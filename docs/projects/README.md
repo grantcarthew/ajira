@@ -10,7 +10,11 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 
 | Project | Title | Status | Started | Completed |
 |---------|-------|--------|---------|-----------|
-| P-001 | Project Initialization | Proposed | - | - |
+| P-001 | Project Initialization | Completed | 2025-12-22 | 2025-12-22 |
+| P-002 | CLI Core Infrastructure | Completed | 2025-12-22 | 2025-12-22 |
+| P-003 | Markdown/ADF Conversion | In Progress | 2025-12-24 | - |
+| P-004 | Issue Commands | Proposed | - | - |
+| P-005 | Comment Functionality | Proposed | - | - |
 
 Note: Completed projects are in `completed/`
 

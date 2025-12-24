@@ -12,7 +12,7 @@ Under active development.
 
 Projects are stored in the docs/projects/ directory. Update this when starting a new project.
 
-Active Project: None
+Active Project: P-003 Markdown/ADF Conversion
 
 Completed: P-002 CLI Core Infrastructure (2025-12-22)
 
