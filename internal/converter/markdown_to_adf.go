@@ -1,0 +1,550 @@
+package converter
+
+import (
+	"bytes"
+
+	"github.com/google/uuid"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
+	extast "github.com/yuin/goldmark/extension/ast"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/text"
+)
+
+// MarkdownToADF converts Markdown text to Atlassian Document Format.
+func MarkdownToADF(markdown string) (*ADF, error) {
+	md := goldmark.New(
+		goldmark.WithExtensions(extension.GFM),
+		goldmark.WithParserOptions(parser.WithAutoHeadingID()),
+	)
+
+	source := []byte(markdown)
+	reader := text.NewReader(source)
+	doc := md.Parser().Parse(reader)
+
+	content := walkNode(doc, source)
+
+	return &ADF{
+		Version: ADFVersion,
+		Type:    NodeTypeDoc,
+		Content: content,
+	}, nil
+}
+
+// walkNode recursively walks the goldmark AST and converts nodes to ADF.
+func walkNode(n ast.Node, source []byte) []ADFNode {
+	var nodes []ADFNode
+
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if node := convertNode(child, source); node != nil {
+			nodes = append(nodes, *node)
+		}
+	}
+
+	return nodes
+}
+
+// convertNode converts a single goldmark AST node to an ADF node.
+func convertNode(n ast.Node, source []byte) *ADFNode {
+	switch node := n.(type) {
+	case *ast.Paragraph:
+		return convertParagraph(node, source)
+	case *ast.TextBlock:
+		return convertTextBlock(node, source)
+	case *ast.Heading:
+		return convertHeading(node, source)
+	case *ast.CodeBlock:
+		return convertCodeBlock(node, source)
+	case *ast.FencedCodeBlock:
+		return convertFencedCodeBlock(node, source)
+	case *ast.Blockquote:
+		return convertBlockquote(node, source)
+	case *ast.List:
+		return convertList(node, source)
+	case *extast.Table:
+		return convertTable(node, source)
+	case *ast.ThematicBreak:
+		return &ADFNode{Type: NodeTypeRule}
+	case *ast.HTMLBlock:
+		return convertHTMLBlock(node, source)
+	default:
+		return nil
+	}
+}
+
+func convertParagraph(n *ast.Paragraph, source []byte) *ADFNode {
+	content := convertInlineNodes(n, source)
+	if len(content) == 0 {
+		return nil
+	}
+	return &ADFNode{
+		Type:    NodeTypeParagraph,
+		Content: content,
+	}
+}
+
+func convertTextBlock(n *ast.TextBlock, source []byte) *ADFNode {
+	content := convertInlineNodes(n, source)
+	if len(content) == 0 {
+		return nil
+	}
+	return &ADFNode{
+		Type:    NodeTypeParagraph,
+		Content: content,
+	}
+}
+
+func convertHeading(n *ast.Heading, source []byte) *ADFNode {
+	return &ADFNode{
+		Type:    NodeTypeHeading,
+		Attrs:   map[string]any{"level": n.Level},
+		Content: convertInlineNodes(n, source),
+	}
+}
+
+func convertCodeBlock(n *ast.CodeBlock, source []byte) *ADFNode {
+	var buf bytes.Buffer
+	lines := n.Lines()
+	for i := 0; i < lines.Len(); i++ {
+		line := lines.At(i)
+		buf.Write(line.Value(source))
+	}
+	text := buf.String()
+	if len(text) > 0 && text[len(text)-1] == '\n' {
+		text = text[:len(text)-1]
+	}
+	return &ADFNode{
+		Type: NodeTypeCodeBlock,
+		Content: []ADFNode{
+			{Type: NodeTypeText, Text: text},
+		},
+	}
+}
+
+func convertFencedCodeBlock(n *ast.FencedCodeBlock, source []byte) *ADFNode {
+	var buf bytes.Buffer
+	lines := n.Lines()
+	for i := 0; i < lines.Len(); i++ {
+		line := lines.At(i)
+		buf.Write(line.Value(source))
+	}
+	text := buf.String()
+	if len(text) > 0 && text[len(text)-1] == '\n' {
+		text = text[:len(text)-1]
+	}
+
+	node := &ADFNode{
+		Type: NodeTypeCodeBlock,
+		Content: []ADFNode{
+			{Type: NodeTypeText, Text: text},
+		},
+	}
+
+	if lang := string(n.Language(source)); lang != "" {
+		node.Attrs = map[string]any{"language": lang}
+	}
+
+	return node
+}
+
+func convertBlockquote(n *ast.Blockquote, source []byte) *ADFNode {
+	return &ADFNode{
+		Type:    NodeTypeBlockquote,
+		Content: walkNode(n, source),
+	}
+}
+
+func convertList(n *ast.List, source []byte) *ADFNode {
+	// Check if this is a task list by examining the first item
+	isTaskList := false
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if item, ok := child.(*ast.ListItem); ok {
+			// Check if list item has checkbox attribute (goldmark GFM style)
+			if item.ChildCount() > 0 {
+				if para, ok := item.FirstChild().(*ast.Paragraph); ok {
+					if para.ChildCount() > 0 {
+						if _, ok := para.FirstChild().(*extast.TaskCheckBox); ok {
+							isTaskList = true
+							break
+						}
+					}
+				}
+				// Also check TextBlock which goldmark may use
+				if tb, ok := item.FirstChild().(*ast.TextBlock); ok {
+					if tb.ChildCount() > 0 {
+						if _, ok := tb.FirstChild().(*extast.TaskCheckBox); ok {
+							isTaskList = true
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if isTaskList {
+		return convertTaskList(n, source)
+	}
+
+	nodeType := NodeTypeBulletList
+	if n.IsOrdered() {
+		nodeType = NodeTypeOrderedList
+	}
+
+	var items []ADFNode
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if item, ok := child.(*ast.ListItem); ok {
+			items = append(items, *convertListItem(item, source))
+		}
+	}
+
+	return &ADFNode{
+		Type:    nodeType,
+		Content: items,
+	}
+}
+
+func convertListItem(n *ast.ListItem, source []byte) *ADFNode {
+	return &ADFNode{
+		Type:    NodeTypeListItem,
+		Content: walkNode(n, source),
+	}
+}
+
+func convertTaskList(n *ast.List, source []byte) *ADFNode {
+	var items []ADFNode
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if item, ok := child.(*ast.ListItem); ok {
+			items = append(items, *convertTaskItem(item, source))
+		}
+	}
+
+	return &ADFNode{
+		Type:    NodeTypeTaskList,
+		Attrs:   map[string]any{"localId": uuid.New().String()},
+		Content: items,
+	}
+}
+
+func convertTaskItem(n *ast.ListItem, source []byte) *ADFNode {
+	state := TaskStateTODO
+
+	// Find checkbox and determine state
+	var contentNodes []ADFNode
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		switch block := child.(type) {
+		case *ast.Paragraph:
+			// Check for checkbox at start of paragraph
+			var paraContent []ADFNode
+			for inline := block.FirstChild(); inline != nil; inline = inline.NextSibling() {
+				if cb, ok := inline.(*extast.TaskCheckBox); ok {
+					if cb.IsChecked {
+						state = TaskStateDONE
+					}
+					continue // Skip the checkbox itself
+				}
+				if inlineNode := convertInlineNode(inline, source); inlineNode != nil {
+					paraContent = append(paraContent, *inlineNode)
+				}
+			}
+			if len(paraContent) > 0 {
+				contentNodes = append(contentNodes, ADFNode{
+					Type:    NodeTypeParagraph,
+					Content: paraContent,
+				})
+			}
+		case *ast.TextBlock:
+			// Check for checkbox at start of text block
+			var paraContent []ADFNode
+			for inline := block.FirstChild(); inline != nil; inline = inline.NextSibling() {
+				if cb, ok := inline.(*extast.TaskCheckBox); ok {
+					if cb.IsChecked {
+						state = TaskStateDONE
+					}
+					continue // Skip the checkbox itself
+				}
+				if inlineNode := convertInlineNode(inline, source); inlineNode != nil {
+					paraContent = append(paraContent, *inlineNode)
+				}
+			}
+			if len(paraContent) > 0 {
+				contentNodes = append(contentNodes, ADFNode{
+					Type:    NodeTypeParagraph,
+					Content: paraContent,
+				})
+			}
+		default:
+			if node := convertNode(child, source); node != nil {
+				contentNodes = append(contentNodes, *node)
+			}
+		}
+	}
+
+	return &ADFNode{
+		Type:    NodeTypeTaskItem,
+		Attrs:   map[string]any{"localId": uuid.New().String(), "state": state},
+		Content: contentNodes,
+	}
+}
+
+func convertTable(n *extast.Table, source []byte) *ADFNode {
+	var rows []ADFNode
+
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if row, ok := child.(*extast.TableRow); ok {
+			rows = append(rows, *convertTableRow(row, source, false))
+		} else if header, ok := child.(*extast.TableHeader); ok {
+			rows = append(rows, *convertTableRow(header, source, true))
+		}
+	}
+
+	return &ADFNode{
+		Type:    NodeTypeTable,
+		Content: rows,
+	}
+}
+
+func convertTableRow(n ast.Node, source []byte, isHeader bool) *ADFNode {
+	var cells []ADFNode
+	cellType := NodeTypeTableCell
+	if isHeader {
+		cellType = NodeTypeTableHeader
+	}
+
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if cell, ok := child.(*extast.TableCell); ok {
+			cells = append(cells, ADFNode{
+				Type: cellType,
+				Content: []ADFNode{
+					{
+						Type:    NodeTypeParagraph,
+						Content: convertInlineNodes(cell, source),
+					},
+				},
+			})
+		}
+	}
+
+	return &ADFNode{
+		Type:    NodeTypeTableRow,
+		Content: cells,
+	}
+}
+
+func convertHTMLBlock(n *ast.HTMLBlock, source []byte) *ADFNode {
+	// Extract text content from HTML, discard tags
+	var buf bytes.Buffer
+	lines := n.Lines()
+	for i := 0; i < lines.Len(); i++ {
+		line := lines.At(i)
+		buf.Write(line.Value(source))
+	}
+
+	text := extractTextFromHTML(buf.String())
+	if text == "" {
+		return nil
+	}
+
+	return &ADFNode{
+		Type: NodeTypeParagraph,
+		Content: []ADFNode{
+			{Type: NodeTypeText, Text: text},
+		},
+	}
+}
+
+// convertInlineNodes converts all inline children of a block node.
+func convertInlineNodes(n ast.Node, source []byte) []ADFNode {
+	var nodes []ADFNode
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if node := convertInlineNode(child, source); node != nil {
+			nodes = append(nodes, *node)
+		}
+	}
+	return nodes
+}
+
+// convertInlineNode converts a single inline node to an ADF text node with marks.
+func convertInlineNode(n ast.Node, source []byte) *ADFNode {
+	switch node := n.(type) {
+	case *ast.Text:
+		return convertText(node, source)
+	case *ast.String:
+		return &ADFNode{Type: NodeTypeText, Text: string(node.Value)}
+	case *ast.CodeSpan:
+		return convertCodeSpan(node, source)
+	case *ast.Emphasis:
+		return convertEmphasis(node, source)
+	case *extast.Strikethrough:
+		return convertStrikethrough(node, source)
+	case *ast.Link:
+		return convertLink(node, source)
+	case *ast.AutoLink:
+		return convertAutoLink(node, source)
+	case *ast.RawHTML:
+		return convertRawHTML(node, source)
+	case *ast.HTMLBlock:
+		return nil // Handled at block level
+	case *ast.Image:
+		// Images out of scope, return alt text
+		return &ADFNode{Type: NodeTypeText, Text: string(node.Text(source))}
+	default:
+		return nil
+	}
+}
+
+func convertText(n *ast.Text, source []byte) *ADFNode {
+	text := string(n.Segment.Value(source))
+
+	// Handle hard breaks (explicit line breaks)
+	if n.HardLineBreak() {
+		return &ADFNode{Type: NodeTypeHardBreak}
+	}
+
+	// Handle soft breaks (become spaces per Markdown spec)
+	if n.SoftLineBreak() {
+		text = text + " "
+	}
+
+	if text == "" {
+		return nil
+	}
+
+	return &ADFNode{Type: NodeTypeText, Text: text}
+}
+
+func convertCodeSpan(n *ast.CodeSpan, source []byte) *ADFNode {
+	var buf bytes.Buffer
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if text, ok := child.(*ast.Text); ok {
+			buf.Write(text.Segment.Value(source))
+		}
+	}
+
+	return &ADFNode{
+		Type:  NodeTypeText,
+		Text:  buf.String(),
+		Marks: []ADFMark{{Type: MarkTypeCode}},
+	}
+}
+
+func convertEmphasis(n *ast.Emphasis, source []byte) *ADFNode {
+	markType := MarkTypeEm
+	if n.Level == 2 {
+		markType = MarkTypeStrong
+	}
+
+	// Get the inner text content
+	var textContent string
+	var innerMarks []ADFMark
+
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		inner := convertInlineNode(child, source)
+		if inner != nil {
+			textContent += inner.Text
+			innerMarks = append(innerMarks, inner.Marks...)
+		}
+	}
+
+	marks := append([]ADFMark{{Type: markType}}, innerMarks...)
+
+	return &ADFNode{
+		Type:  NodeTypeText,
+		Text:  textContent,
+		Marks: marks,
+	}
+}
+
+func convertStrikethrough(n *extast.Strikethrough, source []byte) *ADFNode {
+	var textContent string
+	var innerMarks []ADFMark
+
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		inner := convertInlineNode(child, source)
+		if inner != nil {
+			textContent += inner.Text
+			innerMarks = append(innerMarks, inner.Marks...)
+		}
+	}
+
+	marks := append([]ADFMark{{Type: MarkTypeStrike}}, innerMarks...)
+
+	return &ADFNode{
+		Type:  NodeTypeText,
+		Text:  textContent,
+		Marks: marks,
+	}
+}
+
+func convertLink(n *ast.Link, source []byte) *ADFNode {
+	var textContent string
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if text, ok := child.(*ast.Text); ok {
+			textContent += string(text.Segment.Value(source))
+		}
+	}
+
+	if textContent == "" {
+		textContent = string(n.Destination)
+	}
+
+	return &ADFNode{
+		Type: NodeTypeText,
+		Text: textContent,
+		Marks: []ADFMark{
+			{
+				Type:  MarkTypeLink,
+				Attrs: map[string]any{"href": string(n.Destination)},
+			},
+		},
+	}
+}
+
+func convertAutoLink(n *ast.AutoLink, source []byte) *ADFNode {
+	url := string(n.URL(source))
+	return &ADFNode{
+		Type: NodeTypeText,
+		Text: url,
+		Marks: []ADFMark{
+			{
+				Type:  MarkTypeLink,
+				Attrs: map[string]any{"href": url},
+			},
+		},
+	}
+}
+
+func convertRawHTML(n *ast.RawHTML, source []byte) *ADFNode {
+	// Extract text content from inline HTML
+	var buf bytes.Buffer
+	for i := 0; i < n.Segments.Len(); i++ {
+		seg := n.Segments.At(i)
+		buf.Write(seg.Value(source))
+	}
+
+	text := extractTextFromHTML(buf.String())
+	if text == "" {
+		return nil
+	}
+
+	return &ADFNode{Type: NodeTypeText, Text: text}
+}
+
+// extractTextFromHTML extracts text content from HTML, discarding tags.
+func extractTextFromHTML(html string) string {
+	var result bytes.Buffer
+	inTag := false
+
+	for _, r := range html {
+		if r == '<' {
+			inTag = true
+		} else if r == '>' {
+			inTag = false
+		} else if !inTag {
+			result.WriteRune(r)
+		}
+	}
+
+	return result.String()
+}

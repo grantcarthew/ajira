@@ -1,7 +1,7 @@
 # DR-007: ADF/Markdown Conversion
 
 - Date: 2025-12-24
-- Status: Proposed
+- Status: Accepted
 - Category: Converter
 
 ## Problem
@@ -32,7 +32,8 @@ Supported Markdown elements with 1:1 ADF mappings:
 | Links | `link` mark |
 | Ordered lists | `orderedList` |
 | Unordered lists | `bulletList` |
-| Task lists | `taskList`/`taskItem` with `state` attr |
+| Task lists | `taskList`/`taskItem` with `state` attr (`TODO`/`DONE`) |
+| Nested lists | Supported (arbitrary depth) |
 | Tables | `table`/`tableRow`/`tableCell`/`tableHeader` |
 | Blockquotes | `blockquote` |
 | Horizontal rules | `rule` |
@@ -87,16 +88,50 @@ Limited Markdown subset:
 
 ## Implementation Notes
 
+Location: `internal/converter/`
+
+Package API:
+
+- Two simple functions: `MarkdownToADF` returns ADF and error, `ADFToMarkdown` returns string
+- Error on parse failure for Markdown to ADF; best-effort for ADF to Markdown
+
 Markdown to ADF:
 
 - Use goldmark library with GFM extension for parsing
 - Walk AST nodes and emit ADF JSON structures
 - Pattern from acon project (Confluence converter) applies
+- Hardcode ADF version 1
 
 ADF to Markdown:
 
 - Parse ADF JSON into Go structs
 - Recursively walk nodes and emit Markdown text
 - Skip unsupported node types gracefully (no errors)
+- Escape Markdown special characters in text content to prevent accidental formatting
 
-Location: `internal/converter/`
+Line breaks:
+
+- Only explicit hard breaks (two trailing spaces or `<br>`) map to ADF `hardBreak`
+- Soft breaks become spaces per standard Markdown behaviour
+
+Task lists:
+
+- Checkbox states map to `state` attribute: unchecked is `TODO`, checked is `DONE`
+- Generate UUID for required `localId` attribute on `taskList` and `taskItem`
+- Limitation: Updating content regenerates `localId` values; document this behaviour
+
+Tables:
+
+- GFM column alignment syntax silently ignored (ADF tables lack alignment support)
+
+Inline HTML:
+
+- Extract text content from HTML tags, discard the tags
+- Preserves content, loses HTML formatting
+
+Round-trip fidelity:
+
+- Semantic equivalence, not character-for-character
+- Alternative Markdown syntaxes may normalise (e.g., `__bold__` becomes `**bold**`)
+- Whitespace may normalise
+- Edge cases expected and accepted

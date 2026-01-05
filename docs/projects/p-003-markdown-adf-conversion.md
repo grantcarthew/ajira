@@ -24,7 +24,7 @@ In Scope:
 - Paragraphs and line breaks
 - Headings (h1-h6)
 - Text formatting (bold, italic, strikethrough, inline code)
-- Lists (ordered, unordered, task lists with checkboxes)
+- Lists (ordered, unordered, nested, task lists with checkboxes)
 - Code blocks with language hints
 - Links
 - Tables
@@ -62,7 +62,19 @@ Use goldmark with GFM extension to parse Markdown into AST, then walk nodes to e
 
 For ADF to Markdown, parse ADF JSON into Go structs, recursively walk nodes, emit Markdown text directly.
 
+Key implementation decisions documented in DR-007:
+
+- Simple function API (no structs or interfaces needed)
+- Hard breaks only for line breaks (soft breaks become spaces)
+- Task list states use `TODO`/`DONE` with generated UUID for `localId`
+- Table alignment silently dropped (ADF lacks support)
+- Escape special characters in ADF to Markdown output
+- Extract text from inline HTML, discard tags
+- Semantic round-trip equivalence, not character-for-character
+
 ## Dependencies
 
 - goldmark library (github.com/yuin/goldmark)
+- goldmark GFM extension (github.com/yuin/goldmark, extension subpackage)
+- UUID library (github.com/google/uuid) for task list localId generation
 - Reference: acon project `internal/converter/` for pattern guidance
