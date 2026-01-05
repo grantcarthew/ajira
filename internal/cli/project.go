@@ -18,7 +18,7 @@ type ProjectInfo struct {
 	Key  string `json:"key"`
 	Name string `json:"name"`
 	Lead string `json:"lead"`
-	Type string `json:"type"`
+	Style string `json:"style"`
 }
 
 // projectSearchResponse matches the Jira project search API response.
@@ -103,9 +103,9 @@ func runProjectList(cmd *cobra.Command, args []string) error {
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "KEY\tNAME\tLEAD\tTYPE")
+		fmt.Fprintln(w, "KEY\tNAME\tLEAD\tSTYLE")
 		for _, p := range projects {
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", p.Key, p.Name, p.Lead, p.Type)
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", p.Key, p.Name, p.Lead, p.Style)
 		}
 		w.Flush()
 	}
@@ -119,7 +119,7 @@ func fetchAllProjects(client *api.Client, query string, limit int) ([]ProjectInf
 	maxResults := 50
 
 	for {
-		path := fmt.Sprintf("/project/search?startAt=%d&maxResults=%d", startAt, maxResults)
+		path := fmt.Sprintf("/project/search?startAt=%d&maxResults=%d&expand=lead", startAt, maxResults)
 		if query != "" {
 			path += "&query=" + query
 		}
@@ -136,11 +136,11 @@ func fetchAllProjects(client *api.Client, query string, limit int) ([]ProjectInf
 
 		for _, v := range resp.Values {
 			allProjects = append(allProjects, ProjectInfo{
-				ID:   v.ID,
-				Key:  v.Key,
-				Name: v.Name,
-				Lead: v.Lead.DisplayName,
-				Type: v.Style,
+				ID:    v.ID,
+				Key:   v.Key,
+				Name:  v.Name,
+				Lead:  v.Lead.DisplayName,
+				Style: v.Style,
 			})
 
 			if limit > 0 && len(allProjects) >= limit {

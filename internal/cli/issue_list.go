@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"os"
 	"strings"
-	"text/tabwriter"
 
+	"github.com/fatih/color"
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
 	"github.com/spf13/cobra"
@@ -16,20 +15,20 @@ import (
 
 // IssueInfo represents a Jira issue for output.
 type IssueInfo struct {
-	Key      string `json:"key"`
-	Summary  string `json:"summary"`
-	Status   string `json:"status"`
-	Type     string `json:"type"`
-	Priority string `json:"priority"`
-	Assignee string `json:"assignee"`
+	Key            string `json:"key"`
+	Summary        string `json:"summary"`
+	Status         string `json:"status"`
+	StatusCategory string `json:"statusCategory"`
+	Type           string `json:"type"`
+	Priority       string `json:"priority"`
+	Assignee       string `json:"assignee"`
 }
 
 // issueSearchResponse matches the Jira issue search API response.
 type issueSearchResponse struct {
-	StartAt    int          `json:"startAt"`
-	MaxResults int          `json:"maxResults"`
-	Total      int          `json:"total"`
-	Issues     []issueValue `json:"issues"`
+	Issues        []issueValue `json:"issues"`
+	NextPageToken string       `json:"nextPageToken"`
+	IsLast        bool         `json:"isLast"`
 }
 
 type issueValue struct {
@@ -46,7 +45,12 @@ type issueFields struct {
 }
 
 type statusField struct {
-	Name string `json:"name"`
+	Name           string          `json:"name"`
+	StatusCategory *statusCategory `json:"statusCategory"`
+}
+
+type statusCategory struct {
+	Key string `json:"key"`
 }
 
 type issueType struct {
@@ -131,21 +135,59 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "KEY\tSTATUS\tTYPE\tASSIGNEE\tSUMMARY")
+		bold := color.New(color.Bold).SprintFunc()
+		faint := color.New(color.Faint).SprintFunc()
+		header := color.New(color.FgCyan, color.Bold).SprintFunc()
+
+		// Calculate column widths
+		keyWidth, statusWidth, typeWidth, assigneeWidth := 8, 11, 4, 8
 		for _, issue := range issues {
+			if len(issue.Key) > keyWidth {
+				keyWidth = len(issue.Key)
+			}
+			if len(issue.Status) > statusWidth {
+				statusWidth = len(issue.Status)
+			}
+			if len(issue.Type) > typeWidth {
+				typeWidth = len(issue.Type)
+			}
 			assignee := issue.Assignee
 			if assignee == "" {
 				assignee = "-"
 			}
+			if len(assignee) > assigneeWidth {
+				assigneeWidth = len(assignee)
+			}
+		}
+
+		// Print header
+		fmt.Printf("%s  %s  %s  %s  %s\n",
+			header(padRight("KEY", keyWidth)),
+			header(padRight("STATUS", statusWidth)),
+			header(padRight("TYPE", typeWidth)),
+			header(padRight("ASSIGNEE", assigneeWidth)),
+			header("SUMMARY"))
+
+		// Print rows
+		for _, issue := range issues {
+			key := bold(padRight(issue.Key, keyWidth))
+			status := colorStatus(padRight(issue.Status, statusWidth), issue.StatusCategory)
+
+			assignee := issue.Assignee
+			if assignee == "" {
+				assignee = faint(padRight("-", assigneeWidth))
+			} else {
+				assignee = padRight(assignee, assigneeWidth)
+			}
+
 			// Truncate summary for display
 			summary := issue.Summary
 			if len(summary) > 60 {
 				summary = summary[:57] + "..."
 			}
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", issue.Key, issue.Status, issue.Type, assignee, summary)
+
+			fmt.Printf("%s  %s  %s  %s  %s\n", key, status, padRight(issue.Type, typeWidth), assignee, summary)
 		}
-		w.Flush()
 	}
 
 	return nil
@@ -188,15 +230,19 @@ func buildJQL() string {
 
 func searchIssues(client *api.Client, jql string, limit int) ([]IssueInfo, error) {
 	var allIssues []IssueInfo
-	startAt := 0
 	maxResults := 50
 	if limit > 0 && limit < maxResults {
 		maxResults = limit
 	}
 
+	nextPageToken := ""
+
 	for {
-		path := fmt.Sprintf("/search?jql=%s&startAt=%d&maxResults=%d&fields=summary,status,issuetype,priority,assignee",
-			url.QueryEscape(jql), startAt, maxResults)
+		path := fmt.Sprintf("/search/jql?jql=%s&maxResults=%d&fields=summary,status,issuetype,priority,assignee",
+			url.QueryEscape(jql), maxResults)
+		if nextPageToken != "" {
+			path += "&nextPageToken=" + url.QueryEscape(nextPageToken)
+		}
 
 		body, err := client.Get(context.Background(), path)
 		if err != nil {
@@ -215,6 +261,9 @@ func searchIssues(client *api.Client, jql string, limit int) ([]IssueInfo, error
 			}
 			if issue.Fields.Status != nil {
 				info.Status = issue.Fields.Status.Name
+				if issue.Fields.Status.StatusCategory != nil {
+					info.StatusCategory = issue.Fields.Status.StatusCategory.Key
+				}
 			}
 			if issue.Fields.IssueType != nil {
 				info.Type = issue.Fields.IssueType.Name
@@ -233,12 +282,62 @@ func searchIssues(client *api.Client, jql string, limit int) ([]IssueInfo, error
 			}
 		}
 
-		if startAt+len(resp.Issues) >= resp.Total {
+		if resp.IsLast || resp.NextPageToken == "" {
 			break
 		}
 
-		startAt += maxResults
+		nextPageToken = resp.NextPageToken
 	}
 
 	return allIssues, nil
+}
+
+// colorStatus returns a colored status string based on status category.
+func colorStatus(status, category string) string {
+	green := color.New(color.FgGreen).SprintFunc()
+	yellow := color.New(color.FgYellow).SprintFunc()
+	faint := color.New(color.Faint).SprintFunc()
+
+	// Override for specific status names
+	switch strings.ToLower(status) {
+	case "blocked", "on hold", "on-hold", "awaiting":
+		return yellow(status)
+	}
+
+	// Fall back to category-based coloring
+	switch category {
+	case "done":
+		return green(status)
+	case "indeterminate":
+		return color.BlueString(status)
+	case "new":
+		return faint(status)
+	default:
+		return status
+	}
+}
+
+// colorPriority returns a colored priority string.
+func colorPriority(priority string) string {
+	red := color.New(color.FgRed).SprintFunc()
+	yellow := color.New(color.FgYellow).SprintFunc()
+
+	switch strings.ToLower(priority) {
+	case "highest", "critical", "blocker":
+		return red(priority)
+	case "high":
+		return red(priority)
+	case "medium":
+		return yellow(priority)
+	default:
+		return priority
+	}
+}
+
+// padRight pads a string to the specified width with spaces.
+func padRight(s string, width int) string {
+	if len(s) >= width {
+		return s
+	}
+	return s + strings.Repeat(" ", width-len(s))
 }

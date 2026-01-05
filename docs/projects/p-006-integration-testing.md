@@ -1,7 +1,7 @@
 # P-006: Integration Testing
 
-- Status: Proposed
-- Started:
+- Status: In Progress
+- Started: 2026-01-05
 - Completed:
 
 ## Overview
@@ -42,7 +42,7 @@ Out of Scope:
 
 Before starting, ensure:
 
-- JIRA_URL environment variable is set
+- JIRA_BASE_URL environment variable is set
 - JIRA_EMAIL environment variable is set
 - JIRA_API_TOKEN environment variable is set
 - JIRA_PROJECT environment variable is set (or use -p flag)
@@ -52,13 +52,13 @@ Before starting, ensure:
 
 Phase 1: Setup and Authentication
 
-- [ ] Environment variables are configured
-- [ ] `ajira me` returns current user info
-- [ ] `ajira project list` returns accessible projects
+- [x] Environment variables are configured
+- [x] `ajira me` returns current user info
+- [x] `ajira project list` returns accessible projects
 
 Phase 2: Issue Listing and Viewing
 
-- [ ] `ajira issue list` returns issues from default project
+- [x] `ajira issue list` returns issues from default project
 - [ ] `ajira issue list -q "JQL"` filters correctly
 - [ ] `ajira issue list -s "Status"` filters by status
 - [ ] `ajira issue list -t "Type"` filters by type
@@ -156,3 +156,21 @@ Each test will be performed interactively:
 ## Notes
 
 Test issues created during this project should be deleted after testing is complete to avoid clutter in the Jira project.
+
+## Issues Found and Fixed
+
+### Phase 1
+
+1. **Project list missing LEAD data** - The project search API was not returning lead information. Fixed by adding `expand=lead` parameter to the API call in `internal/cli/project.go:122`.
+
+2. **Column rename TYPE to STYLE** - Renamed the TYPE column to STYLE to accurately reflect the field name from the Jira API (`style` field indicates classic vs next-gen).
+
+### Phase 2
+
+1. **Jira search API deprecated** - The `/search` endpoint was removed (410 Gone). Migrated to `/search/jql` endpoint with token-based pagination (`nextPageToken`) instead of offset-based (`startAt`).
+
+2. **Added color support** - Added `github.com/fatih/color` for terminal colors. Colors auto-disable when piped. Respects `NO_COLOR` env var.
+
+3. **Status coloring by category** - Uses Jira's `statusCategory.key` for automatic coloring: `done` (green), `indeterminate` (blue), `new` (faint). Override for "Blocked", "On Hold" → yellow.
+
+4. **Column alignment with colors** - Replaced tabwriter with manual padding to fix alignment issues caused by ANSI escape codes.

@@ -140,14 +140,12 @@ func TestBuildJQL_MultipleFilters(t *testing.T) {
 // Test searchIssues function
 func TestSearchIssues_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.URL.Path, "/search") {
-			t.Errorf("expected /search path, got %s", r.URL.Path)
+		if !strings.Contains(r.URL.Path, "/search/jql") {
+			t.Errorf("expected /search/jql path, got %s", r.URL.Path)
 		}
 
 		resp := issueSearchResponse{
-			StartAt:    0,
-			MaxResults: 50,
-			Total:      2,
+			IsLast: true,
 			Issues: []issueValue{
 				{
 					Key: "TEST-1",
@@ -211,9 +209,7 @@ func TestSearchIssues_Success(t *testing.T) {
 func TestSearchIssues_WithLimit(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := issueSearchResponse{
-			StartAt:    0,
-			MaxResults: 50,
-			Total:      100,
+			IsLast: false,
 			Issues: []issueValue{
 				{Key: "TEST-1", Fields: issueFields{Summary: "Issue 1"}},
 				{Key: "TEST-2", Fields: issueFields{Summary: "Issue 2"}},
@@ -239,10 +235,8 @@ func TestSearchIssues_WithLimit(t *testing.T) {
 func TestSearchIssues_EmptyResult(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		resp := issueSearchResponse{
-			StartAt:    0,
-			MaxResults: 50,
-			Total:      0,
-			Issues:     []issueValue{},
+			IsLast: true,
+			Issues: []issueValue{},
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(resp)
@@ -908,9 +902,8 @@ func TestSearchIssues_Pagination(t *testing.T) {
 
 		if callCount == 1 {
 			resp = issueSearchResponse{
-				StartAt:    0,
-				MaxResults: 2,
-				Total:      4,
+				NextPageToken: "page2token",
+				IsLast:        false,
 				Issues: []issueValue{
 					{Key: "TEST-1", Fields: issueFields{Summary: "Issue 1"}},
 					{Key: "TEST-2", Fields: issueFields{Summary: "Issue 2"}},
@@ -918,9 +911,7 @@ func TestSearchIssues_Pagination(t *testing.T) {
 			}
 		} else {
 			resp = issueSearchResponse{
-				StartAt:    2,
-				MaxResults: 2,
-				Total:      4,
+				IsLast: true,
 				Issues: []issueValue{
 					{Key: "TEST-3", Fields: issueFields{Summary: "Issue 3"}},
 					{Key: "TEST-4", Fields: issueFields{Summary: "Issue 4"}},
