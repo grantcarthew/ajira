@@ -1,8 +1,8 @@
 # P-004: Issue Commands
 
-- Status: Proposed
-- Started:
-- Completed:
+- Status: Completed
+- Started: 2026-01-05
+- Completed: 2026-01-05
 
 ## Overview
 
@@ -43,19 +43,19 @@ Out of Scope:
 
 ## Success Criteria
 
-- [ ] `ajira issue list` returns issues with JQL filtering
-- [ ] `ajira issue list` supports convenience flags (--status, --type, --assignee)
-- [ ] `ajira issue view ISSUE-KEY` displays formatted issue details
-- [ ] `ajira issue create -s "Summary"` creates an issue and returns key
-- [ ] `ajira issue create` accepts Markdown body via --body, --file, or stdin
-- [ ] `ajira issue edit ISSUE-KEY` updates specified fields
-- [ ] `ajira issue delete ISSUE-KEY` deletes the issue
-- [ ] `ajira issue assign ISSUE-KEY USER` assigns the issue
-- [ ] `ajira issue assign ISSUE-KEY unassigned` removes assignee
-- [ ] `ajira issue move ISSUE-KEY STATUS` transitions the issue
-- [ ] All commands support --json output
-- [ ] Unit tests for command logic
-- [ ] Error messages are clear and actionable
+- [x] `ajira issue list` returns issues with JQL filtering
+- [x] `ajira issue list` supports convenience flags (--status, --type, --assignee)
+- [x] `ajira issue view ISSUE-KEY` displays formatted issue details
+- [x] `ajira issue create -s "Summary"` creates an issue and returns key
+- [x] `ajira issue create` accepts Markdown body via --body, --file, or stdin
+- [x] `ajira issue edit ISSUE-KEY` updates specified fields
+- [x] `ajira issue delete ISSUE-KEY` deletes the issue
+- [x] `ajira issue assign ISSUE-KEY USER` assigns the issue
+- [x] `ajira issue assign ISSUE-KEY unassigned` removes assignee
+- [x] `ajira issue move ISSUE-KEY STATUS` transitions the issue
+- [x] All commands support --json output
+- [x] Unit tests for command logic
+- [x] Error messages are clear and actionable
 
 ## Deliverables
 

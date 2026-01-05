@@ -12,9 +12,9 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 |---------|-------|--------|---------|-----------|
 | P-001 | Project Initialization | Completed | 2025-12-22 | 2025-12-22 |
 | P-002 | CLI Core Infrastructure | Completed | 2025-12-22 | 2025-12-22 |
-| P-003 | Markdown/ADF Conversion | In Progress | 2025-12-24 | - |
-| P-004 | Issue Commands | Proposed | - | - |
-| P-005 | Comment Functionality | Proposed | - | - |
+| P-003 | Markdown/ADF Conversion | Completed | 2025-12-24 | 2026-01-05 |
+| P-004 | Issue Commands | Completed | 2026-01-05 | 2026-01-05 |
+| P-005 | Comment Functionality | Completed | 2026-01-05 | 2026-01-05 |
 
 Note: Completed projects are in `completed/`
 

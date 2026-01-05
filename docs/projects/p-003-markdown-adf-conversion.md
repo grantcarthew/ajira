@@ -1,8 +1,8 @@
 # P-003: Markdown/ADF Conversion
 
-- Status: In Progress
+- Status: Completed
 - Started: 2025-12-24
-- Completed:
+- Completed: 2026-01-05
 
 ## Overview
 
@@ -41,12 +41,12 @@ Out of Scope:
 
 ## Success Criteria
 
-- [ ] Markdown to ADF converts all supported elements correctly
-- [ ] ADF to Markdown produces readable, valid Markdown
-- [ ] Round-trip conversion preserves content semantics
-- [ ] Unsupported ADF elements are skipped gracefully
-- [ ] Unit tests cover all supported element types
-- [ ] Integration test with real Jira API validates ADF acceptance
+- [x] Markdown to ADF converts all supported elements correctly
+- [x] ADF to Markdown produces readable, valid Markdown
+- [x] Round-trip conversion preserves content semantics
+- [x] Unsupported ADF elements are skipped gracefully
+- [x] Unit tests cover all supported element types
+- [ ] Integration test with real Jira API validates ADF acceptance (deferred)
 
 ## Deliverables
 

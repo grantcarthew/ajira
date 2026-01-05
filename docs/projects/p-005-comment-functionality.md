@@ -1,8 +1,8 @@
 # P-005: Comment Functionality
 
-- Status: Proposed
-- Started:
-- Completed:
+- Status: Completed
+- Started: 2026-01-05
+- Completed: 2026-01-05
 
 ## Overview
 
@@ -32,15 +32,15 @@ Out of Scope:
 
 ## Success Criteria
 
-- [ ] `ajira issue comment add ISSUE-KEY "text"` adds a comment
-- [ ] `ajira issue comment add ISSUE-KEY -b "text"` adds via --body flag
-- [ ] `ajira issue comment add ISSUE-KEY -f file.md` adds from file
-- [ ] `echo "text" | ajira issue comment add ISSUE-KEY -f -` adds from stdin
-- [ ] `ajira issue view ISSUE-KEY` displays recent comments
-- [ ] `ajira issue view ISSUE-KEY --comments N` controls comment count
-- [ ] Comments display author, timestamp, and Markdown-formatted body
-- [ ] All commands support --json output
-- [ ] Unit tests for comment functionality
+- [x] `ajira issue comment add ISSUE-KEY "text"` adds a comment
+- [x] `ajira issue comment add ISSUE-KEY -b "text"` adds via --body flag
+- [x] `ajira issue comment add ISSUE-KEY -f file.md` adds from file
+- [x] `echo "text" | ajira issue comment add ISSUE-KEY -f -` adds from stdin
+- [x] `ajira issue view ISSUE-KEY` displays recent comments
+- [x] `ajira issue view ISSUE-KEY --comments N` controls comment count
+- [x] Comments display author, timestamp, and Markdown-formatted body
+- [x] All commands support --json output
+- [x] Unit tests for comment functionality
 
 ## Deliverables
 
