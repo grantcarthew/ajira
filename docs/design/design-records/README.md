@@ -12,6 +12,6 @@ Design Records (DRs) document significant technical decisions made during develo
 | DR-004 | [CLI Global Flags](dr-004-cli-flags.md) | Accepted | 2025-12-22 |
 | DR-005 | [Me Command](dr-005-cmd-me.md) | Accepted | 2025-12-22 |
 | DR-006 | [Project List Command](dr-006-cmd-project-list.md) | Accepted | 2025-12-22 |
-| DR-007 | [ADF/Markdown Conversion](dr-007-adf-markdown-conversion.md) | Proposed | 2025-12-24 |
+| DR-007 | [ADF/Markdown Conversion](dr-007-adf-markdown-conversion.md) | Accepted | 2025-12-24 |
 
 Note: Superseded design records are in `superseded/`
