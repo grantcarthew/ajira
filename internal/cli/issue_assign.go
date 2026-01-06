@@ -94,11 +94,7 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 		output, _ := json.MarshalIndent(result, "", "  ")
 		fmt.Println(string(output))
 	} else {
-		if accountID == nil {
-			fmt.Printf("%s unassigned\n", issueKey)
-		} else {
-			fmt.Printf("%s assigned to %s\n", issueKey, userArg)
-		}
+		fmt.Println(IssueURL(cfg.BaseURL, issueKey))
 	}
 
 	return nil

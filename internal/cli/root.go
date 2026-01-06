@@ -60,6 +60,11 @@ func Errorf(format string, args ...interface{}) error {
 	return fmt.Errorf("%s", msg)
 }
 
+// IssueURL returns the browse URL for an issue key.
+func IssueURL(baseURL, key string) string {
+	return fmt.Sprintf("%s/browse/%s", baseURL, key)
+}
+
 // RenderMarkdown renders markdown with terminal styling.
 // Falls back to plain text if rendering fails or output is not a TTY.
 func RenderMarkdown(markdown string) string {

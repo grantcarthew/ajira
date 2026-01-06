@@ -118,7 +118,7 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Println(string(output))
 	} else {
-		fmt.Println(result.Key)
+		fmt.Println(IssueURL(cfg.BaseURL, result.Key))
 	}
 
 	return nil

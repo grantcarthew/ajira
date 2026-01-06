@@ -130,7 +130,7 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		output, _ := json.MarshalIndent(result, "", "  ")
 		fmt.Println(string(output))
 	} else {
-		fmt.Printf("%s updated\n", issueKey)
+		fmt.Println(IssueURL(cfg.BaseURL, issueKey))
 	}
 
 	return nil

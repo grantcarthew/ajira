@@ -134,7 +134,7 @@ func runIssueMove(cmd *cobra.Command, args []string) error {
 		output, _ := json.MarshalIndent(result, "", "  ")
 		fmt.Println(string(output))
 	} else {
-		fmt.Printf("%s moved to %s\n", issueKey, matchedTransition.To.Name)
+		fmt.Println(IssueURL(cfg.BaseURL, issueKey))
 	}
 
 	return nil

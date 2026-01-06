@@ -180,3 +180,5 @@ Test issues created during this project should be deleted after testing is compl
 6. **Added glamour markdown rendering** - Integrated `github.com/charmbracelet/glamour` for terminal-styled markdown output. Description and comments now render with syntax highlighting, styled headers, and proper formatting. Auto-detects terminal width and dark/light theme. Falls back to plain text when piped.
 
 7. **Changed default comment count to 0** - Issue view now hides comments by default for cleaner output. Use `-c N` to show N recent comments.
+
+8. **Output clickable URLs** - Commands that modify issues (create, edit, assign, move, comment add) now output the issue URL instead of just the key. Added `IssueURL()` helper function. Delete still outputs `KEY deleted` since the URL won't work after deletion.

@@ -98,7 +98,7 @@ func runIssueCommentAdd(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Println(string(output))
 	} else {
-		fmt.Printf("Comment added to %s\n", issueKey)
+		fmt.Println(IssueURL(cfg.BaseURL, issueKey))
 	}
 
 	return nil
