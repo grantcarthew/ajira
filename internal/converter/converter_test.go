@@ -3595,8 +3595,122 @@ func TestADFToMarkdown_TextWithBackslashes(t *testing.T) {
 	}
 
 	md := ADFToMarkdownFromStruct(adf)
-	// Backslashes should be escaped
-	if !strings.Contains(md, "\\\\") {
-		t.Errorf("expected escaped backslashes, got %q", md)
+	// Backslashes should NOT be escaped - they only have special meaning
+	// before certain characters in markdown, and escaping them causes
+	// double-escaping on round-trip
+	if md != "Path: C:\\Users\\name" {
+		t.Errorf("expected backslashes preserved, got %q", md)
+	}
+}
+
+// Test ADF mark compatibility - code mark can only combine with link
+// Per ADF spec: https://developer.atlassian.com/cloud/jira/platform/apis/document/marks/code/
+
+func TestMarkdownToADF_CodeInBold_DropsIncompatibleMark(t *testing.T) {
+	// ADF does not allow code + strong together, code takes precedence
+	md := "**`code`**"
+	adf, err := MarkdownToADF(md)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(adf.Content) != 1 {
+		t.Fatalf("expected 1 content node, got %d", len(adf.Content))
+	}
+
+	para := adf.Content[0]
+	if len(para.Content) != 1 {
+		t.Fatalf("expected 1 text node, got %d", len(para.Content))
+	}
+
+	text := para.Content[0]
+	if text.Text != "code" {
+		t.Errorf("expected text 'code', got %q", text.Text)
+	}
+
+	// Should have only code mark, not strong (ADF incompatibility)
+	if len(text.Marks) != 1 {
+		t.Errorf("expected 1 mark, got %d", len(text.Marks))
+	}
+	if text.Marks[0].Type != MarkTypeCode {
+		t.Errorf("expected code mark, got %q", text.Marks[0].Type)
+	}
+}
+
+func TestMarkdownToADF_CodeInItalic_DropsIncompatibleMark(t *testing.T) {
+	// ADF does not allow code + em together, code takes precedence
+	md := "*`code`*"
+	adf, err := MarkdownToADF(md)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	para := adf.Content[0]
+	text := para.Content[0]
+
+	// Should have only code mark, not em
+	if len(text.Marks) != 1 {
+		t.Errorf("expected 1 mark, got %d", len(text.Marks))
+	}
+	if text.Marks[0].Type != MarkTypeCode {
+		t.Errorf("expected code mark, got %q", text.Marks[0].Type)
+	}
+}
+
+func TestMarkdownToADF_CodeInStrikethrough_DropsIncompatibleMark(t *testing.T) {
+	// ADF does not allow code + strike together, code takes precedence
+	md := "~~`code`~~"
+	adf, err := MarkdownToADF(md)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	para := adf.Content[0]
+	text := para.Content[0]
+
+	// Should have only code mark, not strike
+	if len(text.Marks) != 1 {
+		t.Errorf("expected 1 mark, got %d", len(text.Marks))
+	}
+	if text.Marks[0].Type != MarkTypeCode {
+		t.Errorf("expected code mark, got %q", text.Marks[0].Type)
+	}
+}
+
+func TestMarkdownToADF_BoldWithCode_PreservesNonCodeMarks(t *testing.T) {
+	// Bold text around code should work, with separate nodes
+	md := "**bold `code` more bold**"
+	adf, err := MarkdownToADF(md)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	para := adf.Content[0]
+	if len(para.Content) != 3 {
+		t.Fatalf("expected 3 nodes (bold, code, bold), got %d", len(para.Content))
+	}
+
+	// First node: bold text
+	if para.Content[0].Text != "bold " {
+		t.Errorf("expected 'bold ', got %q", para.Content[0].Text)
+	}
+	if len(para.Content[0].Marks) != 1 || para.Content[0].Marks[0].Type != MarkTypeStrong {
+		t.Errorf("expected strong mark on first node")
+	}
+
+	// Second node: code only (no strong)
+	if para.Content[1].Text != "code" {
+		t.Errorf("expected 'code', got %q", para.Content[1].Text)
+	}
+	if len(para.Content[1].Marks) != 1 || para.Content[1].Marks[0].Type != MarkTypeCode {
+		t.Errorf("expected only code mark on second node, got %v", para.Content[1].Marks)
+	}
+
+	// Third node: bold text
+	if para.Content[2].Text != " more bold" {
+		t.Errorf("expected ' more bold', got %q", para.Content[2].Text)
+	}
+	if len(para.Content[2].Marks) != 1 || para.Content[2].Marks[0].Type != MarkTypeStrong {
+		t.Errorf("expected strong mark on third node")
 	}
 }

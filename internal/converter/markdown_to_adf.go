@@ -231,12 +231,12 @@ func convertTaskItem(n *ast.ListItem, source []byte) *ADFNode {
 	state := TaskStateTODO
 
 	// Find checkbox and determine state
-	var contentNodes []ADFNode
+	// Per ADF spec, taskItem content should be inline nodes directly, not wrapped in paragraphs
+	var inlineContent []ADFNode
 	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
 		switch block := child.(type) {
 		case *ast.Paragraph:
-			// Check for checkbox at start of paragraph
-			var paraContent []ADFNode
+			// Extract inline nodes from paragraph
 			for inline := block.FirstChild(); inline != nil; inline = inline.NextSibling() {
 				if cb, ok := inline.(*extast.TaskCheckBox); ok {
 					if cb.IsChecked {
@@ -244,19 +244,10 @@ func convertTaskItem(n *ast.ListItem, source []byte) *ADFNode {
 					}
 					continue // Skip the checkbox itself
 				}
-				if inlineNode := convertInlineNode(inline, source); inlineNode != nil {
-					paraContent = append(paraContent, *inlineNode)
-				}
-			}
-			if len(paraContent) > 0 {
-				contentNodes = append(contentNodes, ADFNode{
-					Type:    NodeTypeParagraph,
-					Content: paraContent,
-				})
+				inlineContent = append(inlineContent, convertInlineNodeMulti(inline, source)...)
 			}
 		case *ast.TextBlock:
-			// Check for checkbox at start of text block
-			var paraContent []ADFNode
+			// Extract inline nodes from text block
 			for inline := block.FirstChild(); inline != nil; inline = inline.NextSibling() {
 				if cb, ok := inline.(*extast.TaskCheckBox); ok {
 					if cb.IsChecked {
@@ -264,27 +255,16 @@ func convertTaskItem(n *ast.ListItem, source []byte) *ADFNode {
 					}
 					continue // Skip the checkbox itself
 				}
-				if inlineNode := convertInlineNode(inline, source); inlineNode != nil {
-					paraContent = append(paraContent, *inlineNode)
-				}
-			}
-			if len(paraContent) > 0 {
-				contentNodes = append(contentNodes, ADFNode{
-					Type:    NodeTypeParagraph,
-					Content: paraContent,
-				})
-			}
-		default:
-			if node := convertNode(child, source); node != nil {
-				contentNodes = append(contentNodes, *node)
+				inlineContent = append(inlineContent, convertInlineNodeMulti(inline, source)...)
 			}
 		}
+		// Note: We don't process other block types for task items as they should only contain inline content
 	}
 
 	return &ADFNode{
 		Type:    NodeTypeTaskItem,
 		Attrs:   map[string]any{"localId": uuid.New().String(), "state": state},
-		Content: contentNodes,
+		Content: inlineContent,
 	}
 }
 
@@ -358,40 +338,109 @@ func convertHTMLBlock(n *ast.HTMLBlock, source []byte) *ADFNode {
 func convertInlineNodes(n ast.Node, source []byte) []ADFNode {
 	var nodes []ADFNode
 	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
-		if node := convertInlineNode(child, source); node != nil {
-			nodes = append(nodes, *node)
-		}
+		nodes = append(nodes, convertInlineNodeMulti(child, source)...)
 	}
 	return nodes
 }
 
-// convertInlineNode converts a single inline node to an ADF text node with marks.
-func convertInlineNode(n ast.Node, source []byte) *ADFNode {
+// convertInlineNodeMulti converts a single inline node to one or more ADF nodes.
+// This handles nested marks correctly by returning separate nodes for each mark combination.
+func convertInlineNodeMulti(n ast.Node, source []byte) []ADFNode {
 	switch node := n.(type) {
 	case *ast.Text:
-		return convertText(node, source)
+		if n := convertText(node, source); n != nil {
+			return []ADFNode{*n}
+		}
+		return nil
 	case *ast.String:
-		return &ADFNode{Type: NodeTypeText, Text: string(node.Value)}
+		return []ADFNode{{Type: NodeTypeText, Text: string(node.Value)}}
 	case *ast.CodeSpan:
-		return convertCodeSpan(node, source)
+		if n := convertCodeSpan(node, source); n != nil {
+			return []ADFNode{*n}
+		}
+		return nil
 	case *ast.Emphasis:
-		return convertEmphasis(node, source)
+		return convertEmphasisMulti(node, source)
 	case *extast.Strikethrough:
-		return convertStrikethrough(node, source)
+		return convertStrikethroughMulti(node, source)
 	case *ast.Link:
-		return convertLink(node, source)
+		if n := convertLink(node, source); n != nil {
+			return []ADFNode{*n}
+		}
+		return nil
 	case *ast.AutoLink:
-		return convertAutoLink(node, source)
+		if n := convertAutoLink(node, source); n != nil {
+			return []ADFNode{*n}
+		}
+		return nil
 	case *ast.RawHTML:
-		return convertRawHTML(node, source)
+		if n := convertRawHTML(node, source); n != nil {
+			return []ADFNode{*n}
+		}
+		return nil
 	case *ast.HTMLBlock:
 		return nil // Handled at block level
 	case *ast.Image:
 		// Images out of scope, return alt text
-		return &ADFNode{Type: NodeTypeText, Text: string(node.Text(source))}
+		return []ADFNode{{Type: NodeTypeText, Text: string(node.Text(source))}}
 	default:
 		return nil
 	}
+}
+
+// convertInlineNode converts a single inline node to an ADF text node with marks.
+// Deprecated: Use convertInlineNodeMulti for proper nested mark handling.
+func convertInlineNode(n ast.Node, source []byte) *ADFNode {
+	nodes := convertInlineNodeMulti(n, source)
+	if len(nodes) == 1 {
+		return &nodes[0]
+	}
+	// For backward compatibility, concatenate if multiple nodes
+	if len(nodes) > 1 {
+		var text string
+		var marks []ADFMark
+		for _, node := range nodes {
+			text += node.Text
+			marks = append(marks, node.Marks...)
+		}
+		return &ADFNode{Type: NodeTypeText, Text: text, Marks: marks}
+	}
+	return nil
+}
+
+// addMarkToNodes adds a mark to all text nodes in the slice.
+// It respects ADF mark compatibility rules - the 'code' mark can only
+// combine with 'link', so other marks are skipped for code spans.
+func addMarkToNodes(nodes []ADFNode, mark ADFMark) []ADFNode {
+	result := make([]ADFNode, len(nodes))
+	for i, node := range nodes {
+		result[i] = node
+		if node.Type == NodeTypeText {
+			// Check if node has a code mark - code can only combine with link
+			if hasCodeMark(node.Marks) && !isCodeCompatibleMark(mark) {
+				continue // Skip incompatible marks for code spans
+			}
+			// Prepend the mark so outer marks come first
+			result[i].Marks = append([]ADFMark{mark}, node.Marks...)
+		}
+	}
+	return result
+}
+
+// hasCodeMark checks if the marks slice contains a code mark.
+func hasCodeMark(marks []ADFMark) bool {
+	for _, m := range marks {
+		if m.Type == MarkTypeCode {
+			return true
+		}
+	}
+	return false
+}
+
+// isCodeCompatibleMark checks if a mark can be combined with code.
+// Per ADF spec, code can only combine with link.
+func isCodeCompatibleMark(mark ADFMark) bool {
+	return mark.Type == MarkTypeLink
 }
 
 func convertText(n *ast.Text, source []byte) *ADFNode {
@@ -429,52 +478,71 @@ func convertCodeSpan(n *ast.CodeSpan, source []byte) *ADFNode {
 	}
 }
 
-func convertEmphasis(n *ast.Emphasis, source []byte) *ADFNode {
+// convertEmphasisMulti converts emphasis to multiple ADF nodes, preserving nested marks.
+func convertEmphasisMulti(n *ast.Emphasis, source []byte) []ADFNode {
 	markType := MarkTypeEm
 	if n.Level == 2 {
 		markType = MarkTypeStrong
 	}
 
-	// Get the inner text content
-	var textContent string
-	var innerMarks []ADFMark
-
+	// Convert all children and add the emphasis mark to each
+	var nodes []ADFNode
 	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
-		inner := convertInlineNode(child, source)
-		if inner != nil {
-			textContent += inner.Text
-			innerMarks = append(innerMarks, inner.Marks...)
-		}
+		nodes = append(nodes, convertInlineNodeMulti(child, source)...)
 	}
 
-	marks := append([]ADFMark{{Type: markType}}, innerMarks...)
-
-	return &ADFNode{
-		Type:  NodeTypeText,
-		Text:  textContent,
-		Marks: marks,
-	}
+	return addMarkToNodes(nodes, ADFMark{Type: markType})
 }
 
-func convertStrikethrough(n *extast.Strikethrough, source []byte) *ADFNode {
-	var textContent string
-	var innerMarks []ADFMark
-
-	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
-		inner := convertInlineNode(child, source)
-		if inner != nil {
-			textContent += inner.Text
-			innerMarks = append(innerMarks, inner.Marks...)
+// convertEmphasis converts emphasis - kept for backward compatibility.
+func convertEmphasis(n *ast.Emphasis, source []byte) *ADFNode {
+	nodes := convertEmphasisMulti(n, source)
+	if len(nodes) == 1 {
+		return &nodes[0]
+	}
+	if len(nodes) > 1 {
+		// This shouldn't happen in normal use, but handle gracefully
+		var text string
+		var marks []ADFMark
+		for _, node := range nodes {
+			text += node.Text
+			if len(marks) == 0 {
+				marks = node.Marks
+			}
 		}
+		return &ADFNode{Type: NodeTypeText, Text: text, Marks: marks}
+	}
+	return nil
+}
+
+// convertStrikethroughMulti converts strikethrough to multiple ADF nodes, preserving nested marks.
+func convertStrikethroughMulti(n *extast.Strikethrough, source []byte) []ADFNode {
+	var nodes []ADFNode
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		nodes = append(nodes, convertInlineNodeMulti(child, source)...)
 	}
 
-	marks := append([]ADFMark{{Type: MarkTypeStrike}}, innerMarks...)
+	return addMarkToNodes(nodes, ADFMark{Type: MarkTypeStrike})
+}
 
-	return &ADFNode{
-		Type:  NodeTypeText,
-		Text:  textContent,
-		Marks: marks,
+// convertStrikethrough converts strikethrough - kept for backward compatibility.
+func convertStrikethrough(n *extast.Strikethrough, source []byte) *ADFNode {
+	nodes := convertStrikethroughMulti(n, source)
+	if len(nodes) == 1 {
+		return &nodes[0]
 	}
+	if len(nodes) > 1 {
+		var text string
+		var marks []ADFMark
+		for _, node := range nodes {
+			text += node.Text
+			if len(marks) == 0 {
+				marks = node.Marks
+			}
+		}
+		return &ADFNode{Type: NodeTypeText, Text: text, Marks: marks}
+	}
+	return nil
 }
 
 func convertLink(n *ast.Link, source []byte) *ADFNode {

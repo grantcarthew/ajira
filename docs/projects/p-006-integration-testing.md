@@ -73,13 +73,13 @@ Phase 2: Issue Listing and Viewing
 
 Phase 3: Issue Creation
 
-- [ ] `ajira issue create -s "Summary"` creates issue, returns key
-- [ ] `ajira issue create -s "Summary" -b "Description"` includes body
+- [x] `ajira issue create -s "Summary"` creates issue, returns URL
+- [x] `ajira issue create -s "Summary" -b "Description"` includes body
 - [ ] `ajira issue create -s "Summary" -t Bug` sets issue type
-- [ ] `ajira issue create -s "Summary" --priority High` sets priority
+- [ ] `ajira issue create -s "Summary" --priority Major` sets priority
 - [ ] `ajira issue create -s "Summary" --labels a,b` sets labels
-- [ ] Created issue description displays correctly in Jira UI
-- [ ] Markdown formatting (bold, italic, lists, code) renders in Jira
+- [x] Created issue description displays correctly in Jira UI
+- [x] Markdown formatting (bold, italic, lists, code) renders in Jira
 
 Phase 4: Issue Editing
 
@@ -182,3 +182,22 @@ Test issues created during this project should be deleted after testing is compl
 7. **Changed default comment count to 0** - Issue view now hides comments by default for cleaner output. Use `-c N` to show N recent comments.
 
 8. **Output clickable URLs** - Commands that modify issues (create, edit, assign, move, comment add) now output the issue URL instead of just the key. Added `IssueURL()` helper function. Delete still outputs `KEY deleted` since the URL won't work after deletion.
+
+9. **Added field metadata commands** - Implemented `ajira issue priority`, `ajira issue type`, and `ajira issue status` for discovering valid field values. See DR-008.
+
+### Phase 3
+
+1. **ADF code mark compatibility** - Per ADF spec, the `code` mark can ONLY combine with `link` mark. Combinations like `**`code`**` (bold+code) are invalid. Fixed converter to skip incompatible marks when a node has a `code` mark. Added tests for this behavior.
+
+2. **ADF taskItem structure** - Per ADF spec, `taskItem` content must be inline nodes directly, not wrapped in paragraphs. Fixed `convertTaskItem()` to output inline nodes correctly. Task lists now work in Jira.
+
+3. **ADF nested blockquotes not supported** - Per ADF spec, blockquote content can only contain paragraphs, lists, code blocks, and media - NOT other blockquotes. Nested blockquotes like `> > text` are invalid ADF. Documented limitation in testdata file.
+
+4. **Round-trip conversion improvements** - Fixed multiple escaping issues in ADF→MD conversion:
+   - Removed over-escaping of pipes and backslashes
+   - Fixed underscore escaping to only escape at word boundaries
+   - Added merging of adjacent text nodes to prevent goldmark's underscore splitting from causing over-escaping
+   - Fixed detection of already-escaped characters to prevent double-escaping
+   - Round-trip now preserves content accurately with only cosmetic differences (indentation style, table separators)
+   - Created `testdata/comprehensive-markdown.md` for testing all Markdown features
+   - Updated DR-007 with full ADF specification constraints and escaping strategy

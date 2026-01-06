@@ -33,11 +33,11 @@ func renderNodes(nodes []ADFNode, depth int) string {
 		if rendered != "" {
 			parts = append(parts, rendered)
 		}
-		// Add blank line between block elements (except list items)
+		// Add blank line between block elements
 		if i < len(nodes)-1 && isBlockElement(node) && isBlockElement(nodes[i+1]) {
-			if !isListItem(node) && !isListItem(nodes[i+1]) {
-				parts = append(parts, "")
-			}
+			// Always add blank line between different block types
+			// This includes: heading->list, list->heading, paragraph->list, etc.
+			parts = append(parts, "")
 		}
 	}
 	return strings.Join(parts, "\n")
@@ -283,11 +283,56 @@ func renderTable(node ADFNode) string {
 
 // renderInlineContent renders inline content nodes to Markdown.
 func renderInlineContent(nodes []ADFNode) string {
+	// Merge adjacent text nodes with identical marks before rendering
+	// This prevents over-escaping of underscores split across nodes by goldmark
+	merged := mergeAdjacentTextNodes(nodes)
+
 	var parts []string
-	for _, node := range nodes {
+	for _, node := range merged {
 		parts = append(parts, renderInlineNode(node))
 	}
 	return strings.Join(parts, "")
+}
+
+// mergeAdjacentTextNodes merges consecutive text nodes that have identical marks.
+func mergeAdjacentTextNodes(nodes []ADFNode) []ADFNode {
+	if len(nodes) == 0 {
+		return nodes
+	}
+
+	var result []ADFNode
+	for _, node := range nodes {
+		if node.Type != NodeTypeText {
+			result = append(result, node)
+			continue
+		}
+
+		// Check if we can merge with the previous node
+		if len(result) > 0 {
+			prev := &result[len(result)-1]
+			if prev.Type == NodeTypeText && marksEqual(prev.Marks, node.Marks) {
+				// Merge: append text to previous node
+				prev.Text += node.Text
+				continue
+			}
+		}
+
+		result = append(result, node)
+	}
+	return result
+}
+
+// marksEqual returns true if two mark slices are equivalent.
+func marksEqual(a, b []ADFMark) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i].Type != b[i].Type {
+			return false
+		}
+	}
+	return true
 }
 
 // renderInlineNode renders a single inline node to Markdown.
@@ -340,17 +385,54 @@ func applyMark(text string, mark ADFMark) string {
 }
 
 // escapeMarkdown escapes special Markdown characters in text.
-// Only escapes characters that would cause unintended formatting.
+// Uses minimal escaping to avoid over-escaping content that roundtrips through ADF.
 func escapeMarkdown(text string) string {
-	// Only escape characters that could cause formatting issues in inline text
-	// Don't escape: !, ., +, -, # (only special at line start)
-	// Don't escape: (, ) (only special after ])
-	specials := []string{"\\", "`", "*", "_", "[", "]", "|"}
+	// Minimal set of characters that need escaping in inline text:
+	// - ` (backticks) - would create inline code
+	// - * (asterisks) - would create bold/italic
+	// - [ (open bracket) - would start a link
+	//
+	// Characters we intentionally DON'T escape:
+	// - \ (backslash) - escaping this causes double-escaping on roundtrip
+	// - | (pipe) - only meaningful in tables, handled separately
+	// - _ (underscore) - only triggers emphasis at word boundaries
+	// - ] (close bracket) - only meaningful after [
+	// - #, +, -, !, . - only special at line start
+	runes := []rune(text)
+	var result strings.Builder
+	for i, r := range runes {
+		// Check if previous character was a backslash - if so, this char is already escaped
+		alreadyEscaped := i > 0 && runes[i-1] == '\\'
 
-	result := text
-	for _, char := range specials {
-		result = strings.ReplaceAll(result, char, "\\"+char)
+		switch r {
+		case '`', '*', '[':
+			if !alreadyEscaped {
+				result.WriteRune('\\')
+			}
+			result.WriteRune(r)
+		case '_':
+			// Only escape underscore if it could trigger emphasis
+			// Underscores only trigger emphasis at word boundaries
+			// Don't escape if: surrounded by word chars OR part of identifier-like text (with underscores)
+			prevIsWord := i > 0 && (isWordChar(runes[i-1]) || runes[i-1] == '_')
+			nextIsWord := i < len(runes)-1 && (isWordChar(runes[i+1]) || runes[i+1] == '_')
+			// If underscore is between word-like characters, don't escape
+			if prevIsWord && nextIsWord {
+				result.WriteRune(r)
+			} else if !alreadyEscaped {
+				result.WriteRune('\\')
+				result.WriteRune(r)
+			} else {
+				result.WriteRune(r)
+			}
+		default:
+			result.WriteRune(r)
+		}
 	}
+	return result.String()
+}
 
-	return result
+// isWordChar returns true if r is a letter or digit (word character).
+func isWordChar(r rune) bool {
+	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9')
 }
