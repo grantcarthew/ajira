@@ -59,17 +59,17 @@ Phase 1: Setup and Authentication
 Phase 2: Issue Listing and Viewing
 
 - [x] `ajira issue list` returns issues from default project
-- [ ] `ajira issue list -q "JQL"` filters correctly
-- [ ] `ajira issue list -s "Status"` filters by status
-- [ ] `ajira issue list -t "Type"` filters by type
-- [ ] `ajira issue list -a "user"` filters by assignee
-- [ ] `ajira issue list -a unassigned` shows unassigned issues
-- [ ] `ajira issue list -l 5` limits results
-- [ ] `ajira issue list --json` outputs valid JSON
-- [ ] `ajira issue view ISSUE-KEY` displays issue details
-- [ ] `ajira issue view ISSUE-KEY --json` outputs valid JSON
-- [ ] `ajira issue view ISSUE-KEY -c 0` hides comments
-- [ ] `ajira issue view ISSUE-KEY -c 10` shows more comments
+- [x] `ajira issue list -q "JQL"` filters correctly
+- [x] `ajira issue list -s "Status"` filters by status
+- [x] `ajira issue list -t "Type"` filters by type
+- [x] `ajira issue list -a "user"` filters by assignee
+- [x] `ajira issue list -a unassigned` shows unassigned issues
+- [x] `ajira issue list -l 5` limits results
+- [x] `ajira issue list --json` outputs valid JSON
+- [x] `ajira issue view ISSUE-KEY` displays issue details
+- [x] `ajira issue view ISSUE-KEY --json` outputs valid JSON
+- [x] `ajira issue view ISSUE-KEY -c 0` hides comments
+- [x] `ajira issue view ISSUE-KEY -c 10` shows more comments
 
 Phase 3: Issue Creation
 
@@ -174,3 +174,9 @@ Test issues created during this project should be deleted after testing is compl
 3. **Status coloring by category** - Uses Jira's `statusCategory.key` for automatic coloring: `done` (green), `indeterminate` (blue), `new` (faint). Override for "Blocked", "On Hold" → yellow.
 
 4. **Column alignment with colors** - Replaced tabwriter with manual padding to fix alignment issues caused by ANSI escape codes.
+
+5. **Added "me" alias for assignee filter** - Added support for `-a me` which uses Jira's `currentUser()` function. Case insensitive. When `-q` (raw JQL) is provided, other filters including `-a me` are silently ignored (expected behaviour).
+
+6. **Added glamour markdown rendering** - Integrated `github.com/charmbracelet/glamour` for terminal-styled markdown output. Description and comments now render with syntax highlighting, styled headers, and proper formatting. Auto-detects terminal width and dark/light theme. Falls back to plain text when piped.
+
+7. **Changed default comment count to 0** - Issue view now hides comments by default for cleaner output. Use `-c N` to show N recent comments.

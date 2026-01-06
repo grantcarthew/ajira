@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/charmbracelet/glamour"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var (
@@ -56,4 +58,39 @@ func Errorf(format string, args ...interface{}) error {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Fprintln(os.Stderr, "ajira:", msg)
 	return fmt.Errorf("%s", msg)
+}
+
+// RenderMarkdown renders markdown with terminal styling.
+// Falls back to plain text if rendering fails or output is not a TTY.
+func RenderMarkdown(markdown string) string {
+	if markdown == "" {
+		return ""
+	}
+
+	// Check if stdout is a terminal
+	if !term.IsTerminal(int(os.Stdout.Fd())) {
+		return markdown
+	}
+
+	// Get terminal width
+	width, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil || width <= 0 {
+		width = 80
+	}
+
+	// Create renderer with auto style and terminal width
+	r, err := glamour.NewTermRenderer(
+		glamour.WithAutoStyle(),
+		glamour.WithWordWrap(width),
+	)
+	if err != nil {
+		return markdown
+	}
+
+	out, err := r.Render(markdown)
+	if err != nil {
+		return markdown
+	}
+
+	return out
 }

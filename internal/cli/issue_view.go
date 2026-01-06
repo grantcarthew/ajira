@@ -92,7 +92,7 @@ var issueViewCmd = &cobra.Command{
 }
 
 func init() {
-	issueViewCmd.Flags().IntVarP(&viewCommentCount, "comments", "c", 5, "Number of recent comments to show (0 to hide)")
+	issueViewCmd.Flags().IntVarP(&viewCommentCount, "comments", "c", 0, "Number of recent comments to show")
 
 	issueCmd.AddCommand(issueViewCmd)
 }
@@ -217,7 +217,7 @@ func printIssueDetail(issue *IssueDetail) {
 	if issue.Description != "" {
 		fmt.Println()
 		fmt.Println("Description:")
-		fmt.Println(issue.Description)
+		fmt.Print(RenderMarkdown(issue.Description))
 	}
 
 	if len(issue.Comments) > 0 {
@@ -227,7 +227,7 @@ func printIssueDetail(issue *IssueDetail) {
 		for _, c := range issue.Comments {
 			fmt.Println()
 			fmt.Printf("[%s] %s:\n", formatDateTime(c.Created), c.Author)
-			fmt.Println(c.Body)
+			fmt.Print(RenderMarkdown(c.Body))
 		}
 	}
 }

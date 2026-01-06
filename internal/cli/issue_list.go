@@ -88,7 +88,7 @@ func init() {
 	issueListCmd.Flags().StringVarP(&issueListQuery, "query", "q", "", "JQL query (overrides other filters)")
 	issueListCmd.Flags().StringVarP(&issueListStatus, "status", "s", "", "Filter by status")
 	issueListCmd.Flags().StringVarP(&issueListType, "type", "t", "", "Filter by issue type")
-	issueListCmd.Flags().StringVarP(&issueListAssignee, "assignee", "a", "", "Filter by assignee (email, accountId, or 'unassigned')")
+	issueListCmd.Flags().StringVarP(&issueListAssignee, "assignee", "a", "", "Filter by assignee (email, accountId, 'me', or 'unassigned')")
 	issueListCmd.Flags().IntVarP(&issueListLimit, "limit", "l", 50, "Maximum issues to return")
 
 	issueCmd.AddCommand(issueListCmd)
@@ -214,9 +214,12 @@ func buildJQL() string {
 		conditions = append(conditions, fmt.Sprintf("issuetype = \"%s\"", issueListType))
 	}
 	if issueListAssignee != "" {
-		if strings.ToLower(issueListAssignee) == "unassigned" {
+		switch strings.ToLower(issueListAssignee) {
+		case "unassigned":
 			conditions = append(conditions, "assignee IS EMPTY")
-		} else {
+		case "me":
+			conditions = append(conditions, "assignee = currentUser()")
+		default:
 			conditions = append(conditions, fmt.Sprintf("assignee = \"%s\"", issueListAssignee))
 		}
 	}

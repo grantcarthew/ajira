@@ -102,6 +102,94 @@ func TestBuildJQL_Unassigned(t *testing.T) {
 	}
 }
 
+func TestBuildJQL_AssigneeMe(t *testing.T) {
+	issueListQuery = ""
+	issueListStatus = ""
+	issueListType = ""
+	issueListAssignee = "me"
+	project = ""
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "assignee = currentUser()") {
+		t.Errorf("expected JQL to contain 'assignee = currentUser()', got %q", jql)
+	}
+}
+
+func TestBuildJQL_AssigneeMeCaseInsensitive(t *testing.T) {
+	testCases := []string{"ME", "Me", "mE", "me"}
+
+	for _, tc := range testCases {
+		issueListQuery = ""
+		issueListStatus = ""
+		issueListType = ""
+		issueListAssignee = tc
+		project = ""
+
+		jql := buildJQL()
+		if !strings.Contains(jql, "assignee = currentUser()") {
+			t.Errorf("assignee=%q: expected JQL to contain 'assignee = currentUser()', got %q", tc, jql)
+		}
+	}
+}
+
+func TestBuildJQL_UnassignedCaseInsensitive(t *testing.T) {
+	testCases := []string{"UNASSIGNED", "Unassigned", "UnAssigned", "unassigned"}
+
+	for _, tc := range testCases {
+		issueListQuery = ""
+		issueListStatus = ""
+		issueListType = ""
+		issueListAssignee = tc
+		project = ""
+
+		jql := buildJQL()
+		if !strings.Contains(jql, "assignee IS EMPTY") {
+			t.Errorf("assignee=%q: expected JQL to contain 'assignee IS EMPTY', got %q", tc, jql)
+		}
+	}
+}
+
+func TestBuildJQL_AssigneeMeWithOtherFilters(t *testing.T) {
+	issueListQuery = ""
+	issueListStatus = "In Progress"
+	issueListType = "Bug"
+	issueListAssignee = "me"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "project = TEST") {
+		t.Errorf("expected JQL to contain 'project = TEST', got %q", jql)
+	}
+	if !strings.Contains(jql, `status = "In Progress"`) {
+		t.Errorf("expected JQL to contain status filter, got %q", jql)
+	}
+	if !strings.Contains(jql, `issuetype = "Bug"`) {
+		t.Errorf("expected JQL to contain type filter, got %q", jql)
+	}
+	if !strings.Contains(jql, "assignee = currentUser()") {
+		t.Errorf("expected JQL to contain 'assignee = currentUser()', got %q", jql)
+	}
+	if !strings.Contains(jql, " AND ") {
+		t.Errorf("expected AND in JQL, got %q", jql)
+	}
+}
+
+func TestBuildJQL_RawQueryOverridesAssigneeMe(t *testing.T) {
+	issueListQuery = "project = CUSTOM ORDER BY created"
+	issueListStatus = ""
+	issueListType = ""
+	issueListAssignee = "me"
+	project = ""
+
+	jql := buildJQL()
+	if jql != "project = CUSTOM ORDER BY created" {
+		t.Errorf("expected raw query to override 'me' filter, got %q", jql)
+	}
+	if strings.Contains(jql, "currentUser()") {
+		t.Errorf("raw query should not contain currentUser(), got %q", jql)
+	}
+}
+
 func TestBuildJQL_RawQueryOverrides(t *testing.T) {
 	issueListQuery = "project = CUSTOM ORDER BY created"
 	issueListStatus = "Done"
