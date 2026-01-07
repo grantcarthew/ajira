@@ -15,7 +15,7 @@ context/docs/*
 !context/docs/README.md
 
 # Go Binary Output
-ajira
+/ajira
 *.exe
 *.exe~
 *.dll
