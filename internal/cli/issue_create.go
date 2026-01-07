@@ -10,6 +10,7 @@ import (
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
 	"github.com/gcarthew/ajira/internal/converter"
+	"github.com/gcarthew/ajira/internal/jira"
 	"github.com/spf13/cobra"
 )
 
@@ -93,6 +94,14 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 	}
 
 	client := api.NewClient(cfg)
+
+	// Validate issue type and priority before making the create request
+	if err := jira.ValidateIssueType(client, projectKey, createType); err != nil {
+		return Errorf("%v", err)
+	}
+	if err := jira.ValidatePriority(client, createPriority); err != nil {
+		return Errorf("%v", err)
+	}
 
 	// Get description from body, file, or stdin
 	description, err := getDescription()

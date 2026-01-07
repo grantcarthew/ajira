@@ -74,61 +74,62 @@ Phase 2: Issue Listing and Viewing
 Phase 3: Issue Creation
 
 - [x] `ajira issue create -s "Summary"` creates issue, returns URL
-- [x] `ajira issue create -s "Summary" -b "Description"` includes body
-- [ ] `ajira issue create -s "Summary" -t Bug` sets issue type
-- [ ] `ajira issue create -s "Summary" --priority Major` sets priority
-- [ ] `ajira issue create -s "Summary" --labels a,b` sets labels
+- [x] `ajira issue create -s "Summary" -d "Description"` includes description
+- [x] `ajira issue create -s "Summary" -t Bug` sets issue type
+- [x] `ajira issue create -s "Summary" --priority Major` sets priority
+- [x] `ajira issue create -s "Summary" --labels a,b` sets labels
 - [x] Created issue description displays correctly in Jira UI
 - [x] Markdown formatting (bold, italic, lists, code) renders in Jira
 
 Phase 4: Issue Editing
 
-- [ ] `ajira issue edit ISSUE-KEY -s "New Summary"` updates summary
-- [ ] `ajira issue edit ISSUE-KEY -b "New Description"` updates description
-- [ ] `ajira issue edit ISSUE-KEY -t Task` changes type
-- [ ] `ajira issue edit ISSUE-KEY --priority Low` changes priority
-- [ ] `ajira issue edit ISSUE-KEY --labels x,y` replaces labels
-- [ ] Edited description renders correctly in Jira UI
+- [x] `ajira issue edit ISSUE-KEY -s "New Summary"` updates summary
+- [x] `ajira issue edit ISSUE-KEY -d "New Description"` updates description
+- [x] `ajira issue edit ISSUE-KEY -t Task` changes type
+- [x] `ajira issue edit ISSUE-KEY --priority Low` changes priority
+- [x] `ajira issue edit ISSUE-KEY --labels x,y` replaces labels
+- [x] Edited description renders correctly in Jira UI
 
 Phase 5: Issue Assignment
 
-- [ ] `ajira issue assign ISSUE-KEY user@email` assigns by email
-- [ ] `ajira issue assign ISSUE-KEY unassigned` removes assignee
-- [ ] Assignment reflected in Jira UI
+- [x] `ajira issue assign ISSUE-KEY user@email` assigns by email
+- [x] `ajira issue assign ISSUE-KEY me` assigns to current user
+- [x] `ajira issue assign ISSUE-KEY unassigned` removes assignee
+- [x] Assignment reflected in Jira UI
 
 Phase 6: Issue Transitions
 
-- [ ] `ajira issue move ISSUE-KEY` lists available transitions
-- [ ] `ajira issue move ISSUE-KEY "Status"` transitions issue
-- [ ] Status change reflected in Jira UI
+- [x] `ajira issue move ISSUE-KEY` lists available transitions
+- [x] `ajira issue move ISSUE-KEY "Status"` transitions issue
+- [x] Status change reflected in Jira UI
 
 Phase 7: Comments
 
-- [ ] `ajira issue comment add ISSUE-KEY "text"` adds comment
-- [ ] `ajira issue comment add ISSUE-KEY -b "text"` adds via flag
-- [ ] Comment appears in Jira UI with correct formatting
-- [ ] `ajira issue view ISSUE-KEY` displays comments
-- [ ] Comment Markdown renders correctly
+- [x] `ajira issue comment add ISSUE-KEY "text"` adds comment
+- [x] `ajira issue comment add ISSUE-KEY -b "text"` adds via flag
+- [x] Comment appears in Jira UI with correct formatting
+- [x] `ajira issue view ISSUE-KEY` displays comments
+- [x] Comment Markdown renders correctly
 
 Phase 8: Issue Deletion
 
-- [ ] `ajira issue delete ISSUE-KEY` deletes issue
-- [ ] Issue no longer accessible in Jira
+- [x] `ajira issue delete ISSUE-KEY` deletes issue
+- [x] Issue no longer accessible in Jira
 
 Phase 9: Error Handling
 
-- [ ] Invalid credentials show clear error
-- [ ] Non-existent issue shows "not found" error
-- [ ] Invalid JQL shows clear error
-- [ ] Missing required fields show clear error
-- [ ] Permission denied shows clear error
+- [x] Invalid credentials show clear error
+- [x] Non-existent issue shows "not found" error
+- [x] Invalid JQL shows clear error
+- [x] Missing required fields show clear error (custom validation)
+- [ ] Permission denied shows clear error (not tested - requires special setup)
 
 Phase 10: Edge Cases
 
-- [ ] Long issue summaries handled correctly
-- [ ] Special characters in text handled correctly
-- [ ] Empty description handled correctly
-- [ ] Complex Markdown (tables, code blocks, nested lists) converts correctly
+- [x] Long issue summaries handled correctly
+- [x] Special characters in text handled correctly
+- [x] Empty description handled correctly
+- [x] Complex Markdown (tables, code blocks, nested lists) converts correctly
 
 ## Deliverables
 
@@ -201,3 +202,11 @@ Test issues created during this project should be deleted after testing is compl
    - Round-trip now preserves content accurately with only cosmetic differences (indentation style, table separators)
    - Created `testdata/comprehensive-markdown.md` for testing all Markdown features
    - Updated DR-007 with full ADF specification constraints and escaping strategy
+
+5. **Renamed --body to --description for issues** - Changed `-b/--body` to `-d/--description` for `issue create` and `issue edit` commands to match Jira's field naming. Comments retain `-b/--body` since Jira's comment API uses "body".
+
+6. **Proactive field validation** - Added pre-flight validation for `--priority` and `-t/--type` flags. Before making create/edit API calls, ajira fetches valid options and validates locally. Invalid values show clear error with list of valid options (e.g., `invalid priority "High", valid options: Critical, Major, ...`).
+
+7. **Created internal/jira package** - Refactored Jira domain logic (metadata fetching, validation) from `internal/cli` to `internal/jira` for cleaner architecture. CLI package now only contains command definitions.
+
+8. **Added "me" alias for assign command** - `ajira issue assign ISSUE-KEY me` assigns to current user using email from config.

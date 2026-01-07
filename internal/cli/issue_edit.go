@@ -10,6 +10,7 @@ import (
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
 	"github.com/gcarthew/ajira/internal/converter"
+	"github.com/gcarthew/ajira/internal/jira"
 	"github.com/spf13/cobra"
 )
 
@@ -65,6 +66,17 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 	}
 
 	client := api.NewClient(cfg)
+
+	// Extract project key from issue key for validation
+	projectKey := extractProjectKey(issueKey)
+
+	// Validate issue type and priority before making the update request
+	if err := jira.ValidateIssueType(client, projectKey, editType); err != nil {
+		return Errorf("%v", err)
+	}
+	if err := jira.ValidatePriority(client, editPriority); err != nil {
+		return Errorf("%v", err)
+	}
 
 	// Build fields to update
 	fields := make(map[string]any)

@@ -29,7 +29,7 @@ type userSearchResult struct {
 var issueAssignCmd = &cobra.Command{
 	Use:           "assign <issue-key> <user>",
 	Short:         "Assign an issue to a user",
-	Long:          "Assign a Jira issue to a user. Use 'unassigned' to remove the assignee.",
+	Long:          "Assign a Jira issue to a user. Use 'me' for yourself, or 'unassigned' to remove the assignee.",
 	Args:          cobra.ExactArgs(2),
 	SilenceUsage:  true,
 	SilenceErrors: true,
@@ -53,9 +53,16 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 
 	var accountID *string
 
-	if strings.ToLower(userArg) == "unassigned" {
+	if strings.EqualFold(userArg, "unassigned") {
 		// null accountId removes assignee
 		accountID = nil
+	} else if strings.EqualFold(userArg, "me") {
+		// Use current user's email from config
+		resolved, err := resolveUser(client, cfg.Email)
+		if err != nil {
+			return Errorf("failed to resolve current user: %v", err)
+		}
+		accountID = &resolved
 	} else {
 		// Resolve user to accountId
 		resolved, err := resolveUser(client, userArg)

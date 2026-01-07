@@ -1,28 +1,16 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/fatih/color"
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
+	"github.com/gcarthew/ajira/internal/jira"
 	"github.com/spf13/cobra"
 )
 
-// PriorityInfo represents a Jira priority for output.
-type PriorityInfo struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type priorityResponse struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
 
 var issuePriorityCmd = &cobra.Command{
 	Use:           "priority",
@@ -45,7 +33,7 @@ func runIssuePriority(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	priorities, err := getPriorities(client)
+	priorities, err := jira.GetPriorities(client)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			if apiErr.StatusCode == 401 {
@@ -69,30 +57,7 @@ func runIssuePriority(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getPriorities(client *api.Client) ([]PriorityInfo, error) {
-	body, err := client.Get(context.Background(), "/priority")
-	if err != nil {
-		return nil, err
-	}
-
-	var resp []priorityResponse
-	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	var priorities []PriorityInfo
-	for _, p := range resp {
-		priorities = append(priorities, PriorityInfo{
-			ID:          p.ID,
-			Name:        p.Name,
-			Description: p.Description,
-		})
-	}
-
-	return priorities, nil
-}
-
-func printPriorities(priorities []PriorityInfo) {
+func printPriorities(priorities []jira.Priority) {
 	bold := color.New(color.Bold).SprintFunc()
 	header := color.New(color.FgCyan, color.Bold).SprintFunc()
 

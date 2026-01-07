@@ -1,39 +1,15 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/fatih/color"
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
+	"github.com/gcarthew/ajira/internal/jira"
 	"github.com/spf13/cobra"
 )
-
-// StatusInfo represents a Jira status for output.
-type StatusInfo struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Category string `json:"category"`
-}
-
-type statusResponse struct {
-	ID             string              `json:"id"`
-	Name           string              `json:"name"`
-	StatusCategory statusCategoryField `json:"statusCategory"`
-}
-
-type statusCategoryField struct {
-	Key  string `json:"key"`
-	Name string `json:"name"`
-}
-
-type projectStatusesResponse struct {
-	ID       string           `json:"id"`
-	Name     string           `json:"name"`
-	Statuses []statusResponse `json:"statuses"`
-}
 
 var issueStatusCmd = &cobra.Command{
 	Use:           "status",
@@ -61,7 +37,7 @@ func runIssueStatus(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	statuses, err := getStatuses(client, projectKey)
+	statuses, err := jira.GetStatuses(client, projectKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			if apiErr.StatusCode == 401 {
@@ -88,40 +64,7 @@ func runIssueStatus(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getStatuses(client *api.Client, projectKey string) ([]StatusInfo, error) {
-	path := fmt.Sprintf("/project/%s/statuses", projectKey)
-
-	body, err := client.Get(context.Background(), path)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp []projectStatusesResponse
-	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	// Deduplicate statuses across issue types
-	seen := make(map[string]bool)
-	var statuses []StatusInfo
-	for _, issueType := range resp {
-		for _, s := range issueType.Statuses {
-			if seen[s.ID] {
-				continue
-			}
-			seen[s.ID] = true
-			statuses = append(statuses, StatusInfo{
-				ID:       s.ID,
-				Name:     s.Name,
-				Category: s.StatusCategory.Name,
-			})
-		}
-	}
-
-	return statuses, nil
-}
-
-func printStatuses(statuses []StatusInfo) {
+func printStatuses(statuses []jira.Status) {
 	bold := color.New(color.Bold).SprintFunc()
 	header := color.New(color.FgCyan, color.Bold).SprintFunc()
 
