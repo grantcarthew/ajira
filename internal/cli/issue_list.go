@@ -114,9 +114,6 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 	issues, err := searchIssues(client, jql, issueListLimit)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			if apiErr.StatusCode == 401 {
-				return Errorf("authentication failed (401)")
-			}
 			return Errorf("API error - %v", apiErr)
 		}
 		return Errorf("failed to search issues: %v", err)

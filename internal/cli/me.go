@@ -42,9 +42,6 @@ func runMe(cmd *cobra.Command, args []string) error {
 	body, err := client.Get(context.Background(), "/myself")
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			if apiErr.StatusCode == 401 {
-				return Errorf("authentication failed (401)")
-			}
 			return Errorf("API error - %v", apiErr)
 		}
 		return Errorf("failed to connect to Jira API: %v", err)

@@ -80,12 +80,6 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 	err = assignIssue(client, issueKey, accountID)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			if apiErr.StatusCode == 401 {
-				return Errorf("authentication failed (401)")
-			}
-			if apiErr.StatusCode == 404 {
-				return Errorf("issue not found: %s", issueKey)
-			}
 			return Errorf("API error - %v", apiErr)
 		}
 		return Errorf("failed to assign issue: %v", err)

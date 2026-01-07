@@ -36,15 +36,6 @@ func runIssueDelete(cmd *cobra.Command, args []string) error {
 	err = deleteIssue(client, issueKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			if apiErr.StatusCode == 401 {
-				return Errorf("authentication failed (401)")
-			}
-			if apiErr.StatusCode == 404 {
-				return Errorf("issue not found: %s", issueKey)
-			}
-			if apiErr.StatusCode == 403 {
-				return Errorf("permission denied: cannot delete %s", issueKey)
-			}
 			return Errorf("API error - %v", apiErr)
 		}
 		return Errorf("failed to delete issue: %v", err)

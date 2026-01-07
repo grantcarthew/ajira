@@ -111,9 +111,6 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 	result, err := createIssue(client, projectKey, createSummary, description, createType, createPriority, createLabels)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			if apiErr.StatusCode == 401 {
-				return Errorf("authentication failed (401)")
-			}
 			return Errorf("API error - %v", apiErr)
 		}
 		return Errorf("failed to create issue: %v", err)

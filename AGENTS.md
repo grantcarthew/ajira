@@ -12,9 +12,9 @@ Under active development.
 
 Projects are stored in the docs/projects/ directory. Update this when starting a new project.
 
-Active Project: P-006 Integration Testing
+Active Project: None
 
-Completed: P-005 Comment Functionality (2026-01-05)
+Completed: P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
 
 ## Quick Reference
 

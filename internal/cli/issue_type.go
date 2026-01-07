@@ -40,12 +40,6 @@ func runIssueType(cmd *cobra.Command, args []string) error {
 	types, err := jira.GetIssueTypes(client, projectKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			if apiErr.StatusCode == 401 {
-				return Errorf("authentication failed (401)")
-			}
-			if apiErr.StatusCode == 404 {
-				return Errorf("project not found: %s", projectKey)
-			}
 			return Errorf("API error - %v", apiErr)
 		}
 		return Errorf("failed to fetch issue types: %v", err)
