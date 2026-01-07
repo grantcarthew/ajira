@@ -48,6 +48,16 @@ Run validation checks:
 git checkout main
 git pull origin main
 
+# Check formatting (should produce no output)
+gofmt -l .
+
+# Run linters
+go vet ./...
+ineffassign ./...
+
+# Check cyclomatic complexity (functions over 15)
+gocyclo -over 15 .
+
 # Verify all tests pass
 go test -v ./...
 
@@ -63,11 +73,22 @@ git status
 
 **Expected results**:
 
+- `gofmt -l .` produces no output (all files formatted)
+- `go vet ./...` reports no issues
+- `ineffassign ./...` reports no issues
+- `gocyclo -over 15 .` reports no functions (or acceptable exceptions)
 - All tests pass
 - Build completes without errors
 - `ajira --version` shows current version
 - `ajira me` returns current user info
 - `git status` shows clean working tree
+
+**Linter installation** (if not already installed):
+
+```bash
+go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+go install github.com/gordonklaus/ineffassign@latest
+```
 
 **If any validation fails, stop and fix issues before proceeding.**
 

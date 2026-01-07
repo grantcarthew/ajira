@@ -2987,7 +2987,7 @@ func TestADFToMarkdown_LayoutNodeSkipped(t *testing.T) {
 				Type: "layoutSection",
 				Content: []ADFNode{
 					{
-						Type: "layoutColumn",
+						Type:  "layoutColumn",
 						Attrs: map[string]any{"width": 50},
 						Content: []ADFNode{
 							{Type: NodeTypeParagraph, Content: []ADFNode{{Type: NodeTypeText, Text: "Column 1"}}},

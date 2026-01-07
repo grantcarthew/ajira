@@ -11,15 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
 var issueTypeCmd = &cobra.Command{
-	Use:           "type",
-	Short:         "List available issue types",
-	Long:          "List issue types available for the current project.",
+	Use:   "type",
+	Short: "List available issue types",
+	Long:  "List issue types available for the current project.",
 	Example: `  ajira issue type           # List types for default project
   ajira issue type -p PROJ   # List types for specific project`,
-	SilenceUsage:  true,
-	RunE:          runIssueType,
+	SilenceUsage: true,
+	RunE:         runIssueType,
 }
 
 func init() {

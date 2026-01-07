@@ -11,15 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
 var issuePriorityCmd = &cobra.Command{
-	Use:           "priority",
-	Short:         "List available priorities",
-	Long:          "List all priorities available in the Jira instance.",
+	Use:   "priority",
+	Short: "List available priorities",
+	Long:  "List all priorities available in the Jira instance.",
 	Example: `  ajira issue priority         # List all priorities
   ajira issue priority --json  # JSON output`,
-	SilenceUsage:  true,
-	RunE:          runIssuePriority,
+	SilenceUsage: true,
+	RunE:         runIssuePriority,
 }
 
 func init() {

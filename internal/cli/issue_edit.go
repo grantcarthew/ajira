@@ -29,15 +29,15 @@ var (
 )
 
 var issueEditCmd = &cobra.Command{
-	Use:           "edit <issue-key>",
-	Short:         "Edit an existing issue",
-	Long:          "Update fields of an existing Jira issue.",
+	Use:   "edit <issue-key>",
+	Short: "Edit an existing issue",
+	Long:  "Update fields of an existing Jira issue.",
 	Example: `  ajira issue edit PROJ-123 -s "New summary"       # Update summary
   ajira issue edit PROJ-123 -d "New description"   # Update description
   ajira issue edit PROJ-123 -t Bug --priority High # Change type and priority`,
-	Args:          cobra.ExactArgs(1),
-	SilenceUsage:  true,
-	RunE:          runIssueEdit,
+	Args:         cobra.ExactArgs(1),
+	SilenceUsage: true,
+	RunE:         runIssueEdit,
 }
 
 func init() {

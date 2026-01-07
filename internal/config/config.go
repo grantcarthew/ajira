@@ -13,10 +13,10 @@ const (
 )
 
 type Config struct {
-	BaseURL    string
-	Email      string
-	APIToken   string
-	Project    string
+	BaseURL     string
+	Email       string
+	APIToken    string
+	Project     string
 	HTTPTimeout time.Duration
 }
 

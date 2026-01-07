@@ -11,11 +11,11 @@ type ADF struct {
 
 // ADFNode represents a node in the ADF document tree.
 type ADFNode struct {
-	Type    string            `json:"type"`
-	Attrs   map[string]any    `json:"attrs,omitempty"`
-	Content []ADFNode         `json:"content,omitempty"`
-	Marks   []ADFMark         `json:"marks,omitempty"`
-	Text    string            `json:"text,omitempty"`
+	Type    string         `json:"type"`
+	Attrs   map[string]any `json:"attrs,omitempty"`
+	Content []ADFNode      `json:"content,omitempty"`
+	Marks   []ADFMark      `json:"marks,omitempty"`
+	Text    string         `json:"text,omitempty"`
 }
 
 // ADFMark represents a text formatting mark in ADF.

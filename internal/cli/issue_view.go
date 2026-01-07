@@ -14,18 +14,18 @@ import (
 
 // IssueDetail represents a full Jira issue for output.
 type IssueDetail struct {
-	Key         string       `json:"key"`
-	Summary     string       `json:"summary"`
-	Status      string       `json:"status"`
-	Type        string       `json:"type"`
-	Priority    string       `json:"priority"`
-	Assignee    string       `json:"assignee"`
-	Reporter    string       `json:"reporter"`
-	Created     string       `json:"created"`
-	Updated     string       `json:"updated"`
-	Description string       `json:"description"`
-	Labels      []string     `json:"labels"`
-	Project     string       `json:"project"`
+	Key         string        `json:"key"`
+	Summary     string        `json:"summary"`
+	Status      string        `json:"status"`
+	Type        string        `json:"type"`
+	Priority    string        `json:"priority"`
+	Assignee    string        `json:"assignee"`
+	Reporter    string        `json:"reporter"`
+	Created     string        `json:"created"`
+	Updated     string        `json:"updated"`
+	Description string        `json:"description"`
+	Labels      []string      `json:"labels"`
+	Project     string        `json:"project"`
 	Comments    []CommentInfo `json:"comments,omitempty"`
 }
 
@@ -54,8 +54,8 @@ type commentValue struct {
 
 // issueDetailResponse matches the Jira issue API response.
 type issueDetailResponse struct {
-	Key    string             `json:"key"`
-	Fields issueDetailFields  `json:"fields"`
+	Key    string            `json:"key"`
+	Fields issueDetailFields `json:"fields"`
 }
 
 type issueDetailFields struct {
@@ -82,15 +82,15 @@ var (
 )
 
 var issueViewCmd = &cobra.Command{
-	Use:           "view <issue-key>",
-	Short:         "View issue details",
-	Long:          "Display detailed information about a Jira issue.",
+	Use:   "view <issue-key>",
+	Short: "View issue details",
+	Long:  "Display detailed information about a Jira issue.",
 	Example: `  ajira issue view PROJ-123           # View issue details
   ajira issue view PROJ-123 -c 5      # Include 5 recent comments
   ajira issue view PROJ-123 --json    # JSON output`,
-	Args:          cobra.ExactArgs(1),
-	SilenceUsage:  true,
-	RunE:          runIssueView,
+	Args:         cobra.ExactArgs(1),
+	SilenceUsage: true,
+	RunE:         runIssueView,
 }
 
 func init() {

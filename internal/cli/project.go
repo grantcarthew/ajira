@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"text/tabwriter"
 	"os"
+	"text/tabwriter"
 
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
@@ -14,10 +14,10 @@ import (
 
 // ProjectInfo represents a Jira project.
 type ProjectInfo struct {
-	ID   string `json:"id"`
-	Key  string `json:"key"`
-	Name string `json:"name"`
-	Lead string `json:"lead"`
+	ID    string `json:"id"`
+	Key   string `json:"key"`
+	Name  string `json:"name"`
+	Lead  string `json:"lead"`
 	Style string `json:"style"`
 }
 
@@ -55,14 +55,14 @@ var projectCmd = &cobra.Command{
 }
 
 var projectListCmd = &cobra.Command{
-	Use:           "list",
-	Short:         "List accessible projects",
-	Long:          "List all Jira projects accessible to the current user.",
+	Use:   "list",
+	Short: "List accessible projects",
+	Long:  "List all Jira projects accessible to the current user.",
 	Example: `  ajira project list              # List all projects
   ajira project list -q "web"     # Filter by name/key
   ajira project list -l 10        # Limit results`,
-	SilenceUsage:  true,
-	RunE:          runProjectList,
+	SilenceUsage: true,
+	RunE:         runProjectList,
 }
 
 func init() {

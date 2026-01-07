@@ -12,13 +12,13 @@ import (
 )
 
 var issueStatusCmd = &cobra.Command{
-	Use:           "status",
-	Short:         "List available statuses",
-	Long:          "List statuses available for the current project.",
+	Use:   "status",
+	Short: "List available statuses",
+	Long:  "List statuses available for the current project.",
 	Example: `  ajira issue status           # List statuses for default project
   ajira issue status -p PROJ   # List statuses for specific project`,
-	SilenceUsage:  true,
-	RunE:          runIssueStatus,
+	SilenceUsage: true,
+	RunE:         runIssueStatus,
 }
 
 func init() {
