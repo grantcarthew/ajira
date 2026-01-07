@@ -87,7 +87,6 @@ var issueViewCmd = &cobra.Command{
 	Long:          "Display detailed information about a Jira issue.",
 	Args:          cobra.ExactArgs(1),
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueView,
 }
 

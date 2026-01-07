@@ -16,7 +16,6 @@ var issueDeleteCmd = &cobra.Command{
 	Long:          "Permanently delete a Jira issue. This action cannot be undone.",
 	Args:          cobra.ExactArgs(1),
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueDelete,
 }
 

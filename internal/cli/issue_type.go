@@ -17,7 +17,6 @@ var issueTypeCmd = &cobra.Command{
 	Short:         "List available issue types",
 	Long:          "List issue types available for the current project.",
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueType,
 }
 

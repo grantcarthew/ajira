@@ -45,7 +45,6 @@ var issueCommentAddCmd = &cobra.Command{
 	Long:          "Add a comment to a Jira issue. Comment text can be provided as an argument, via --body, --file, or stdin.",
 	Args:          cobra.RangeArgs(1, 2),
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueCommentAdd,
 }
 

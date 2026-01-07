@@ -34,7 +34,6 @@ var issueEditCmd = &cobra.Command{
 	Long:          "Update fields of an existing Jira issue.",
 	Args:          cobra.ExactArgs(1),
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueEdit,
 }
 

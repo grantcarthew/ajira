@@ -61,7 +61,6 @@ var issueCreateCmd = &cobra.Command{
 	Short:         "Create a new issue",
 	Long:          "Create a new Jira issue with the specified summary and optional description.",
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueCreate,
 }
 

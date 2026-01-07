@@ -17,7 +17,6 @@ var issuePriorityCmd = &cobra.Command{
 	Short:         "List available priorities",
 	Long:          "List all priorities available in the Jira instance.",
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssuePriority,
 }
 

@@ -24,7 +24,6 @@ var meCmd = &cobra.Command{
 	Short:         "Display current user information",
 	Long:          "Display information about the currently authenticated Jira user. Useful for verifying credentials and connection.",
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runMe,
 }
 

@@ -53,11 +53,9 @@ func Project() string {
 	return project
 }
 
-// Errorf prints an error message to stderr and returns an error.
+// Errorf returns a formatted error with the "ajira:" prefix.
 func Errorf(format string, args ...interface{}) error {
-	msg := fmt.Sprintf(format, args...)
-	fmt.Fprintln(os.Stderr, "ajira:", msg)
-	return fmt.Errorf("%s", msg)
+	return fmt.Errorf("ajira: "+format, args...)
 }
 
 // IssueURL returns the browse URL for an issue key.

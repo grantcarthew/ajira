@@ -32,7 +32,6 @@ var issueAssignCmd = &cobra.Command{
 	Long:          "Assign a Jira issue to a user. Use 'me' for yourself, or 'unassigned' to remove the assignee.",
 	Args:          cobra.ExactArgs(2),
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueAssign,
 }
 

@@ -80,7 +80,6 @@ var issueListCmd = &cobra.Command{
 	Short:         "List and search issues",
 	Long:          "List Jira issues using JQL or convenience filters.",
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueList,
 }
 

@@ -16,7 +16,6 @@ var issueStatusCmd = &cobra.Command{
 	Short:         "List available statuses",
 	Long:          "List statuses available for the current project.",
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueStatus,
 }
 

@@ -59,7 +59,6 @@ var projectListCmd = &cobra.Command{
 	Short:         "List accessible projects",
 	Long:          "List all Jira projects accessible to the current user.",
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runProjectList,
 }
 

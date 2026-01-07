@@ -45,7 +45,6 @@ var issueMoveCmd = &cobra.Command{
 	Long:          "Move a Jira issue to a new status via workflow transition.",
 	Args:          cobra.RangeArgs(1, 2),
 	SilenceUsage:  true,
-	SilenceErrors: true,
 	RunE:          runIssueMove,
 }
 
