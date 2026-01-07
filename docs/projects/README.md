@@ -24,6 +24,7 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 | P-012 | Time Tracking | Proposed | | |
 | P-013 | Automation Support | Proposed | | |
 | P-014 | Auxiliary Commands | Proposed | | |
+| P-015 | CLI Help System | Proposed | | |
 
 Note: Completed projects are in `completed/`
 

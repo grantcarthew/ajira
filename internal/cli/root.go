@@ -19,9 +19,23 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "ajira <command>",
+	Use:   "ajira <command> [flags]",
 	Short: "Atlassian Jira CLI for AI agents and automation",
-	Long:  "Atlassian Jira CLI designed for AI agents and automation. Non-interactive, environment-configured, with Markdown input/output and JSON support.",
+	Long: `Atlassian Jira CLI designed for AI agents and automation.
+Non-interactive, environment-configured, with Markdown input/output and JSON support.
+
+Environment Variables:
+  JIRA_BASE_URL    Jira instance URL (required)
+  JIRA_EMAIL       User email for authentication (required)
+  JIRA_API_TOKEN   API token for authentication (required)
+  JIRA_PROJECT     Default project key (optional)
+
+Quick Start:
+  ajira me                          Verify authentication
+  ajira project list                List accessible projects
+  ajira issue list -p PROJECT       List issues in project
+  ajira issue view KEY              View issue details
+  ajira issue create -p PROJECT -s "Summary" -t Task    Create issue`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
@@ -37,6 +51,31 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "Output in JSON format")
 	rootCmd.PersistentFlags().StringVarP(&project, "project", "p", "", "Default project key (or set JIRA_PROJECT)")
 	rootCmd.Version = Version
+
+	// Custom usage template to avoid duplicate usage lines
+	rootCmd.SetUsageTemplate(`Usage:
+  {{.UseLine}}{{if gt (len .Aliases) 0}}
+
+Aliases:
+  {{.NameAndAliases}}{{end}}{{if .HasAvailableSubCommands}}
+
+Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+  {{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
+Flags:
+{{.LocalFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+Global Flags:
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasExample}}
+
+Examples:
+{{.Example}}{{end}}{{if .HasHelpSubCommands}}
+
+Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+  {{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+Use "{{.CommandPath}} <command> --help" for more information about a command.{{end}}
+`)
 }
 
 func Execute() error {
