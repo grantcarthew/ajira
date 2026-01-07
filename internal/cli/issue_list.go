@@ -235,8 +235,9 @@ func searchIssues(client *api.Client, jql string, limit int) ([]IssueInfo, error
 	}
 
 	nextPageToken := ""
+	const maxPages = 100 // Safety guard against infinite pagination loops
 
-	for {
+	for page := 0; page < maxPages; page++ {
 		path := fmt.Sprintf("/search/jql?jql=%s&maxResults=%d&fields=summary,status,issuetype,priority,assignee",
 			url.QueryEscape(jql), maxResults)
 		if nextPageToken != "" {

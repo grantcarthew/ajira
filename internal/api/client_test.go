@@ -200,3 +200,116 @@ func TestClient_TrailingSlashInBaseURL(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestClient_ContextCancellation(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Simulate slow response
+		time.Sleep(500 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := NewClient(testConfig(server.URL))
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	_, err := client.Get(ctx, "/test")
+	if err == nil {
+		t.Fatal("expected error for cancelled context, got nil")
+	}
+	if !strings.Contains(err.Error(), "context canceled") {
+		t.Errorf("expected 'context canceled' in error, got: %v", err)
+	}
+}
+
+func TestClient_ContextTimeout(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Simulate slow response longer than timeout
+		time.Sleep(200 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := NewClient(testConfig(server.URL))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	_, err := client.Get(ctx, "/test")
+	if err == nil {
+		t.Fatal("expected error for context timeout, got nil")
+	}
+	if !strings.Contains(err.Error(), "context deadline exceeded") {
+		t.Errorf("expected 'context deadline exceeded' in error, got: %v", err)
+	}
+}
+
+func TestClient_MalformedResponse(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Return HTML (like a proxy error page) instead of JSON
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("<html><body>Proxy Error</body></html>"))
+	}))
+	defer server.Close()
+
+	client := NewClient(testConfig(server.URL))
+	body, err := client.Get(context.Background(), "/test")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Client returns raw bytes on 2xx - caller must handle non-JSON
+	if !strings.Contains(string(body), "Proxy Error") {
+		t.Errorf("expected body to contain 'Proxy Error', got: %s", string(body))
+	}
+}
+
+func TestClient_MalformedErrorResponse(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Return non-JSON on error status
+		w.Header().Set("Content-Type", "text/html")
+		w.WriteHeader(http.StatusBadGateway)
+		w.Write([]byte("<html><body>502 Bad Gateway</body></html>"))
+	}))
+	defer server.Close()
+
+	client := NewClient(testConfig(server.URL))
+	_, err := client.Get(context.Background(), "/test")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	apiErr, ok := err.(*APIError)
+	if !ok {
+		t.Fatalf("expected *APIError, got %T", err)
+	}
+
+	if apiErr.StatusCode != http.StatusBadGateway {
+		t.Errorf("expected status 502, got %d", apiErr.StatusCode)
+	}
+	// Messages should be empty since body wasn't valid JSON
+	if len(apiErr.Messages) != 0 {
+		t.Errorf("expected empty messages for non-JSON error, got: %v", apiErr.Messages)
+	}
+}
+
+func TestClient_NetworkError(t *testing.T) {
+	// Use an invalid address that will fail to connect
+	cfg := &config.Config{
+		BaseURL:     "http://localhost:1", // Port 1 is typically unavailable
+		Email:       "test@example.com",
+		APIToken:    "test-token",
+		HTTPTimeout: 1 * time.Second,
+	}
+
+	client := NewClient(cfg)
+	_, err := client.Get(context.Background(), "/test")
+	if err == nil {
+		t.Fatal("expected error for network failure, got nil")
+	}
+	if !strings.Contains(err.Error(), "executing request") {
+		t.Errorf("expected 'executing request' in error, got: %v", err)
+	}
+}

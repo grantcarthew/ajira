@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -981,6 +982,68 @@ func TestGetCommentText_Empty(t *testing.T) {
 	}
 }
 
+func TestGetCommentText_FromFile(t *testing.T) {
+	// Create a temporary file with comment content
+	tmpFile, err := os.CreateTemp("", "comment-*.md")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	content := "This is a comment from a file.\n\nWith multiple lines."
+	if _, err := tmpFile.WriteString(content); err != nil {
+		t.Fatalf("failed to write to temp file: %v", err)
+	}
+	tmpFile.Close()
+
+	commentBody = ""
+	commentFile = tmpFile.Name()
+
+	text, err := getCommentText([]string{"TEST-123"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if text != content {
+		t.Errorf("expected %q, got %q", content, text)
+	}
+}
+
+func TestGetCommentText_FilePriority(t *testing.T) {
+	// File should take priority over body flag and positional arg
+	tmpFile, err := os.CreateTemp("", "comment-*.md")
+	if err != nil {
+		t.Fatalf("failed to create temp file: %v", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	fileContent := "Content from file"
+	if _, err := tmpFile.WriteString(fileContent); err != nil {
+		t.Fatalf("failed to write to temp file: %v", err)
+	}
+	tmpFile.Close()
+
+	commentBody = "Content from body flag"
+	commentFile = tmpFile.Name()
+
+	text, err := getCommentText([]string{"TEST-123", "Content from arg"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if text != fileContent {
+		t.Errorf("expected file content %q, got %q", fileContent, text)
+	}
+}
+
+func TestGetCommentText_FileNotFound(t *testing.T) {
+	commentBody = ""
+	commentFile = "/nonexistent/path/to/file.md"
+
+	_, err := getCommentText([]string{"TEST-123"})
+	if err == nil {
+		t.Fatal("expected error for nonexistent file, got nil")
+	}
+}
+
 // Additional edge case tests
 func TestSearchIssues_Pagination(t *testing.T) {
 	callCount := 0
@@ -1023,6 +1086,40 @@ func TestSearchIssues_Pagination(t *testing.T) {
 	}
 	if callCount != 2 {
 		t.Errorf("expected 2 API calls for pagination, got %d", callCount)
+	}
+}
+
+func TestSearchIssues_PaginationSafetyGuard(t *testing.T) {
+	// Simulate an API that never returns IsLast: true (potential infinite loop)
+	callCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		// Always return more pages - simulates buggy API
+		resp := issueSearchResponse{
+			NextPageToken: "always-more",
+			IsLast:        false,
+			Issues: []issueValue{
+				{Key: "TEST-" + string(rune('0'+callCount)), Fields: issueFields{Summary: "Issue"}},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	// No limit set - would loop forever without safety guard
+	issues, err := searchIssues(client, "project = TEST", 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should have stopped at maxPages (100) iterations
+	if callCount != 100 {
+		t.Errorf("expected 100 API calls (maxPages), got %d", callCount)
+	}
+	if len(issues) != 100 {
+		t.Errorf("expected 100 issues from pagination guard, got %d", len(issues))
 	}
 }
 
