@@ -39,7 +39,7 @@ var issueEditCmd = &cobra.Command{
 
 func init() {
 	issueEditCmd.Flags().StringVarP(&editSummary, "summary", "s", "", "New issue summary")
-	issueEditCmd.Flags().StringVarP(&editBody, "body", "b", "", "New description in Markdown")
+	issueEditCmd.Flags().StringVarP(&editBody, "description", "d", "", "New description in Markdown")
 	issueEditCmd.Flags().StringVarP(&editFile, "file", "f", "", "Read description from file (use - for stdin)")
 	issueEditCmd.Flags().StringVarP(&editType, "type", "t", "", "New issue type")
 	issueEditCmd.Flags().StringVar(&editPriority, "priority", "", "New priority")
@@ -56,7 +56,7 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		editType != "" || editPriority != "" || editLabels != nil
 
 	if !hasChanges {
-		return Errorf("no fields to update (use --summary, --body, --file, --type, --priority, or --labels)")
+		return Errorf("no fields to update (use --summary, --description, --file, --type, --priority, or --labels)")
 	}
 
 	cfg, err := config.Load()
@@ -73,7 +73,7 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		fields["summary"] = editSummary
 	}
 
-	// Get description from file or body
+	// Get description from file or description flag
 	description := editBody
 	if editFile != "" {
 		if editFile == "-" {

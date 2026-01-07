@@ -66,7 +66,7 @@ var issueCreateCmd = &cobra.Command{
 
 func init() {
 	issueCreateCmd.Flags().StringVarP(&createSummary, "summary", "s", "", "Issue summary (required)")
-	issueCreateCmd.Flags().StringVarP(&createBody, "body", "b", "", "Issue description in Markdown")
+	issueCreateCmd.Flags().StringVarP(&createBody, "description", "d", "", "Issue description in Markdown")
 	issueCreateCmd.Flags().StringVarP(&createFile, "file", "f", "", "Read description from file (use - for stdin)")
 	issueCreateCmd.Flags().StringVarP(&createType, "type", "t", "Task", "Issue type (Task, Bug, Story, etc.)")
 	issueCreateCmd.Flags().StringVar(&createPriority, "priority", "", "Issue priority")
@@ -125,7 +125,7 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 }
 
 func getDescription() (string, error) {
-	// Priority: file > body
+	// Priority: file > description flag
 	if createFile != "" {
 		if createFile == "-" {
 			// Read from stdin
