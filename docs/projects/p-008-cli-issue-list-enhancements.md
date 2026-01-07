@@ -21,6 +21,7 @@ Enhance the `issue list` command with additional filters, sorting options, and o
 In Scope:
 
 New filter flags:
+
 - `--reporter`, `-r` - Filter by reporter
 - `--priority`, `-y` - Filter by priority
 - `--labels`, `-l` - Filter by labels (repeatable)
@@ -29,10 +30,12 @@ New filter flags:
 - `--watching`, `-w` - Issues current user is watching
 
 Sorting options:
+
 - `--order-by` - Sort field (created, updated, priority, key, rank)
 - `--reverse` - Reverse sort order
 
 Output options:
+
 - `--plain` - Disable colours, simple format
 - `--csv` - CSV output format
 - `--columns` - Select output columns

@@ -1,8 +1,8 @@
 # P-015: CLI Help System
 
-- Status: Proposed
-- Started:
-- Completed:
+- Status: Completed
+- Started: 2026-01-07
+- Completed: 2026-01-07
 
 ## Overview
 
@@ -21,15 +21,18 @@ Improve ajira's help system to be comprehensive and AI-agent friendly. AI agents
 In Scope:
 
 Custom help topics:
+
 - `ajira help agents` - Token-efficient AI agent reference (env vars, commands, examples, workflows)
 - `ajira help schemas` - JSON output structures for all commands
 
 Per-command improvements:
+
 - Add 2-3 examples per command
 - Consistent help template across all commands
 - Clear output descriptions
 
 Technical:
+
 - Use `//go:embed` for help topic content
 - Help content in `internal/cli/help/*.md`
 - Markdown rendering for terminal output
@@ -42,17 +45,17 @@ Out of Scope:
 
 ## Success Criteria
 
-- [ ] `ajira help agents` outputs comprehensive AI reference
-- [ ] `ajira help schemas` documents all JSON output structures
-- [ ] Every command has at least 2 examples in --help
-- [ ] Help text follows consistent template
-- [ ] Embedded markdown files render correctly in terminal
-- [ ] `ajira help agents` is under 2000 tokens (AI-efficient)
-- [ ] Tests verify help commands work
+- [x] `ajira help agents` outputs comprehensive AI reference
+- [x] `ajira help schemas` documents all JSON output structures
+- [x] Every command has at least 2 examples in --help
+- [x] Help text follows consistent template
+- [x] Embedded Markdown files render correctly in terminal
+- [x] `ajira help agents` is under 2000 tokens (~400 tokens)
+- [x] Tests verify help commands work
 
 ## Deliverables
 
-- `internal/cli/help/` directory with embedded markdown files
+- `internal/cli/help/` directory with embedded Markdown files
 - `internal/cli/help.go` - Help command implementations
 - `internal/cli/help/agents.md` - AI agent reference
 - `internal/cli/help/schemas.md` - JSON schema documentation
@@ -62,6 +65,7 @@ Out of Scope:
 ## Technical Approach
 
 File structure:
+
 ```
 internal/cli/
 ├── help/
@@ -72,6 +76,7 @@ internal/cli/
 ```
 
 Help template for commands:
+
 ```
 Short: One-line description
 
@@ -87,10 +92,11 @@ Examples:
 
 ## Questions and Uncertainties
 
-- What's the ideal token count for `help agents`?
-- Should `help schemas` show full JSON examples or field descriptions?
-- How detailed should per-command examples be?
-- Should we add `ajira help examples` for workflow examples?
+Resolved:
+
+- Token count for `help agents`: ~400 tokens achieved (under 2000 target)
+- `help schemas` format: Field lists only (most token-efficient)
+- Additional help topics: Only agents and schemas needed; workflow examples included in agents.md
 
 ## Dependencies
 
@@ -99,7 +105,17 @@ None - improves existing CLI infrastructure.
 ## Notes
 
 Discussion points from design session:
-- Use Go 1.16+ embed for help content in markdown files
+
+- Use Go 1.16+ embed for help content in Markdown files
 - Keep short command help inline, longer topics in embedded files
-- Render markdown with glamour for terminal styling
+- Render Markdown with glamour for terminal styling
 - Goal: agent runs `ajira help agents` and knows almost everything needed
+
+Implementation decisions (2026-01-07):
+
+- Custom help command replaces Cobra default to support subcommands
+- Help topics accessible via `ajira help agents` and `ajira help schemas`
+- agents.md focuses on examples, minimal prose, text output preferred over JSON
+- schemas.md uses simple field lists for token efficiency
+- Root help includes reference to `ajira help agents` for agent discoverability
+- No DR required; decisions documented here

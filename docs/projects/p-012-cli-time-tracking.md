@@ -21,16 +21,19 @@ Add worklog (time tracking) functionality to ajira. Time tracking is essential f
 In Scope:
 
 Worklog commands:
+
 - `ajira issue worklog add <key> <time>` - Add time entry
 - `ajira issue worklog list <key>` - List worklogs on issue
 - `--comment`, `-m` - Worklog description
 - `--started` - When work was performed (defaults to now)
 
 Time format support:
+
 - Duration strings: "2h", "30m", "1d", "2h 30m"
 - Jira format: "2d 4h 30m"
 
 Issue view integration:
+
 - Show total time logged
 - Option to show worklog entries
 
@@ -67,6 +70,7 @@ Out of Scope:
 ## Technical Approach
 
 Time parsing strategy:
+
 1. Parse duration string into seconds
 2. Support: d (days), h (hours), m (minutes)
 3. Handle combinations: "1d 2h 30m"

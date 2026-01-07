@@ -30,6 +30,9 @@ var issueAssignCmd = &cobra.Command{
 	Use:           "assign <issue-key> <user>",
 	Short:         "Assign an issue to a user",
 	Long:          "Assign a Jira issue to a user. Use 'me' for yourself, or 'unassigned' to remove the assignee.",
+	Example: `  ajira issue assign PROJ-123 me                   # Assign to yourself
+  ajira issue assign PROJ-123 user@example.com     # Assign by email
+  ajira issue assign PROJ-123 unassigned           # Remove assignee`,
 	Args:          cobra.ExactArgs(2),
 	SilenceUsage:  true,
 	RunE:          runIssueAssign,

@@ -27,7 +27,7 @@ Environment variables:
 
 | Variable | Required | Description |
 | -------- | -------- | ----------- |
-| JIRA_BASE_URL | Yes | Jira instance URL (e.g., https://company.atlassian.net) |
+| JIRA_BASE_URL | Yes | Jira instance URL (e.g., <https://company.atlassian.net>) |
 | JIRA_EMAIL | Yes | User email for authentication |
 | JIRA_API_TOKEN | Yes* | API token for authentication |
 | ATLASSIAN_API_TOKEN | No | Fallback if JIRA_API_TOKEN not set |

@@ -79,6 +79,10 @@ var issueListCmd = &cobra.Command{
 	Use:           "list",
 	Short:         "List and search issues",
 	Long:          "List Jira issues using JQL or convenience filters.",
+	Example: `  ajira issue list                        # List issues in default project
+  ajira issue list -s "In Progress"       # Filter by status
+  ajira issue list -a me -t Bug           # My bugs
+  ajira issue list -q "updated >= -7d"    # JQL query`,
 	SilenceUsage:  true,
 	RunE:          runIssueList,
 }

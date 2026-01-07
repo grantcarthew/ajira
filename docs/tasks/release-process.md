@@ -427,7 +427,7 @@ ajira --version
 
 - Wait 1-2 minutes after pushing tag
 - Verify tag exists: `git ls-remote --tags origin | grep v${VERSION}`
-- Check: https://github.com/gcarthew/ajira/tags
+- Check: <https://github.com/gcarthew/ajira/tags>
 
 **Homebrew formula issues**
 

@@ -21,6 +21,7 @@ Add support for Jira Agile features: epics, sprints, and boards. These are core 
 In Scope:
 
 Epic commands:
+
 - `ajira epic list` - List epics in project
 - `ajira epic list <key>` - List issues in an epic
 - `ajira epic create` - Create a new epic
@@ -28,6 +29,7 @@ Epic commands:
 - `ajira epic remove <issue-keys...>` - Remove issues from epic
 
 Sprint commands:
+
 - `ajira sprint list` - List sprints
 - `ajira sprint list <id>` - List issues in sprint
 - `ajira sprint list --current` - Current active sprint
@@ -35,6 +37,7 @@ Sprint commands:
 - `ajira sprint add <sprint-id> <issue-keys...>` - Add issues to sprint
 
 Board commands:
+
 - `ajira board list` - List boards in project
 
 Out of Scope:

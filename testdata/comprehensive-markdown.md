@@ -6,7 +6,7 @@ This document tests all Markdown features supported by ajira for conversion to J
 
 ### Basic Formatting
 
-This paragraph contains **bold text**, *italic text*, and ***bold italic text*** combined. Here is some `inline code` within a sentence.
+This paragraph contains **bold text**, _italic text_, and _**bold italic text**_ combined. Here is some `inline code` within a sentence.
 
 ### Strikethrough
 
@@ -14,7 +14,7 @@ This feature uses ~~strikethrough~~ text for deleted content.
 
 ### Mixed Formatting
 
-You can combine **bold** and *italic* with `inline code` in the same line.
+You can combine **bold** and _italic_ with `inline code` in the same line.
 
 > **Note:** ADF does not support combining `code` marks with other formatting marks like bold or italic. The `code` mark can only combine with `link`. For example, `**`code`**` will render as just `code` without bold formatting. This is an [ADF specification limitation](https://developer.atlassian.com/cloud/jira/platform/apis/document/marks/code/).
 
@@ -154,7 +154,7 @@ spec:
 
 - First item
 - Second item
-- Third item with **bold** and *italic*
+- Third item with **bold** and _italic_
 - Fourth item with `inline code`
 
 ### Ordered List
@@ -199,7 +199,7 @@ spec:
 |---------|--------|-------|
 | Headings | Working | H1-H6 |
 | Bold | Working | **text** |
-| Italic | Working | *text* |
+| Italic | Working | _text_ |
 | Code | Working | `code` |
 
 ### Table with Alignment
@@ -322,4 +322,4 @@ def second():
 
 ---
 
-*Generated for ajira CLI testing - Markdown to ADF conversion verification.*
+_Generated for ajira CLI testing - Markdown to ADF conversion verification._

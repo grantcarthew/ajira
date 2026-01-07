@@ -85,6 +85,9 @@ var issueViewCmd = &cobra.Command{
 	Use:           "view <issue-key>",
 	Short:         "View issue details",
 	Long:          "Display detailed information about a Jira issue.",
+	Example: `  ajira issue view PROJ-123           # View issue details
+  ajira issue view PROJ-123 -c 5      # Include 5 recent comments
+  ajira issue view PROJ-123 --json    # JSON output`,
 	Args:          cobra.ExactArgs(1),
 	SilenceUsage:  true,
 	RunE:          runIssueView,

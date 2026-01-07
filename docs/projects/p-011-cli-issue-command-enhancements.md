@@ -22,12 +22,14 @@ Enhance existing issue commands (create, edit, move, delete) with additional fie
 In Scope:
 
 Create enhancements (`issue create`):
+
 - `--parent`, `-P` - Attach to epic/parent issue
 - `--component`, `-C` - Set component(s)
 - `--fix-version` - Set fix version(s)
 - `--custom "field:value"` - Set custom field
 
 Edit enhancements (`issue edit`):
+
 - `--parent`, `-P` - Change parent/epic
 - `--component`, `-C` - Set/add/remove components
 - `--fix-version` - Set/add/remove fix versions
@@ -35,11 +37,13 @@ Edit enhancements (`issue edit`):
 - Minus notation for removal (`--label -old-label`)
 
 Move enhancements (`issue move`):
+
 - `--comment`, `-m` - Add comment during transition
 - `--resolution`, `-R` - Set resolution (for done transitions)
 - `--assignee`, `-a` - Set assignee during transition
 
 Delete enhancements (`issue delete`):
+
 - `--cascade` - Delete issue with all subtasks
 
 Out of Scope:

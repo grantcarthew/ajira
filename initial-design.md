@@ -85,6 +85,7 @@ ajira me [-j]
 Returns the authenticated user's account ID and email address. Useful for scripting assignee values.
 
 **Output (plain):**
+
 ```
 Account ID: 712020:f0aa8349-1860-4d9d-bf31-d12e26b85d84
 Email: grant.carthew@autogeneral.com.au
@@ -92,6 +93,7 @@ Display Name: Grant Carthew
 ```
 
 **Output (JSON):**
+
 ```json
 {
   "accountId": "712020:f0aa8349-1860-4d9d-bf31-d12e26b85d84",
@@ -120,6 +122,7 @@ ajira project list [-l LIMIT] [-j]
 Lists Jira projects the authenticated user has access to.
 
 **Output (plain):**
+
 ```
 KEY     NAME
 GCP     GCP Cloud Platform
@@ -158,6 +161,7 @@ ajira issue list [flags]
 Searches for issues using JQL. Flags are combined into a JQL query. Use `--query` for complex queries.
 
 **Examples:**
+
 ```bash
 # List issues in default project
 ajira issue list
@@ -176,6 +180,7 @@ ajira issue list -l 10 -j
 ```
 
 **Output (plain):**
+
 ```
 KEY        STATUS        ASSIGNEE              SUMMARY
 GCP-123    In Progress   Grant Carthew         Implement feature X
@@ -209,6 +214,7 @@ ajira issue view ISSUE-KEY [flags]
 Displays issue details including summary, description (converted to Markdown), status, assignee, and recent comments.
 
 **Examples:**
+
 ```bash
 # View issue
 ajira issue view GCP-123
@@ -221,6 +227,7 @@ ajira issue view GCP-123 -j
 ```
 
 **Output (plain):**
+
 ```
 Key: GCP-123
 Summary: Implement feature X
@@ -277,6 +284,7 @@ ajira issue create -s SUMMARY [flags]
 Creates a new Jira issue. Description can be provided inline with `--body`, from a file with `--file`, or piped via stdin.
 
 **Examples:**
+
 ```bash
 # Simple task
 ajira issue create -s "Implement login feature"
@@ -302,6 +310,7 @@ ajira issue create \
 ```
 
 **Output (plain):**
+
 ```
 Issue created successfully
 Key: GCP-456
@@ -338,6 +347,7 @@ ajira issue edit ISSUE-KEY [flags]
 Updates issue fields. Only specified fields are updated.
 
 **Examples:**
+
 ```bash
 # Update summary
 ajira issue edit GCP-123 -s "Updated summary"
@@ -350,6 +360,7 @@ ajira issue edit GCP-123 -y High
 ```
 
 **Output (plain):**
+
 ```
 Issue updated successfully
 Key: GCP-123
@@ -376,11 +387,13 @@ ajira issue delete ISSUE-KEY
 Permanently deletes an issue. This action cannot be undone.
 
 **Examples:**
+
 ```bash
 ajira issue delete GCP-123
 ```
 
 **Output (plain):**
+
 ```
 Issue GCP-123 deleted successfully
 ```
@@ -406,6 +419,7 @@ ajira issue assign ISSUE-KEY ASSIGNEE
 Assigns an issue to a user. Use "unassigned" to remove the assignee.
 
 **Examples:**
+
 ```bash
 # Assign to user by email
 ajira issue assign GCP-123 grant.carthew@autogeneral.com.au
@@ -418,6 +432,7 @@ ajira issue assign GCP-123 unassigned
 ```
 
 **Output (plain):**
+
 ```
 Issue GCP-123 assigned to Grant Carthew
 ```
@@ -443,6 +458,7 @@ ajira issue move ISSUE-KEY STATUS
 Transitions an issue to a new status. The status must be a valid transition from the current state.
 
 **Examples:**
+
 ```bash
 # Move to In Progress
 ajira issue move GCP-123 "In Progress"
@@ -452,6 +468,7 @@ ajira issue move GCP-123 Done
 ```
 
 **Output (plain):**
+
 ```
 Issue GCP-123 moved to "In Progress"
 ```
@@ -484,6 +501,7 @@ ajira issue comment add ISSUE-KEY [BODY] [flags]
 Adds a comment to an issue. Comment text can be provided as a positional argument, via `--body`, from a file, or piped via stdin.
 
 **Examples:**
+
 ```bash
 # Inline comment
 ajira issue comment add GCP-123 "This is my comment"
@@ -499,6 +517,7 @@ echo "Comment from stdin" | ajira issue comment add GCP-123 -f -
 ```
 
 **Output (plain):**
+
 ```
 Comment added to GCP-123
 ```
@@ -530,6 +549,7 @@ The `internal/api/client.go` will implement these methods:
 When creating or editing issues/comments, Markdown input is converted to Atlassian Document Format (ADF) for the API.
 
 **Supported Markdown:**
+
 - Headings (# to ######)
 - Bold, italic, strikethrough
 - Ordered and unordered lists

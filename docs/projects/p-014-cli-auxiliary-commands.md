@@ -21,23 +21,28 @@ Add utility commands that complement the core issue functionality. This includes
 In Scope:
 
 Watch commands:
+
 - `ajira issue watch <key>` - Start watching an issue
 - `ajira issue unwatch <key>` - Stop watching an issue
 
 Release commands:
+
 - `ajira release list` - List project versions/releases
 - Filter by released/unreleased status
 
 Open command:
+
 - `ajira open` - Open project in browser
 - `ajira open <key>` - Open issue in browser
 - Print URL if browser cannot be opened
 
 User commands:
+
 - `ajira user search <query>` - Search users by name/email
 - Useful for finding account IDs for assignment
 
 Field discovery:
+
 - `ajira field list` - List available fields
 - `ajira field list <project>` - List fields for project
 - Include custom fields with their IDs

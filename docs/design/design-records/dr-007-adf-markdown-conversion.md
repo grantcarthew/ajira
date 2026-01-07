@@ -107,13 +107,14 @@ Critical constraint: The `code` mark can ONLY combine with `link`. Combinations 
 
 Converter behavior: When converting Markdown like `**\`code\`**` (bold code), the converter applies only the `code` mark, silently dropping incompatible marks. Code formatting takes precedence.
 
-Reference: https://developer.atlassian.com/cloud/jira/platform/apis/document/marks/code/
+Reference: <https://developer.atlassian.com/cloud/jira/platform/apis/document/marks/code/>
 
 ### Task Item Structure
 
 Per the ADF specification, `taskItem` nodes must contain inline content directly, not wrapped in block nodes:
 
 Valid structure:
+
 ```json
 {
   "type": "taskItem",
@@ -125,6 +126,7 @@ Valid structure:
 ```
 
 Invalid structure (rejected by Jira):
+
 ```json
 {
   "type": "taskItem",
@@ -138,7 +140,7 @@ Invalid structure (rejected by Jira):
 }
 ```
 
-Reference: ADF JSON schema at http://go.atlassian.com/adf-json-schema
+Reference: ADF JSON schema at <http://go.atlassian.com/adf-json-schema>
 
 ### Blockquote Nesting
 
@@ -250,7 +252,7 @@ Expected differences on round-trip:
 | `\|------\|` | `\| --- \|` | Table separator normalization |
 | `:---:` | `---` | Column alignment lost (ADF limitation) |
 | 3-space indent | 2-space indent | List indentation normalization |
-| `> ` (blank quote line) | `>` + space | Trailing space variation |
+| `>` (blank quote line) | `>` + space | Trailing space variation |
 
 Content that round-trips exactly:
 
@@ -262,7 +264,7 @@ Content that round-trips exactly:
 - Tables (content, not alignment)
 - Headings (all levels)
 - Blockquotes (non-nested)
-- Escaped characters (`\*`, `\``, `\[`)
+- Escaped characters (`\*`, `\``,`\[`)
 
 ## Updates
 

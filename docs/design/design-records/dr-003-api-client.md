@@ -88,6 +88,7 @@ GET /myself - Current user:
 GET /project/search - List projects (paginated):
 
 Query parameters:
+
 - `startAt` (int): Page offset, default 0
 - `maxResults` (int): Page size, default 50
 - `query` (string): Filter by name/key

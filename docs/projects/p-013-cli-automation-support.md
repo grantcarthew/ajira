@@ -22,6 +22,7 @@ Add features specifically designed for scripting and automation use cases. This 
 In Scope:
 
 Exit codes:
+
 - 0: Success
 - 1: User/input error
 - 2: API error
@@ -30,17 +31,20 @@ Exit codes:
 - Document exit codes in help and README
 
 Global flags:
+
 - `--dry-run` - Show what would happen without executing
 - `--verbose`, `-v` - Show API requests/responses
 - `--quiet`, `-q` - Suppress non-essential output
 - `--no-color` - Disable ANSI colours (alternative to --plain)
 
 Batch operations:
+
 - Accept issue keys from stdin for applicable commands
 - `--stdin` flag to read from pipe
 - Support: assign, move, delete, comment add
 
 Rate limiting:
+
 - Detect 429 responses
 - Automatic retry with backoff
 - `--rate-limit-info` - Show remaining API quota
@@ -76,18 +80,21 @@ Out of Scope:
 ## Technical Approach
 
 Exit code implementation:
+
 1. Define constants for exit codes
 2. Create typed errors that carry exit codes
 3. Handle at root command level
 4. Map API errors to appropriate codes
 
 Dry-run implementation:
+
 1. Pass dry-run flag through context
 2. Commands check flag before API calls
 3. Print intended action instead of executing
 4. Return success without side effects
 
 Stdin batch processing:
+
 1. Check if stdin is a pipe
 2. Read issue keys (one per line)
 3. Process each with same operation

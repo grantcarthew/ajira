@@ -35,7 +35,9 @@ Quick Start:
   ajira project list                List accessible projects
   ajira issue list -p PROJECT       List issues in project
   ajira issue view KEY              View issue details
-  ajira issue create -p PROJECT -s "Summary" -t Task    Create issue`,
+  ajira issue create -p PROJECT -s "Summary" -t Task    Create issue
+
+AI Agents: Run "ajira help agents" for a token-efficient reference.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},

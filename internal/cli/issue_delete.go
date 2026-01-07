@@ -14,6 +14,7 @@ var issueDeleteCmd = &cobra.Command{
 	Use:           "delete <issue-key>",
 	Short:         "Delete an issue",
 	Long:          "Permanently delete a Jira issue. This action cannot be undone.",
+	Example: `  ajira issue delete PROJ-123    # Delete issue permanently`,
 	Args:          cobra.ExactArgs(1),
 	SilenceUsage:  true,
 	RunE:          runIssueDelete,

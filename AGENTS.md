@@ -2,46 +2,76 @@
 
 Atlassian Jira CLI designed for AI agents and automation. Non-interactive, environment-configured, with Markdown input/output and JSON support.
 
-See <https://agents.md/> for the full AGENTS.md specification as this project matures.
+## Setup
 
-## Status
+```bash
+# Clone and build
+git clone https://github.com/grantcarthew/ajira.git
+cd ajira
+go build -o ajira ./cmd/ajira
 
-Under active development.
+# Configure environment
+export JIRA_BASE_URL="https://example.atlassian.net"
+export JIRA_EMAIL="user@example.com"
+export JIRA_API_TOKEN="your-token"
+export JIRA_PROJECT="PROJ"
 
-## Active Project
+# Verify
+./ajira me
+```
 
-Projects are stored in the docs/projects/ directory. Update this when starting a new project.
-
-Active Project: [P-015 CLI Help System](docs/projects/p-015-cli-help-system.md)
-
-Completed: P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
-
-Proposed: P-007 through P-014 (see docs/projects/README.md)
-
-## Quick Reference
+## Build and Test
 
 ```bash
 # Build
 go build -o ajira ./cmd/ajira
 
-# Test
+# Run all tests
 go test ./...
 
-# Run
+# Run tests with verbose output
+go test -v ./...
+
+# Run specific package tests
+go test ./internal/cli/...
+go test ./internal/jira/...
+
+# Quick validation
 ./ajira me
 ./ajira project list
+./ajira issue list -l 3
 ```
 
----
+## Code Style
 
-## Documentation Driven Development (DDD)
+- Go standard formatting (`gofmt`)
+- No cgo - pure Go only
+- Error handling: return errors, don't panic
+- Cobra for CLI commands
+- Environment variables for configuration (no config files)
+- Non-interactive: all input via flags, arguments, or stdin
 
-This project uses Documentation Driven Development. Design decisions are documented in Design Records (DRs) before or during implementation.
+## Project Structure
 
-For complete DR writing guidelines: See [docs/design/dr-writing-guide.md](docs/design/dr-writing-guide.md)
+```
+cmd/ajira/         Main entry point
+internal/cli/      Command implementations
+internal/jira/     Jira API client
+internal/markdown/ Markdown to ADF conversion
+docs/              Documentation and design records
+```
 
-For project writing guidelines: See [docs/projects/p-writing-guide.md](docs/projects/p-writing-guide.md)
+## Active Project
 
-For feature development workflow: See [docs/workflow.md](docs/workflow.md)
+Projects are stored in `docs/projects/`. Update this section when starting a new project.
 
-Location: `docs/design/design-records/`
+Active Project: None - see `docs/projects/README.md` for proposed projects
+
+Completed: P-015 CLI Help System (2026-01-07), P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
+
+## Development Guidelines
+
+- Read `docs/workflow.md` for feature development process
+- Read `docs/projects/p-writing-guide.md` for project documentation
+- Read `docs/design/dr-writing-guide.md` for design record format
+- Design records are in `docs/design/design-records/`

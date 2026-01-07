@@ -178,7 +178,7 @@ Test issues created during this project should be deleted after testing is compl
 
 5. **Added "me" alias for assignee filter** - Added support for `-a me` which uses Jira's `currentUser()` function. Case insensitive. When `-q` (raw JQL) is provided, other filters including `-a me` are silently ignored (expected behaviour).
 
-6. **Added glamour markdown rendering** - Integrated `github.com/charmbracelet/glamour` for terminal-styled markdown output. Description and comments now render with syntax highlighting, styled headers, and proper formatting. Auto-detects terminal width and dark/light theme. Falls back to plain text when piped.
+6. **Added glamour Markdown rendering** - Integrated `github.com/charmbracelet/glamour` for terminal-styled Markdown output. Description and comments now render with syntax highlighting, styled headers, and proper formatting. Auto-detects terminal width and dark/light theme. Falls back to plain text when piped.
 
 7. **Changed default comment count to 0** - Issue view now hides comments by default for cleaner output. Use `-c N` to show N recent comments.
 

@@ -43,6 +43,9 @@ var issueMoveCmd = &cobra.Command{
 	Use:           "move <issue-key> [status]",
 	Short:         "Transition an issue to a new status",
 	Long:          "Move a Jira issue to a new status via workflow transition.",
+	Example: `  ajira issue move PROJ-123                    # List available transitions
+  ajira issue move PROJ-123 "In Progress"      # Move to In Progress
+  ajira issue move PROJ-123 Done               # Move to Done`,
 	Args:          cobra.RangeArgs(1, 2),
 	SilenceUsage:  true,
 	RunE:          runIssueMove,

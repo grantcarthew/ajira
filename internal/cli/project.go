@@ -58,6 +58,9 @@ var projectListCmd = &cobra.Command{
 	Use:           "list",
 	Short:         "List accessible projects",
 	Long:          "List all Jira projects accessible to the current user.",
+	Example: `  ajira project list              # List all projects
+  ajira project list -q "web"     # Filter by name/key
+  ajira project list -l 10        # Limit results`,
 	SilenceUsage:  true,
 	RunE:          runProjectList,
 }

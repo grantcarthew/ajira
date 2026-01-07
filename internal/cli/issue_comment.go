@@ -43,6 +43,9 @@ var issueCommentAddCmd = &cobra.Command{
 	Use:           "add <issue-key> [text]",
 	Short:         "Add a comment to an issue",
 	Long:          "Add a comment to a Jira issue. Comment text can be provided as an argument, via --body, --file, or stdin.",
+	Example: `  ajira issue comment add PROJ-123 "Comment text"   # Inline comment
+  ajira issue comment add PROJ-123 -f comment.md    # From file
+  echo "text" | ajira issue comment add PROJ-123 -f - # From stdin`,
 	Args:          cobra.RangeArgs(1, 2),
 	SilenceUsage:  true,
 	RunE:          runIssueCommentAdd,
