@@ -12,9 +12,11 @@ Under active development.
 
 Projects are stored in the docs/projects/ directory. Update this when starting a new project.
 
-Active Project: None
+Active Project: [P-007 Issue Linking](docs/projects/p-007-cli-issue-linking.md)
 
 Completed: P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
+
+Proposed: P-008 through P-014 (see docs/projects/README.md)
 
 ## Quick Reference
 
