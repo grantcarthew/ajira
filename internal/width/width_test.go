@@ -256,9 +256,9 @@ func TestRuneWidth_Emoji(t *testing.T) {
 		{"airplane", '✈', 1}, // Text presentation
 		{"ship", '🚢', 2},
 		// Nature
-		{"sun", '☀', 1}, // Text presentation
-		{"cloud", '☁', 1}, // Text presentation
-		{"umbrella", '☂', 1}, // Text presentation
+		{"sun", '☀', 1},       // Text presentation
+		{"cloud", '☁', 1},     // Text presentation
+		{"umbrella", '☂', 1},  // Text presentation
 		{"snowflake", '❄', 1}, // Text presentation
 		{"rainbow", '🌈', 2},
 		// Food
@@ -421,12 +421,12 @@ func TestStringWidth_Mixed(t *testing.T) {
 		s    string
 		want int
 	}{
-		{"ASCII and kanji", "Hello日本", 9},             // 5 + 4
-		{"kanji and ASCII", "日本語ABC", 9},             // 6 + 3
-		{"emoji and ASCII", "Hello🔥", 7},               // 5 + 2
-		{"ASCII emoji ASCII", "Hi🎉Bye", 7},             // 2 + 2 + 3
-		{"fullwidth and ASCII", "ＡＢＣabc", 9},         // 6 + 3
-		{"complex mix", "Hello世界🌍!", 12},             // 5 + 4 + 2 + 1
+		{"ASCII and kanji", "Hello日本", 9},    // 5 + 4
+		{"kanji and ASCII", "日本語ABC", 9},     // 6 + 3
+		{"emoji and ASCII", "Hello🔥", 7},     // 5 + 2
+		{"ASCII emoji ASCII", "Hi🎉Bye", 7},   // 2 + 2 + 3
+		{"fullwidth and ASCII", "ＡＢＣabc", 9}, // 6 + 3
+		{"complex mix", "Hello世界🌍!", 12},     // 5 + 4 + 2 + 1
 		{"issue key style", "PROJ-123", 8},
 		{"issue with CJK summary", "PROJ-123: 日本語タスク", 22}, // 10 + 12
 	}
@@ -446,12 +446,12 @@ func TestStringWidth_WithCombining(t *testing.T) {
 		want int
 	}{
 		// Combining characters should not add width
-		{"e with combining acute", "e\u0301", 1},  // e + combining acute = é
-		{"a with combining ring", "a\u030A", 1},   // a + combining ring = å
-		{"n with combining tilde", "n\u0303", 1},  // n + combining tilde = ñ
-		{"o with combining umlaut", "o\u0308", 1}, // o + combining umlaut = ö
-		{"multiple combining", "e\u0301\u0327", 1}, // e + acute + cedilla
-		{"word with combining", "cafe\u0301", 4},  // café
+		{"e with combining acute", "e\u0301", 1},         // e + combining acute = é
+		{"a with combining ring", "a\u030A", 1},          // a + combining ring = å
+		{"n with combining tilde", "n\u0303", 1},         // n + combining tilde = ñ
+		{"o with combining umlaut", "o\u0308", 1},        // o + combining umlaut = ö
+		{"multiple combining", "e\u0301\u0327", 1},       // e + acute + cedilla
+		{"word with combining", "cafe\u0301", 4},         // café
 		{"resume with accents", "re\u0301sume\u0301", 6}, // résumé
 	}
 	for _, tt := range tests {
@@ -493,7 +493,7 @@ func TestStringWidth_RealWorldExamples(t *testing.T) {
 		// Jira-like issue summaries
 		{"bug report", "Fix login button not working", 28},
 		{"feature request", "Add dark mode support", 21},
-		{"with emoji prefix", "🐛 Fix null pointer exception", 29},  // 2 + 27
+		{"with emoji prefix", "🐛 Fix null pointer exception", 29},    // 2 + 27
 		{"with check emoji", "✅ Completed: Update dependencies", 33}, // 2 + 31
 		// Usernames
 		{"simple username", "john.doe", 8},

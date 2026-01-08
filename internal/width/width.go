@@ -80,271 +80,142 @@ func Truncate(s string, maxWidth int, suffix string) string {
 	return string(result) + suffix
 }
 
-// isCombining returns true for combining diacritical marks and similar
-// characters that overlay the previous character (zero width).
-func isCombining(r rune) bool {
-	// Combining Diacritical Marks
-	if r >= 0x0300 && r <= 0x036F {
-		return true
-	}
-	// Combining Diacritical Marks Extended
-	if r >= 0x1AB0 && r <= 0x1AFF {
-		return true
-	}
-	// Combining Diacritical Marks Supplement
-	if r >= 0x1DC0 && r <= 0x1DFF {
-		return true
-	}
-	// Combining Diacritical Marks for Symbols
-	if r >= 0x20D0 && r <= 0x20FF {
-		return true
-	}
-	// Combining Half Marks
-	if r >= 0xFE20 && r <= 0xFE2F {
-		return true
+// runeRange represents a range of Unicode code points [lo, hi] inclusive.
+type runeRange struct {
+	lo, hi rune
+}
+
+// inRanges returns true if r falls within any of the given ranges.
+func inRanges(r rune, ranges []runeRange) bool {
+	for _, rng := range ranges {
+		if r >= rng.lo && r <= rng.hi {
+			return true
+		}
 	}
 	return false
 }
 
+// combiningRanges defines Unicode ranges for combining diacritical marks
+// and similar characters that overlay the previous character (zero width).
+var combiningRanges = []runeRange{
+	{0x0300, 0x036F}, // Combining Diacritical Marks
+	{0x1AB0, 0x1AFF}, // Combining Diacritical Marks Extended
+	{0x1DC0, 0x1DFF}, // Combining Diacritical Marks Supplement
+	{0x20D0, 0x20FF}, // Combining Diacritical Marks for Symbols
+	{0xFE20, 0xFE2F}, // Combining Half Marks
+}
+
+// isCombining returns true for combining diacritical marks and similar
+// characters that overlay the previous character (zero width).
+func isCombining(r rune) bool {
+	return inRanges(r, combiningRanges)
+}
+
+// zeroWidthRanges defines Unicode ranges for zero-width characters.
+var zeroWidthRanges = []runeRange{
+	{0x200B, 0x200F},   // Zero-width space, non-joiner, joiner
+	{0x2028, 0x202F},   // Line/paragraph separators, format chars
+	{0x2060, 0x206F},   // Invisible format indicators
+	{0xFE00, 0xFE0F},   // Variation selectors
+	{0xFEFF, 0xFEFF},   // Byte order mark
+	{0xE0100, 0xE01EF}, // Variation selectors supplement
+}
+
 // isZeroWidth returns true for characters that take zero terminal columns.
 func isZeroWidth(r rune) bool {
-	// Zero-width space, non-joiner, joiner
-	if r >= 0x200B && r <= 0x200F {
-		return true
-	}
-	// Line/paragraph separators, format chars
-	if r >= 0x2028 && r <= 0x202F {
-		return true
-	}
-	// Invisible format indicators
-	if r >= 0x2060 && r <= 0x206F {
-		return true
-	}
-	// Byte order mark
-	if r == 0xFEFF {
-		return true
-	}
-	// Variation selectors
-	if r >= 0xFE00 && r <= 0xFE0F {
-		return true
-	}
-	// Variation selectors supplement
-	if r >= 0xE0100 && r <= 0xE01EF {
-		return true
-	}
-	return false
+	return inRanges(r, zeroWidthRanges)
+}
+
+// wideRanges defines Unicode ranges for characters that occupy 2 terminal columns.
+// This includes CJK characters, fullwidth forms, and wide emoji.
+var wideRanges = []runeRange{
+	// Hangul Jamo
+	{0x1100, 0x115F},
+
+	// Miscellaneous symbols (wide emoji subset)
+	{0x231A, 0x231B}, // watch, hourglass
+	{0x2329, 0x232A}, // angle brackets
+	{0x23E9, 0x23F3}, // media control symbols
+	{0x23F8, 0x23FA},
+
+	// Misc symbols
+	{0x25FD, 0x25FE},
+	{0x2614, 0x2615}, // umbrella, hot beverage
+	{0x2648, 0x2653}, // zodiac
+	{0x267F, 0x267F}, // wheelchair
+	{0x2693, 0x2693}, // anchor
+	{0x26A1, 0x26A1}, // high voltage
+	{0x26AA, 0x26AB}, // circles
+	{0x26BD, 0x26BE}, // soccer, baseball
+	{0x26C4, 0x26C5}, // snowman, sun
+	{0x26CE, 0x26CE}, // ophiuchus
+	{0x26D4, 0x26D4}, // no entry
+	{0x26EA, 0x26EA}, // church
+	{0x26F2, 0x26F3}, // fountain, golf
+	{0x26F5, 0x26F5}, // sailboat
+	{0x26FA, 0x26FA}, // tent
+	{0x26FD, 0x26FD}, // fuel pump
+	{0x2705, 0x2705}, // check mark
+	{0x270A, 0x270B}, // fist, hand
+	{0x2728, 0x2728}, // sparkles
+	{0x274C, 0x274C}, // cross mark
+	{0x274E, 0x274E}, // cross mark
+	{0x2753, 0x2755}, // question marks
+	{0x2757, 0x2757}, // exclamation
+	{0x2795, 0x2797}, // math symbols
+	{0x27B0, 0x27B0}, // curly loop
+	{0x27BF, 0x27BF}, // curly loop
+	{0x2B1B, 0x2B1C}, // squares
+	{0x2B50, 0x2B50}, // star
+	{0x2B55, 0x2B55}, // circle
+
+	// CJK Radicals Supplement through CJK Unified Ideographs
+	{0x2E80, 0x2EF3},
+	{0x2F00, 0x2FD5}, // Kangxi Radicals
+	{0x2FF0, 0x2FFF}, // Ideographic Description
+	{0x3000, 0x303E}, // CJK Symbols and Punctuation
+	{0x3041, 0x3096}, // Hiragana
+	{0x3099, 0x30FF}, // Hiragana/Katakana
+	{0x3105, 0x312F}, // Bopomofo
+	{0x3131, 0x318E}, // Hangul Compatibility Jamo
+	{0x3190, 0x31E3}, // Kanbun, Bopomofo Extended
+	{0x31F0, 0x321E}, // Katakana Phonetic Extensions, Enclosed CJK
+	{0x3220, 0x3247},
+	{0x3250, 0x4DBF}, // CJK blocks
+	{0x4E00, 0x9FFF}, // CJK Unified Ideographs
+	{0xA960, 0xA97F}, // Hangul Jamo Extended-A
+	{0xAC00, 0xD7A3}, // Hangul Syllables
+
+	// CJK Compatibility Ideographs
+	{0xF900, 0xFAFF},
+
+	// Vertical Forms, CJK Compatibility Forms
+	{0xFE10, 0xFE19},
+	{0xFE30, 0xFE6F},
+
+	// Fullwidth Forms
+	{0xFF01, 0xFF60},
+	{0xFFE0, 0xFFE6},
+
+	// CJK extensions and supplements (Plane 2)
+	{0x1F300, 0x1F5FF}, // Misc Symbols and Pictographs
+	{0x1F600, 0x1F64F}, // Emoticons
+	{0x1F680, 0x1F6FF}, // Transport and Map Symbols
+	{0x1F700, 0x1F77F}, // Alchemical Symbols
+	{0x1F780, 0x1F7FF}, // Geometric Shapes Extended
+	{0x1F800, 0x1F8FF}, // Supplemental Arrows-C
+	{0x1F900, 0x1F9FF}, // Supplemental Symbols and Pictographs
+	{0x1FA00, 0x1FA6F}, // Chess Symbols
+	{0x1FA70, 0x1FAFF}, // Symbols and Pictographs Extended-A
+
+	// CJK Unified Ideographs Extension B through G (Plane 2)
+	{0x20000, 0x2FFFD},
+	// Plane 3
+	{0x30000, 0x3FFFD},
 }
 
 // isWide returns true for characters that occupy 2 terminal columns.
 // This includes CJK characters, fullwidth forms, and wide emoji.
 func isWide(r rune) bool {
-	// Hangul Jamo
-	if r >= 0x1100 && r <= 0x115F {
-		return true
-	}
-
-	// Miscellaneous symbols (wide emoji subset)
-	if r == 0x231A || r == 0x231B { // watch, hourglass
-		return true
-	}
-	if r == 0x2329 || r == 0x232A { // angle brackets
-		return true
-	}
-	if r >= 0x23E9 && r <= 0x23F3 { // media control symbols
-		return true
-	}
-	if r >= 0x23F8 && r <= 0x23FA {
-		return true
-	}
-
-	// Misc symbols
-	if r == 0x25FD || r == 0x25FE {
-		return true
-	}
-	if r >= 0x2614 && r <= 0x2615 { // umbrella, hot beverage
-		return true
-	}
-	if r >= 0x2648 && r <= 0x2653 { // zodiac
-		return true
-	}
-	if r == 0x267F { // wheelchair
-		return true
-	}
-	if r == 0x2693 { // anchor
-		return true
-	}
-	if r == 0x26A1 { // high voltage
-		return true
-	}
-	if r == 0x26AA || r == 0x26AB { // circles
-		return true
-	}
-	if r >= 0x26BD && r <= 0x26BE { // soccer, baseball
-		return true
-	}
-	if r >= 0x26C4 && r <= 0x26C5 { // snowman, sun
-		return true
-	}
-	if r == 0x26CE { // ophiuchus
-		return true
-	}
-	if r == 0x26D4 { // no entry
-		return true
-	}
-	if r == 0x26EA { // church
-		return true
-	}
-	if r >= 0x26F2 && r <= 0x26F3 { // fountain, golf
-		return true
-	}
-	if r == 0x26F5 { // sailboat
-		return true
-	}
-	if r == 0x26FA { // tent
-		return true
-	}
-	if r == 0x26FD { // fuel pump
-		return true
-	}
-	if r == 0x2705 { // check mark
-		return true
-	}
-	if r >= 0x270A && r <= 0x270B { // fist, hand
-		return true
-	}
-	if r == 0x2728 { // sparkles
-		return true
-	}
-	if r == 0x274C || r == 0x274E { // cross marks
-		return true
-	}
-	if r >= 0x2753 && r <= 0x2755 { // question marks
-		return true
-	}
-	if r == 0x2757 { // exclamation
-		return true
-	}
-	if r >= 0x2795 && r <= 0x2797 { // math symbols
-		return true
-	}
-	if r == 0x27B0 || r == 0x27BF { // curly loop
-		return true
-	}
-	if r >= 0x2B1B && r <= 0x2B1C { // squares
-		return true
-	}
-	if r == 0x2B50 { // star
-		return true
-	}
-	if r == 0x2B55 { // circle
-		return true
-	}
-
-	// CJK Radicals Supplement through CJK Unified Ideographs
-	if r >= 0x2E80 && r <= 0x2EF3 {
-		return true
-	}
-	if r >= 0x2F00 && r <= 0x2FD5 { // Kangxi Radicals
-		return true
-	}
-	if r >= 0x2FF0 && r <= 0x2FFF { // Ideographic Description
-		return true
-	}
-	if r >= 0x3000 && r <= 0x303E { // CJK Symbols and Punctuation
-		return true
-	}
-	if r >= 0x3041 && r <= 0x3096 { // Hiragana
-		return true
-	}
-	if r >= 0x3099 && r <= 0x30FF { // Hiragana/Katakana
-		return true
-	}
-	if r >= 0x3105 && r <= 0x312F { // Bopomofo
-		return true
-	}
-	if r >= 0x3131 && r <= 0x318E { // Hangul Compatibility Jamo
-		return true
-	}
-	if r >= 0x3190 && r <= 0x31E3 { // Kanbun, Bopomofo Extended
-		return true
-	}
-	if r >= 0x31F0 && r <= 0x321E { // Katakana Phonetic Extensions, Enclosed CJK
-		return true
-	}
-	if r >= 0x3220 && r <= 0x3247 {
-		return true
-	}
-	if r >= 0x3250 && r <= 0x4DBF { // CJK blocks
-		return true
-	}
-	if r >= 0x4E00 && r <= 0x9FFF { // CJK Unified Ideographs
-		return true
-	}
-	if r >= 0xA960 && r <= 0xA97F { // Hangul Jamo Extended-A
-		return true
-	}
-	if r >= 0xAC00 && r <= 0xD7A3 { // Hangul Syllables
-		return true
-	}
-
-	// CJK Compatibility Ideographs
-	if r >= 0xF900 && r <= 0xFAFF {
-		return true
-	}
-
-	// Vertical Forms, CJK Compatibility Forms
-	if r >= 0xFE10 && r <= 0xFE19 {
-		return true
-	}
-	if r >= 0xFE30 && r <= 0xFE6F {
-		return true
-	}
-
-	// Fullwidth Forms
-	if r >= 0xFF01 && r <= 0xFF60 {
-		return true
-	}
-	if r >= 0xFFE0 && r <= 0xFFE6 {
-		return true
-	}
-
-	// CJK extensions and supplements (Plane 2)
-	if r >= 0x1F300 && r <= 0x1F5FF { // Misc Symbols and Pictographs
-		return true
-	}
-	if r >= 0x1F600 && r <= 0x1F64F { // Emoticons
-		return true
-	}
-	if r >= 0x1F680 && r <= 0x1F6FF { // Transport and Map Symbols
-		return true
-	}
-	if r >= 0x1F700 && r <= 0x1F77F { // Alchemical Symbols
-		return true
-	}
-	if r >= 0x1F780 && r <= 0x1F7FF { // Geometric Shapes Extended
-		return true
-	}
-	if r >= 0x1F800 && r <= 0x1F8FF { // Supplemental Arrows-C
-		return true
-	}
-	if r >= 0x1F900 && r <= 0x1F9FF { // Supplemental Symbols and Pictographs
-		return true
-	}
-	if r >= 0x1FA00 && r <= 0x1FA6F { // Chess Symbols
-		return true
-	}
-	if r >= 0x1FA70 && r <= 0x1FAFF { // Symbols and Pictographs Extended-A
-		return true
-	}
-
-	// CJK Unified Ideographs Extension B through G (Plane 2)
-	if r >= 0x20000 && r <= 0x2FFFD {
-		return true
-	}
-	// Plane 3
-	if r >= 0x30000 && r <= 0x3FFFD {
-		return true
-	}
-
-	return false
+	return inRanges(r, wideRanges)
 }

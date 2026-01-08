@@ -297,6 +297,10 @@ ajira help schemas
 | `issue assign` | Assign an issue to a user |
 | `issue move` | Transition an issue to a new status |
 | `issue comment add` | Add a comment to an issue |
+| `issue link add` | Create a link between two issues |
+| `issue link remove` | Remove links between two issues |
+| `issue link types` | List available link types |
+| `issue link url` | Add a web URL to an issue |
 | `issue type` | List available issue types |
 | `issue status` | List available statuses |
 | `issue priority` | List available priorities |
@@ -323,7 +327,6 @@ ajira completion fish > ~/.config/fish/completions/ajira.fish
 
 Planned features for future releases:
 
-- **Issue Linking** - Link issues together, add web links
 - **Issue Clone** - Duplicate issues with field modifications
 - **Agile Features** - Epic and sprint management
 - **Time Tracking** - Worklog support
