@@ -26,7 +26,16 @@ type IssueDetail struct {
 	Description string        `json:"description"`
 	Labels      []string      `json:"labels"`
 	Project     string        `json:"project"`
+	Links       []LinkInfo    `json:"links,omitempty"`
 	Comments    []CommentInfo `json:"comments,omitempty"`
+}
+
+// LinkInfo represents a linked issue for display.
+type LinkInfo struct {
+	Direction string `json:"direction"`
+	Key       string `json:"key"`
+	Status    string `json:"status"`
+	Summary   string `json:"summary"`
 }
 
 // CommentInfo represents a comment on an issue.
@@ -59,17 +68,39 @@ type issueDetailResponse struct {
 }
 
 type issueDetailFields struct {
-	Summary     string          `json:"summary"`
-	Status      *statusField    `json:"status"`
-	IssueType   *issueType      `json:"issuetype"`
-	Priority    *priorityField  `json:"priority"`
-	Assignee    *userField      `json:"assignee"`
-	Reporter    *userField      `json:"reporter"`
-	Created     string          `json:"created"`
-	Updated     string          `json:"updated"`
-	Description json.RawMessage `json:"description"`
-	Labels      []string        `json:"labels"`
-	Project     *projectField   `json:"project"`
+	Summary     string            `json:"summary"`
+	Status      *statusField      `json:"status"`
+	IssueType   *issueType        `json:"issuetype"`
+	Priority    *priorityField    `json:"priority"`
+	Assignee    *userField        `json:"assignee"`
+	Reporter    *userField        `json:"reporter"`
+	Created     string            `json:"created"`
+	Updated     string            `json:"updated"`
+	Description json.RawMessage   `json:"description"`
+	Labels      []string          `json:"labels"`
+	Project     *projectField     `json:"project"`
+	IssueLinks  []issueLinkDetail `json:"issuelinks"`
+}
+
+type issueLinkDetail struct {
+	ID           string              `json:"id"`
+	Type         issueLinkTypeDetail `json:"type"`
+	InwardIssue  *linkedIssueDetail  `json:"inwardIssue,omitempty"`
+	OutwardIssue *linkedIssueDetail  `json:"outwardIssue,omitempty"`
+}
+
+type issueLinkTypeDetail struct {
+	Name    string `json:"name"`
+	Inward  string `json:"inward"`
+	Outward string `json:"outward"`
+}
+
+type linkedIssueDetail struct {
+	Key    string `json:"key"`
+	Fields struct {
+		Summary string       `json:"summary"`
+		Status  *statusField `json:"status"`
+	} `json:"fields"`
 }
 
 type projectField struct {
@@ -185,6 +216,29 @@ func getIssue(client *api.Client, key string) (*IssueDetail, error) {
 		detail.Description = converter.ADFToMarkdown(resp.Fields.Description)
 	}
 
+	// Parse issue links
+	for _, link := range resp.Fields.IssueLinks {
+		var info LinkInfo
+		if link.OutwardIssue != nil {
+			info.Direction = link.Type.Outward
+			info.Key = link.OutwardIssue.Key
+			info.Summary = link.OutwardIssue.Fields.Summary
+			if link.OutwardIssue.Fields.Status != nil {
+				info.Status = link.OutwardIssue.Fields.Status.Name
+			}
+		} else if link.InwardIssue != nil {
+			info.Direction = link.Type.Inward
+			info.Key = link.InwardIssue.Key
+			info.Summary = link.InwardIssue.Fields.Summary
+			if link.InwardIssue.Fields.Status != nil {
+				info.Status = link.InwardIssue.Fields.Status.Name
+			}
+		} else {
+			continue
+		}
+		detail.Links = append(detail.Links, info)
+	}
+
 	return detail, nil
 }
 
@@ -214,6 +268,18 @@ func printIssueDetail(issue *IssueDetail) {
 		fmt.Println()
 		fmt.Println("Description:")
 		fmt.Print(RenderMarkdown(issue.Description))
+	}
+
+	if len(issue.Links) > 0 {
+		fmt.Println()
+		fmt.Println("Links:")
+		for _, link := range issue.Links {
+			summary := link.Summary
+			if len(summary) > 50 {
+				summary = summary[:47] + "..."
+			}
+			fmt.Printf("  %s %s (%s) - %s\n", link.Direction, link.Key, link.Status, summary)
+		}
 	}
 
 	if len(issue.Comments) > 0 {

@@ -30,6 +30,14 @@ type Status struct {
 	Category string `json:"category"`
 }
 
+// LinkType represents a Jira issue link type.
+type LinkType struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Inward  string `json:"inward"`
+	Outward string `json:"outward"`
+}
+
 type priorityResponse struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -148,4 +156,21 @@ func GetStatuses(client *api.Client, projectKey string) ([]Status, error) {
 	}
 
 	return statuses, nil
+}
+
+// GetLinkTypes fetches all issue link types from the Jira instance.
+func GetLinkTypes(client *api.Client) ([]LinkType, error) {
+	body, err := client.Get(context.Background(), "/issueLinkType")
+	if err != nil {
+		return nil, err
+	}
+
+	var resp struct {
+		IssueLinkTypes []LinkType `json:"issueLinkTypes"`
+	}
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return resp.IssueLinkTypes, nil
 }

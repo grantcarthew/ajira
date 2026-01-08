@@ -65,9 +65,9 @@ docs/              Documentation and design records
 
 Projects are stored in `docs/projects/`. Update this section when starting a new project.
 
-Active Project: P-007 Issue Linking - `docs/projects/p-007-cli-issue-linking.md`
+Active Project: P-008 Issue List Enhancements - `docs/projects/p-008-cli-issue-list-enhancements.md`
 
-Completed: P-015 CLI Help System (2026-01-07), P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
+Completed: P-007 Issue Linking (2026-01-08), P-015 CLI Help System (2026-01-07), P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
 
 ## Development Guidelines
 

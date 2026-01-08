@@ -12,9 +12,10 @@ import (
 )
 
 var issueTypeCmd = &cobra.Command{
-	Use:   "type",
-	Short: "List available issue types",
-	Long:  "List issue types available for the current project.",
+	Use:     "type",
+	Aliases: []string{"types"},
+	Short:   "List available issue types",
+	Long:    "List issue types available for the current project.",
 	Example: `  ajira issue type           # List types for default project
   ajira issue type -p PROJ   # List types for specific project`,
 	SilenceUsage: true,
