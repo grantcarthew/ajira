@@ -302,8 +302,8 @@ func colorStatus(status, category string) string {
 	yellow := color.New(color.FgYellow).SprintFunc()
 	faint := color.New(color.Faint).SprintFunc()
 
-	// Override for specific status names
-	switch strings.ToLower(status) {
+	// Override for specific status names (TrimSpace handles padded input)
+	switch strings.ToLower(strings.TrimSpace(status)) {
 	case "blocked", "on hold", "on-hold", "awaiting":
 		return yellow(status)
 	}
