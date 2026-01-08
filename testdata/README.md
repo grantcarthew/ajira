@@ -53,72 +53,72 @@ The `roundtrip-test.sh` script provides comprehensive round-trip testing:
 
 ### Markdown to ADF Conversion
 
-| Feature | MD to ADF | ADF to MD | Status | Notes |
-| ------- | :-------: | :-------: | ------ | ----- |
+| Feature | MD→ADF | ADF→MD | Status | Notes |
+| ------- | :----: | :----: | ------ | ----- |
 | **Text Formatting** | | | | |
-| Bold `**text**` | Yes | Yes | Working | |
-| Italic `*text*` | Yes | Yes | Working | |
-| Bold+Italic `***text***` | Yes | Yes | Working | |
-| Strikethrough `~~text~~` | Yes | Yes | Working | |
-| Inline code `` `code` `` | Yes | Yes | Working | Cannot combine with bold/italic (ADF limit) |
+| Bold `**text**` | ✅ | ✅ | Working | |
+| Italic `*text*` | ✅ | ✅ | Working | |
+| Bold+Italic `***text***` | ✅ | ✅ | Working | |
+| Strikethrough `~~text~~` | ✅ | ✅ | Working | |
+| Inline code `` `code` `` | ✅ | ✅ | Working | Cannot combine with bold/italic (ADF limit) |
 | **Headings** | | | | |
-| H1-H6 | Yes | Yes | Working | All heading levels supported |
+| H1-H6 | ✅ | ✅ | Working | All heading levels supported |
 | **Code Blocks** | | | | |
-| Fenced with language | Yes | Yes | Working | Language preserved |
-| Fenced without language | Yes | Yes | Working | Renders as plain code |
-| Special chars (`<`, `>`, `&`) | Yes | Yes | Working | Properly escaped in code |
-| Backslashes and regex | Yes | Yes | Working | Preserved correctly |
-| Quotes (escaped) | Yes | Yes | Working | Single, double, escaped |
-| Indented (4-space) | Yes | Yes | Working | Converted to fenced block |
-| Empty code blocks | Yes | Yes | Working | Uses space placeholder (workaround) |
+| Fenced with language | ✅ | ✅ | Working | Language preserved |
+| Fenced without language | ✅ | ✅ | Working | Renders as plain code |
+| Special chars (`<`, `>`, `&`) | ✅ | ✅ | Working | Properly escaped in code |
+| Backslashes and regex | ✅ | ✅ | Working | Preserved correctly |
+| Quotes (escaped) | ✅ | ✅ | Working | Single, double, escaped |
+| Indented (4-space) | ✅ | ✅ | Working | Converted to fenced block |
+| Empty code blocks | ✅ | ✅ | Working | Uses space placeholder (workaround) |
 | **Lists** | | | | |
-| Unordered | Yes | Yes | Working | |
-| Ordered | Yes | Yes | Working | |
-| Nested (3+ levels) | Yes | Yes | Working | |
-| Mixed nested | Yes | Yes | Working | |
-| Deeply nested (5 levels) | Yes | Yes | Working | |
-| Task lists `- [ ]` | Yes | Yes | Working | Checkbox state preserved |
+| Unordered | ✅ | ✅ | Working | |
+| Ordered | ✅ | ✅ | Working | |
+| Nested (3+ levels) | ✅ | ✅ | Working | |
+| Mixed nested | ✅ | ✅ | Working | |
+| Deeply nested (5 levels) | ✅ | ✅ | Working | |
+| Task lists `- [ ]` | ✅ | ✅ | Working | Checkbox state preserved |
 | **Tables** | | | | |
-| Basic tables | Yes | Yes | Working | |
-| Column alignment | Yes | No | Partial | ADF does not preserve alignment |
-| Empty cells | Yes | Yes | Working | |
-| Escaped pipes `\|` | Yes | Yes | Working | Pipe content preserved |
-| Formatted headers | Yes | Yes | Working | Bold, italic, code in headers |
-| Code in cells | Yes | Yes | Working | |
+| Basic tables | ✅ | ✅ | Working | |
+| Column alignment | ✅ | ❌ | Partial | ADF does not preserve alignment |
+| Empty cells | ✅ | ✅ | Working | |
+| Escaped pipes `\|` | ✅ | ✅ | Working | Pipe content preserved |
+| Formatted headers | ✅ | ✅ | Working | Bold, italic, code in headers |
+| Code in cells | ✅ | ✅ | Working | |
 | **Links** | | | | |
-| Basic links | Yes | Yes | Working | |
-| Multiple links | Yes | Yes | Working | |
-| Link titles | Yes | No | Partial | ADF does not preserve titles |
-| Links with special chars | Yes | Yes | Working | Query params, anchors |
-| AutoLinks `<url>` | Yes | Yes | Working | Converted to regular links |
-| Reference-style links | Yes | Yes | Working | Resolved during parse |
+| Basic links | ✅ | ✅ | Working | |
+| Multiple links | ✅ | ✅ | Working | |
+| Link titles | ✅ | ❌ | Partial | ADF does not preserve titles |
+| Links with special chars | ✅ | ✅ | Working | Query params, anchors |
+| AutoLinks `<url>` | ✅ | ✅ | Working | Converted to regular links |
+| Reference-style links | ✅ | ✅ | Working | Resolved during parse |
 | **Blockquotes** | | | | |
-| Simple | Yes | Yes | Working | |
-| With formatting | Yes | Yes | Working | |
-| With lists | Yes | Yes | Working | |
-| With code blocks | Yes | Yes | Working | |
-| Nested blockquotes | Yes | Yes | Working | Flattened (workaround) |
+| Simple | ✅ | ✅ | Working | |
+| With formatting | ✅ | ✅ | Working | |
+| With lists | ✅ | ✅ | Working | |
+| With code blocks | ✅ | ✅ | Working | |
+| Nested blockquotes | ✅ | ✅ | Working | Flattened (workaround) |
 | **Horizontal Rules** | | | | |
-| `---`, `***`, `___` | Yes | Yes | Working | All render as rule |
+| `---`, `***`, `___` | ✅ | ✅ | Working | All render as rule |
 | **Unicode & Special Chars** | | | | |
-| Unicode text (CJK, etc.) | Yes | Yes | Working | Japanese, Chinese, Korean, etc. |
-| HTML entities | Yes | Yes | Working | Properly escaped |
-| Emoji | Yes | Yes | Working | Unicode emoji supported |
-| Mathematical symbols | Yes | Yes | Working | ×, π, ∞, etc. |
-| Arrows | Yes | Yes | Working | →, ←, ↑, ↓, etc. |
+| Unicode text (CJK, etc.) | ✅ | ✅ | Working | Japanese, Chinese, Korean, etc. |
+| HTML entities | ✅ | ✅ | Working | Properly escaped |
+| Emoji | ✅ | ✅ | Working | Unicode emoji supported |
+| Mathematical symbols | ✅ | ✅ | Working | ×, π, ∞, etc. |
+| Arrows | ✅ | ✅ | Working | →, ←, ↑, ↓, etc. |
 | **Edge Cases** | | | | |
-| Escaped chars `\*` | Yes | Yes | Working | Escapes preserved |
-| Hard line breaks | Yes | Yes | Working | Two-space and backslash |
-| Double-backtick code | Yes | Yes | Working | Backtick in code spans |
-| Consecutive code blocks | Yes | Yes | Working | |
-| Long lines | Yes | Yes | Working | Wrapped correctly |
-| Paragraph breaks | Yes | Yes | Working | Single vs double breaks |
+| Escaped chars `\*` | ✅ | ✅ | Working | Escapes preserved |
+| Hard line breaks | ✅ | ✅ | Working | Two-space and backslash |
+| Double-backtick code | ✅ | ✅ | Working | Backtick in code spans |
+| Consecutive code blocks | ✅ | ✅ | Working | |
+| Long lines | ✅ | ✅ | Working | Wrapped correctly |
+| Paragraph breaks | ✅ | ✅ | Working | Single vs double breaks |
 
 ### Legend
 
-- Yes - Working correctly
-- Partial - Works with known limitations
-- No - Not supported by ADF
+- ✅ Working correctly
+- ⚠️ Works with minor issues
+- ❌ Not supported by ADF
 
 ## ADF Limitations
 
