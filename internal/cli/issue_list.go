@@ -183,11 +183,8 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 				assignee = padRight(assignee, assigneeWidth)
 			}
 
-			// Truncate summary for display
-			summary := issue.Summary
-			if len(summary) > 60 {
-				summary = summary[:57] + "..."
-			}
+			// Truncate summary for display using display width
+			summary := width.Truncate(issue.Summary, 60, "...")
 
 			fmt.Printf("%s  %s  %s  %s  %s\n", key, status, padRight(issue.Type, typeWidth), assignee, summary)
 		}

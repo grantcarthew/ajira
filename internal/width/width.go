@@ -49,6 +49,37 @@ func StringWidth(s string) int {
 	return w
 }
 
+// Truncate truncates s to fit within maxWidth display columns.
+// If the string exceeds maxWidth, it is truncated and suffix is appended.
+// The result (including suffix) will not exceed maxWidth columns.
+func Truncate(s string, maxWidth int, suffix string) string {
+	sw := StringWidth(s)
+	if sw <= maxWidth {
+		return s
+	}
+
+	suffixWidth := StringWidth(suffix)
+	targetWidth := maxWidth - suffixWidth
+	if targetWidth <= 0 {
+		// Not enough room for suffix, just truncate without it
+		targetWidth = maxWidth
+		suffix = ""
+	}
+
+	var result []rune
+	currentWidth := 0
+	for _, r := range s {
+		rw := RuneWidth(r)
+		if currentWidth+rw > targetWidth {
+			break
+		}
+		result = append(result, r)
+		currentWidth += rw
+	}
+
+	return string(result) + suffix
+}
+
 // isCombining returns true for combining diacritical marks and similar
 // characters that overlay the previous character (zero width).
 func isCombining(r rune) bool {

@@ -9,6 +9,7 @@ import (
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
 	"github.com/gcarthew/ajira/internal/converter"
+	"github.com/gcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -275,10 +276,7 @@ func printIssueDetail(issue *IssueDetail) {
 		fmt.Println()
 		fmt.Println("Links:")
 		for _, link := range issue.Links {
-			summary := link.Summary
-			if len(summary) > 50 {
-				summary = summary[:47] + "..."
-			}
+			summary := width.Truncate(link.Summary, 50, "...")
 			fmt.Printf("  %s %s (%s) - %s\n", link.Direction, link.Key, link.Status, summary)
 		}
 	}

@@ -592,3 +592,155 @@ func BenchmarkStringWidth_Long(b *testing.B) {
 		StringWidth(s)
 	}
 }
+
+func TestTruncate_Basic(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		maxWidth int
+		suffix   string
+		want     string
+	}{
+		{"empty", "", 10, "...", ""},
+		{"shorter_than_max", "hello", 10, "...", "hello"},
+		{"exact_length", "hello", 5, "...", "hello"},
+		{"needs_truncation", "hello world", 8, "...", "hello..."},
+		{"truncate_to_zero", "hello", 0, "...", ""},
+		{"suffix_too_long", "hello", 2, "...", "he"},
+		{"no_suffix", "hello world", 5, "", "hello"},
+		{"single_char_suffix", "hello world", 6, ".", "hello."},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Truncate(tt.input, tt.maxWidth, tt.suffix)
+			if got != tt.want {
+				t.Errorf("Truncate(%q, %d, %q) = %q, want %q",
+					tt.input, tt.maxWidth, tt.suffix, got, tt.want)
+			}
+			// Verify result doesn't exceed maxWidth
+			gotWidth := StringWidth(got)
+			if gotWidth > tt.maxWidth {
+				t.Errorf("Truncate result width %d exceeds maxWidth %d", gotWidth, tt.maxWidth)
+			}
+		})
+	}
+}
+
+func TestTruncate_CJK(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		maxWidth int
+		suffix   string
+		want     string
+	}{
+		{"CJK_no_truncation", "日本語", 6, "...", "日本語"},
+		{"CJK_truncate_one", "日本語テスト", 9, "...", "日本語..."},
+		{"CJK_truncate_to_fit", "日本語テスト", 8, "...", "日本..."},
+		{"CJK_mixed_ASCII", "Hello世界", 10, "...", "Hello世界"},
+		{"CJK_mixed_truncate", "Hello世界Test", 10, "...", "Hello世..."},
+		{"hangul", "안녕하세요", 7, "...", "안녕..."},
+		{"chinese", "你好世界", 5, "...", "你..."},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Truncate(tt.input, tt.maxWidth, tt.suffix)
+			if got != tt.want {
+				t.Errorf("Truncate(%q, %d, %q) = %q, want %q",
+					tt.input, tt.maxWidth, tt.suffix, got, tt.want)
+			}
+			gotWidth := StringWidth(got)
+			if gotWidth > tt.maxWidth {
+				t.Errorf("Truncate result width %d exceeds maxWidth %d", gotWidth, tt.maxWidth)
+			}
+		})
+	}
+}
+
+func TestTruncate_Emoji(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		maxWidth int
+		suffix   string
+		want     string
+	}{
+		{"emoji_fits", "🔥🚀", 4, "...", "🔥🚀"},
+		{"emoji_truncate", "🔥🚀✨⭐", 5, "...", "🔥..."},
+		{"emoji_with_text", "Bug🐛Fix", 8, "...", "Bug🐛Fix"},
+		{"text_then_emoji", "Test🔥", 6, "...", "Test🔥"},
+		{"text_then_emoji_truncate", "Testing🔥", 7, "...", "Test..."},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Truncate(tt.input, tt.maxWidth, tt.suffix)
+			if got != tt.want {
+				t.Errorf("Truncate(%q, %d, %q) = %q, want %q",
+					tt.input, tt.maxWidth, tt.suffix, got, tt.want)
+			}
+			gotWidth := StringWidth(got)
+			if gotWidth > tt.maxWidth {
+				t.Errorf("Truncate result width %d exceeds maxWidth %d", gotWidth, tt.maxWidth)
+			}
+		})
+	}
+}
+
+func TestTruncate_EdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		maxWidth int
+		suffix   string
+		wantMax  int // verify result is at most this width
+	}{
+		{"wide_char_boundary", "あいうえお", 7, "...", 7},
+		{"wide_char_exact", "あいう", 6, "...", 6},
+		{"combining_chars", "e\u0301e\u0301e\u0301", 3, "...", 3},
+		{"zero_width_chars", "a\u200Bb\u200Bc", 3, "...", 3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Truncate(tt.input, tt.maxWidth, tt.suffix)
+			gotWidth := StringWidth(got)
+			if gotWidth > tt.wantMax {
+				t.Errorf("Truncate(%q, %d, %q) width = %d, want <= %d",
+					tt.input, tt.maxWidth, tt.suffix, gotWidth, tt.wantMax)
+			}
+		})
+	}
+}
+
+func TestTruncate_RealWorld(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		maxWidth int
+		suffix   string
+	}{
+		{"issue_summary_EN", "Fix authentication bug in login page", 60, "..."},
+		{"issue_summary_JP", "ログイン機能のバグを修正する必要があります", 60, "..."},
+		{"issue_summary_mixed", "Fix the 日本語 encoding issue in exports", 50, "..."},
+		{"long_summary", "This is a very long issue summary that definitely needs to be truncated to fit within the display width", 60, "..."},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Truncate(tt.input, tt.maxWidth, tt.suffix)
+			gotWidth := StringWidth(got)
+			if gotWidth > tt.maxWidth {
+				t.Errorf("Truncate result width %d exceeds maxWidth %d for %q",
+					gotWidth, tt.maxWidth, tt.input)
+			}
+			// If original fits, should be unchanged
+			if StringWidth(tt.input) <= tt.maxWidth && got != tt.input {
+				t.Errorf("Truncate modified string that already fits: got %q, want %q",
+					got, tt.input)
+			}
+		})
+	}
+}
