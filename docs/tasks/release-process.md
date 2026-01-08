@@ -25,21 +25,63 @@ Verify before starting:
 
 **Steps**:
 
-1. Run pre-release validation
-2. Determine version number
-3. Update CHANGELOG.md
-4. Commit changes
-5. Create and push git tag
-6. Create GitHub Release
-7. Update Homebrew tap
-8. Verify installation
-9. Clean up
+1. Pre-release review
+2. Run pre-release validation
+3. Determine version number
+4. Update CHANGELOG.md
+5. Commit changes
+6. Create and push git tag
+7. Create GitHub Release
+8. Update Homebrew tap
+9. Verify installation
+10. Clean up
 
-**Estimated Time**: 20-30 minutes
+**Estimated Time**: 25-35 minutes
 
 ---
 
-## Step 1: Pre-Release Validation
+## Step 1: Pre-Release Review
+
+Perform a brief holistic review of the codebase before release. This is a quick glance to identify obvious issues, not a full code review.
+
+**Review the following:**
+
+1. **Active project status** - Check `AGENTS.md` for the active project. Verify it is complete and ready for release, or confirm no active project blocks the release.
+
+2. **Recent changes** - Review commits since the last release tag. Look for:
+   - Incomplete work (TODO, FIXME, XXX comments in changed files)
+   - Obvious errors or missing error handling
+   - Changes that lack corresponding tests
+
+3. **Documentation currency** - Quick check that:
+   - `README.md` reflects current functionality
+   - Command help text matches implementation (`ajira help`)
+   - `AGENTS.md` is accurate
+
+4. **Code cleanliness** - Scan `internal/` for:
+   - Dead code or commented-out blocks
+   - Debug statements (fmt.Println, log.Println not part of normal output)
+   - Hardcoded values that should be configurable
+
+**Commands to assist review:**
+
+```bash
+# Find TODOs/FIXMEs in Go files
+rg -i "TODO|FIXME|XXX" --type go
+
+# Show commits since last release
+PREV_VERSION=$(git tag -l | tail -1)
+git log ${PREV_VERSION}..HEAD --oneline
+
+# List recently modified Go files
+git diff --name-only ${PREV_VERSION}..HEAD -- "*.go"
+```
+
+**Decision:** Report **GO** if no blocking issues found, or **NO-GO** with specific concerns that must be addressed before release.
+
+---
+
+## Step 2: Pre-Release Validation
 
 Run validation checks:
 
@@ -94,7 +136,7 @@ go install github.com/gordonklaus/ineffassign@latest
 
 ---
 
-## Step 2: Determine Version Number
+## Step 3: Determine Version Number
 
 Set the version number using [Semantic Versioning](https://semver.org/):
 
@@ -113,7 +155,7 @@ echo "Releasing version: v${VERSION}"
 
 ---
 
-## Step 3: Update CHANGELOG.md
+## Step 4: Update CHANGELOG.md
 
 Review changes since last release and update CHANGELOG.md:
 
@@ -163,7 +205,7 @@ Example format:
 
 ---
 
-## Step 4: Commit Changes
+## Step 5: Commit Changes
 
 Commit the CHANGELOG:
 
@@ -176,7 +218,7 @@ git push origin main
 
 ---
 
-## Step 5: Create and Push Git Tag
+## Step 6: Create and Push Git Tag
 
 Create an annotated git tag:
 
@@ -203,7 +245,7 @@ git tag -l -n9 "v${VERSION}"
 
 ---
 
-## Step 6: Create GitHub Release
+## Step 7: Create GitHub Release
 
 Create the GitHub Release with release notes:
 
@@ -247,7 +289,7 @@ gh release view "v${VERSION}"
 
 ---
 
-## Step 7: Update Homebrew Tap
+## Step 8: Update Homebrew Tap
 
 Update the Homebrew formula with the new version:
 
@@ -300,7 +342,7 @@ end
 
 ---
 
-## Step 8: Verify Installation
+## Step 9: Verify Installation
 
 Test the Homebrew installation:
 
@@ -331,7 +373,7 @@ brew install --verbose grantcarthew/tap/ajira
 
 ---
 
-## Step 9: Clean Up
+## Step 10: Clean Up
 
 Complete the release:
 
@@ -399,29 +441,32 @@ export VERSION="0.0.1"
 # Get previous version for change summary
 PREV_VERSION=$(git tag -l | tail -1)
 
-# 1. Validation
+# 1. Pre-release review (see Step 1 for details)
+rg -i "TODO|FIXME|XXX" --type go  # Should be empty or acceptable
+
+# 2. Validation
 go test -v ./...
 git status  # Should be clean
 
-# 2. Update CHANGELOG.md manually, then commit
+# 3. Update CHANGELOG.md manually, then commit
 git add CHANGELOG.md
 git commit -m "chore: prepare for v${VERSION} release"
 git push origin main
 
-# 3. Create tag with summary
+# 4. Create tag with summary
 SUMMARY="Your summary here"
 git tag -a "v${VERSION}" -m "Release v${VERSION} - ${SUMMARY}"
 git push origin "v${VERSION}"
 
-# 4. Create GitHub Release
+# 5. Create GitHub Release
 gh release create "v${VERSION}" --title "Release v${VERSION}" \
   --notes "$(git log ${PREV_VERSION}..v${VERSION} --pretty=format:'- %s' 2>/dev/null || git log --pretty=format:'- %s' | head -20)"
 
-# 5. Get tarball SHA256 (macOS)
+# 6. Get tarball SHA256 (macOS)
 TARBALL_SHA256=$(curl -sL "https://github.com/gcarthew/ajira/archive/refs/tags/v${VERSION}.tar.gz" | shasum -a 256 | cut -d' ' -f1)
 echo "SHA256: $TARBALL_SHA256"
 
-# 6. Update Homebrew (edit Formula/ajira.rb with VERSION and SHA256)
+# 7. Update Homebrew (edit Formula/ajira.rb with VERSION and SHA256)
 cd ~/Projects/homebrew-tap
 # Edit Formula/ajira.rb
 git add Formula/ajira.rb
@@ -429,7 +474,7 @@ git commit -m "ajira: update to ${VERSION}"
 git push origin main
 cd -
 
-# 7. Test
+# 8. Test
 brew update && brew reinstall grantcarthew/tap/ajira
 ajira --version
 ```

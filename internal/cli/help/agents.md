@@ -59,6 +59,15 @@ ajira issue comment add PROJ-123 -f comment.md
 echo "Stdin comment" | ajira issue comment add PROJ-123 -f -
 ```
 
+## Issue Links
+
+```
+ajira issue link types
+ajira issue link add PROJ-123 Blocks PROJ-456
+ajira issue link remove PROJ-123 PROJ-456
+ajira issue link url PROJ-123 https://example.com "Documentation"
+```
+
 ## Available Values
 
 ```
