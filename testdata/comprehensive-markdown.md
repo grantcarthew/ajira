@@ -1,4 +1,4 @@
-# Ajira Markdown Test Document
+# Ajira Comprehensive Test Document
 
 This document tests all Markdown features supported by ajira for conversion to Jira's Atlassian Document Format (ADF). Use this to verify Markdown renders correctly in Jira issues and comments.
 
@@ -6,7 +6,7 @@ This document tests all Markdown features supported by ajira for conversion to J
 
 ### Basic Formatting
 
-This paragraph contains **bold text**, _italic text_, and _**bold italic text**_ combined. Here is some `inline code` within a sentence.
+This paragraph contains **bold text**, *italic text*, and ***bold italic text*** combined. Here is some `inline code` within a sentence.
 
 ### Strikethrough
 
@@ -14,7 +14,7 @@ This feature uses ~~strikethrough~~ text for deleted content.
 
 ### Mixed Formatting
 
-You can combine **bold** and _italic_ with `inline code` in the same line.
+You can combine **bold with `inline code`** and *italic with `inline code`* in the same line.
 
 > **Note:** ADF does not support combining `code` marks with other formatting marks like bold or italic. The `code` mark can only combine with `link`. For example, `**`code`**` will render as just `code` without bold formatting. This is an [ADF specification limitation](https://developer.atlassian.com/cloud/jira/platform/apis/document/marks/code/).
 
@@ -77,19 +77,47 @@ const fetchData = async (url) => {
 };
 ```
 
-### Shell Commands
+### Code with Special Characters
 
-```bash
-#!/bin/bash
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test & Demo</title>
+</head>
+<body>
+    <div class="container">
+        <p>if (a < b && c > d) { /* comment */ }</p>
+    </div>
+</body>
+</html>
+```
 
-# Install dependencies
-npm install
+### Code with Backslashes and Regex
 
-# Build the project
-go build -o ajira ./cmd/ajira
+```go
+func validatePath(path string) bool {
+    // Windows paths: C:\Users\test\file.txt
+    winRegex := regexp.MustCompile(`^[A-Z]:\\[\w\\]+$`)
+    // Unix paths: /home/user/file.txt
+    unixRegex := regexp.MustCompile(`^/[\w/]+$`)
+    return winRegex.MatchString(path) || unixRegex.MatchString(path)
+}
+```
 
-# Run tests
-go test -v ./...
+### Code with Quotes
+
+```python
+def process_text(text):
+    single = 'Hello'
+    double = "World"
+    escaped = "She said \"Hello\" and 'waved'"
+    multiline = """
+    This is a
+    multiline string
+    """
+    return f"{single} {double}: {escaped}"
 ```
 
 ### Code Block Without Language
@@ -100,52 +128,44 @@ without any language specified.
 It should still be formatted as code.
 ```
 
-### Terraform (Common for Jira GCP Project)
+### Shell Commands
 
-```hcl
-resource "google_compute_instance" "default" {
-  name         = "my-instance"
-  machine_type = "e2-medium"
-  zone         = "australia-southeast1-b"
+```bash
+#!/bin/bash
 
-  boot_disk {
-    initialize_params {
-      image = "debian-cloud/debian-11"
-    }
-  }
+# Install dependencies
+npm install
 
-  network_interface {
-    network = "default"
-    access_config {}
-  }
-}
+# Build the project
+go build -o ajira -ldflags "-X main.version=v1.0.0"
+
+# Run tests
+go test -v ./... 2>&1 | tee test-output.log
+
+# Check exit status
+if [ $? -eq 0 ]; then
+    echo "All tests passed!"
+else
+    echo "Some tests failed."
+    exit 1
+fi
 ```
 
-### JSON Example
+### Indented Code Block (4-space prefix)
 
-```json
-{
-  "name": "ajira",
-  "version": "1.0.0",
-  "config": {
-    "timeout": 30,
-    "retries": 3
-  }
-}
+    This is an indented code block
+    created with 4 spaces instead of fences.
+    It should render as code without a language.
+
+### Empty Code Block
+
+```
 ```
 
-### YAML Example
+### Code Block with Only Whitespace
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-app
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: my-app
+```
+
 ```
 
 ## Lists
@@ -154,7 +174,7 @@ spec:
 
 - First item
 - Second item
-- Third item with **bold** and _italic_
+- Third item with **bold** and *italic*
 - Fourth item with `inline code`
 
 ### Ordered List
@@ -183,6 +203,16 @@ spec:
 2. Ordered parent two
    1. Nested ordered 2.1
    2. Nested ordered 2.2
+      - Mixed deep nesting
+      - Another mixed item
+
+### Deeply Nested Lists (5 levels)
+
+- Level 1
+  - Level 2
+    - Level 3
+      - Level 4
+        - Level 5
 
 ### Task Lists (GFM Checkboxes)
 
@@ -199,7 +229,7 @@ spec:
 |---------|--------|-------|
 | Headings | Working | H1-H6 |
 | Bold | Working | **text** |
-| Italic | Working | _text_ |
+| Italic | Working | *text* |
 | Code | Working | `code` |
 
 ### Table with Alignment
@@ -210,13 +240,35 @@ spec:
 | Data | Data | Data |
 | More | More | More |
 
-### Table with Code
+### Table with Complex Content
 
-| Command | Description |
-|---------|-------------|
-| `ajira issue list` | List issues |
-| `ajira issue view KEY` | View issue details |
-| `ajira issue create -s "Summary"` | Create new issue |
+| Language | Example | Description |
+|----------|---------|-------------|
+| Go | `fmt.Println()` | Print with newline |
+| Python | `print()` | Standard output |
+| JavaScript | `console.log()` | Browser console |
+| Rust | `println!()` | Macro-based print |
+
+### Table with Empty Cells
+
+| Column A | Column B | Column C |
+|----------|----------|----------|
+| Has data | | Empty middle |
+| | Empty start | Has data |
+| Data | Data | |
+
+### Table with Escaped Pipes
+
+| Expression | Result | Notes |
+|------------|--------|-------|
+| a \| b | OR operation | Logical or |
+| x \| y \| z | Multiple | Chained |
+
+### Table with Formatted Headers
+
+| **Bold Header** | *Italic Header* | `Code Header` |
+|-----------------|-----------------|---------------|
+| normal data | normal data | normal data |
 
 ## Links
 
@@ -228,13 +280,32 @@ Check out the [Go Programming Language](https://go.dev/) official website.
 
 ### Multiple Links in Paragraph
 
-Here are useful resources: [GitHub](https://github.com), [Stack Overflow](https://stackoverflow.com), and [Go Docs](https://pkg.go.dev).
+Here are some useful resources: [GitHub](https://github.com), [Stack Overflow](https://stackoverflow.com), and [Go Docs](https://pkg.go.dev).
 
-### Jira-Style Links (Common in Issues)
+### Link with Title (may be lost in ADF)
 
-Related ticket: [GCP-123](https://autogeneral-au.atlassian.net/browse/GCP-123)
+[Go Documentation](https://go.dev/doc/ "Official Go documentation and tutorials")
 
-Confluence page: [Project Documentation](https://autogeneral-au.atlassian.net/wiki/spaces/CSA1/overview)
+### Links with Special Characters
+
+[Search with params](https://example.com/search?q=foo&bar=baz#anchor)
+
+[URL with spaces](https://example.com/path%20with%20spaces)
+
+### AutoLinks
+
+<https://example.com>
+
+<https://go.dev/doc/>
+
+<user@example.com>
+
+### Reference-Style Links
+
+Here is a [reference link][reflink] and another [link][golang].
+
+[reflink]: https://example.com/reference "Reference Example"
+[golang]: https://go.dev
 
 ## Blockquotes
 
@@ -248,7 +319,11 @@ Confluence page: [Project Documentation](https://autogeneral-au.atlassian.net/wi
 
 ### Nested Blockquotes
 
-> **Note:** ADF does not support nested blockquotes. Blockquote content can only contain paragraphs, lists, code blocks, and media - not other blockquotes. See the [ADF blockquote spec](https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/blockquote/).
+> Outer blockquote level one
+> > Inner blockquote level two
+> > > Deeply nested level three
+
+> **Note:** ADF does not support nested blockquotes. They will be flattened. See the [ADF blockquote spec](https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/blockquote/).
 
 ### Blockquote with List
 
@@ -258,54 +333,76 @@ Confluence page: [Project Documentation](https://autogeneral-au.atlassian.net/wi
 > - Second item in quote
 > - Third item in quote
 
+### Blockquote with Code
+
+> Here is some code in a blockquote:
+>
+> ```go
+> fmt.Println("Hello from blockquote")
+> ```
+
 ## Horizontal Rules
 
-Section separator:
+Various horizontal rule syntaxes:
 
 ---
 
-Another separator:
-
 ***
 
-## Special Characters
+___
 
-### Common Characters in Technical Docs
+## Unicode and Special Characters
 
-- Ampersands & angle brackets < > work correctly
-- Quotes: "double" and 'single'
-- Pipes: command1 | command2 | command3
-- Backslashes: C:\Users\path\file.txt
+### Unicode Text
 
-### Mathematical and Arrows
+- Japanese: こんにちは世界
+- Chinese: 你好世界
+- Korean: 안녕하세요
+- Russian: Привет мир
+- Arabic: مرحبا بالعالم
+- Emoji: 🚀 🎉 ✨ 💻 🔧
 
-- Mathematical: 2 x 3 = 6
-- Arrows: -> <- => <= <->
-- Comparison: >= <= != ==
+### Special Characters in Text
 
-### Emoji (if supported)
+Ampersands & angle brackets < > and quotes "double" 'single' work correctly.
 
-Common emoji: :rocket: :white_check_mark: :x: :warning:
+Mathematical: 2 × 3 = 6, π ≈ 3.14159, ∞ infinity
 
-Unicode emoji: 🚀 ✅ ❌ ⚠️ 💻
+Arrows: → ← ↑ ↓ ↔ ⇒ ⇐
 
 ## Edge Cases
 
 ### Escaped Characters
 
-These should render literally:
+These should render literally, not as formatting:
 
 \*not italic\* and \`not code\` and \[not a link\](url)
 
-### Inline Code with Special Characters
+\# Not a heading
 
-Command with flags: `go test -v -race ./...`
+\- Not a list item
 
-Path with spaces: `"/path/with spaces/file.txt"`
+### Hard Line Breaks
+
+Line with two trailing spaces
+forces a line break here.
+
+Line with backslash\
+also forces a break.
+
+### Double-Backtick Code Spans
+
+Code with backtick inside: ``code with ` backtick``
+
+Multiple backticks: ``` `multiple` backticks ```
+
+### Empty Sections
+
+This section has no special formatting.
 
 ### Long Lines
 
-This is an extremely long line that should wrap correctly in Jira without breaking the formatting or causing any display issues in the rendered output regardless of the screen width or display settings.
+This is an extremely long line that should wrap correctly in both Jira and when converted back to Markdown without breaking the formatting or causing any display issues in the rendered output regardless of the screen width or display settings being used by the reader of this document.
 
 ### Consecutive Code Blocks
 
@@ -320,6 +417,18 @@ def second():
     pass
 ```
 
+```javascript
+// Third code block
+const third = () => {};
+```
+
+### Paragraphs with Single vs Double Line Breaks
+
+This is paragraph one.
+This is still paragraph one (single line break).
+
+This is paragraph two (double line break above).
+
 ---
 
-_Generated for ajira CLI testing - Markdown to ADF conversion verification._
+*Generated for ajira CLI testing - Markdown to ADF conversion verification.*

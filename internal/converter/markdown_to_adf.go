@@ -2,6 +2,7 @@ package converter
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/yuin/goldmark"
@@ -134,6 +135,11 @@ func convertFencedCodeBlock(n *ast.FencedCodeBlock, source []byte) *ADFNode {
 		text = text[:len(text)-1]
 	}
 
+	// Jira ADF rejects empty text nodes in code blocks - use space placeholder
+	if strings.TrimSpace(text) == "" {
+		text = " "
+	}
+
 	node := &ADFNode{
 		Type: NodeTypeCodeBlock,
 		Content: []ADFNode{
@@ -149,10 +155,26 @@ func convertFencedCodeBlock(n *ast.FencedCodeBlock, source []byte) *ADFNode {
 }
 
 func convertBlockquote(n *ast.Blockquote, source []byte) *ADFNode {
+	// ADF does not support nested blockquotes - flatten them
+	content := flattenBlockquoteContent(n, source)
 	return &ADFNode{
 		Type:    NodeTypeBlockquote,
-		Content: walkNode(n, source),
+		Content: content,
 	}
+}
+
+// flattenBlockquoteContent extracts content from blockquotes, flattening any nested blockquotes.
+func flattenBlockquoteContent(n ast.Node, source []byte) []ADFNode {
+	var nodes []ADFNode
+	for child := n.FirstChild(); child != nil; child = child.NextSibling() {
+		if bq, ok := child.(*ast.Blockquote); ok {
+			// Flatten nested blockquote - include its content directly
+			nodes = append(nodes, flattenBlockquoteContent(bq, source)...)
+		} else if node := convertNode(child, source); node != nil {
+			nodes = append(nodes, *node)
+		}
+	}
+	return nodes
 }
 
 func convertList(n *ast.List, source []byte) *ADFNode {
