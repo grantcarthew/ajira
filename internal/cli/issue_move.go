@@ -58,6 +58,7 @@ func init() {
 }
 
 func runIssueMove(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	issueKey := args[0]
 
 	cfg, err := config.Load()
@@ -68,7 +69,7 @@ func runIssueMove(cmd *cobra.Command, args []string) error {
 	client := api.NewClient(cfg)
 
 	// Get available transitions
-	transitions, err := getTransitions(client, issueKey)
+	transitions, err := getTransitions(ctx, client, issueKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -114,7 +115,7 @@ func runIssueMove(cmd *cobra.Command, args []string) error {
 		return Errorf("transition not available: %s (available: %s)", targetStatus, strings.Join(available, ", "))
 	}
 
-	err = doTransition(client, issueKey, matchedTransition.ID)
+	err = doTransition(ctx, client, issueKey, matchedTransition.ID)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -136,10 +137,10 @@ func runIssueMove(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getTransitions(client *api.Client, key string) ([]transition, error) {
+func getTransitions(ctx context.Context, client *api.Client, key string) ([]transition, error) {
 	path := fmt.Sprintf("/issue/%s/transitions", key)
 
-	body, err := client.Get(context.Background(), path)
+	body, err := client.Get(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +153,7 @@ func getTransitions(client *api.Client, key string) ([]transition, error) {
 	return resp.Transitions, nil
 }
 
-func doTransition(client *api.Client, key, transitionID string) error {
+func doTransition(ctx context.Context, client *api.Client, key, transitionID string) error {
 	req := transitionRequest{
 		Transition: transitionRef{ID: transitionID},
 	}
@@ -163,6 +164,6 @@ func doTransition(client *api.Client, key, transitionID string) error {
 	}
 
 	path := fmt.Sprintf("/issue/%s/transitions", key)
-	_, err = client.Post(context.Background(), path, body)
+	_, err = client.Post(ctx, path, body)
 	return err
 }

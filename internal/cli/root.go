@@ -1,8 +1,11 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/spf13/cobra"
@@ -81,7 +84,9 @@ Use "{{.CommandPath}} <command> --help" for more information about a command.{{e
 }
 
 func Execute() error {
-	return rootCmd.Execute()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	return rootCmd.ExecuteContext(ctx)
 }
 
 // JSONOutput returns true if JSON output is requested.

@@ -1469,15 +1469,22 @@ func TestMarkdownToADF_NestedBlockquotes(t *testing.T) {
 	if quote.Type != NodeTypeBlockquote {
 		t.Fatalf("expected blockquote, got %q", quote.Type)
 	}
-	// Should contain nested blockquote
-	foundNested := false
+	// Nested blockquotes should be flattened for Jira ADF compatibility
+	// Verify no nested blockquotes exist and content is flattened
 	for _, child := range quote.Content {
 		if child.Type == NodeTypeBlockquote {
-			foundNested = true
+			t.Error("expected nested blockquotes to be flattened")
 		}
 	}
-	if !foundNested {
-		t.Error("expected nested blockquote")
+	// Should have at least 2 paragraphs from flattened content
+	paraCount := 0
+	for _, child := range quote.Content {
+		if child.Type == NodeTypeParagraph {
+			paraCount++
+		}
+	}
+	if paraCount < 2 {
+		t.Errorf("expected at least 2 paragraphs from flattened blockquotes, got %d", paraCount)
 	}
 }
 

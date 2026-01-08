@@ -54,6 +54,7 @@ func init() {
 }
 
 func runIssueLinkAdd(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	outwardKey := args[0]
 	linkTypeName := args[1]
 	inwardKey := args[2]
@@ -66,7 +67,7 @@ func runIssueLinkAdd(cmd *cobra.Command, args []string) error {
 	client := api.NewClient(cfg)
 
 	// Validate link type
-	linkTypes, err := jira.GetLinkTypes(client)
+	linkTypes, err := jira.GetLinkTypes(ctx, client)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -84,7 +85,7 @@ func runIssueLinkAdd(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create the link
-	err = createIssueLink(client, outwardKey, inwardKey, validType.Name)
+	err = createIssueLink(ctx, client, outwardKey, inwardKey, validType.Name)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -117,7 +118,7 @@ func findLinkType(linkTypes []jira.LinkType, name string) *jira.LinkType {
 	return nil
 }
 
-func createIssueLink(client *api.Client, outwardKey, inwardKey, linkTypeName string) error {
+func createIssueLink(ctx context.Context, client *api.Client, outwardKey, inwardKey, linkTypeName string) error {
 	// Jira API naming is counterintuitive:
 	// - inwardIssue = the issue that "does" the action (shows outward text, e.g., "blocks")
 	// - outwardIssue = the issue that "receives" the action (shows inward text, e.g., "is blocked by")
@@ -133,6 +134,6 @@ func createIssueLink(client *api.Client, outwardKey, inwardKey, linkTypeName str
 		return fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	_, err = client.Post(context.Background(), "/issueLink", body)
+	_, err = client.Post(ctx, "/issueLink", body)
 	return err
 }

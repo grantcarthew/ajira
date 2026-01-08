@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -89,7 +90,7 @@ func (c *Client) request(ctx context.Context, method, path string, body []byte) 
 
 	var bodyReader io.Reader
 	if body != nil {
-		bodyReader = strings.NewReader(string(body))
+		bodyReader = bytes.NewReader(body)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, url, bodyReader)

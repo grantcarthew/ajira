@@ -67,8 +67,8 @@ type projectStatusesResponse struct {
 }
 
 // GetPriorities fetches all priorities from the Jira instance.
-func GetPriorities(client *api.Client) ([]Priority, error) {
-	body, err := client.Get(context.Background(), "/priority")
+func GetPriorities(ctx context.Context, client *api.Client) ([]Priority, error) {
+	body, err := client.Get(ctx, "/priority")
 	if err != nil {
 		return nil, err
 	}
@@ -91,10 +91,10 @@ func GetPriorities(client *api.Client) ([]Priority, error) {
 }
 
 // GetIssueTypes fetches issue types for a project.
-func GetIssueTypes(client *api.Client, projectKey string) ([]IssueType, error) {
+func GetIssueTypes(ctx context.Context, client *api.Client, projectKey string) ([]IssueType, error) {
 	path := fmt.Sprintf("/issue/createmeta/%s/issuetypes", projectKey)
 
-	body, err := client.Get(context.Background(), path)
+	body, err := client.Get(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -125,10 +125,10 @@ func GetIssueTypes(client *api.Client, projectKey string) ([]IssueType, error) {
 }
 
 // GetStatuses fetches statuses for a project.
-func GetStatuses(client *api.Client, projectKey string) ([]Status, error) {
+func GetStatuses(ctx context.Context, client *api.Client, projectKey string) ([]Status, error) {
 	path := fmt.Sprintf("/project/%s/statuses", projectKey)
 
-	body, err := client.Get(context.Background(), path)
+	body, err := client.Get(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -159,8 +159,8 @@ func GetStatuses(client *api.Client, projectKey string) ([]Status, error) {
 }
 
 // GetLinkTypes fetches all issue link types from the Jira instance.
-func GetLinkTypes(client *api.Client) ([]LinkType, error) {
-	body, err := client.Get(context.Background(), "/issueLinkType")
+func GetLinkTypes(ctx context.Context, client *api.Client) ([]LinkType, error) {
+	body, err := client.Get(ctx, "/issueLinkType")
 	if err != nil {
 		return nil, err
 	}

@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 
@@ -34,6 +33,8 @@ func init() {
 }
 
 func runMe(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
 	cfg, err := config.Load()
 	if err != nil {
 		return Errorf("%v", err)
@@ -41,7 +42,7 @@ func runMe(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	body, err := client.Get(context.Background(), "/myself")
+	body, err := client.Get(ctx, "/myself")
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)

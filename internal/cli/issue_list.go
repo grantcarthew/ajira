@@ -10,6 +10,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
+	"github.com/gcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -98,6 +99,8 @@ func init() {
 }
 
 func runIssueList(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
 	cfg, err := config.Load()
 	if err != nil {
 		return Errorf("%v", err)
@@ -115,7 +118,7 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	issues, err := searchIssues(client, jql, issueListLimit)
+	issues, err := searchIssues(ctx, client, jql, issueListLimit)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -139,24 +142,24 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 		faint := color.New(color.Faint).SprintFunc()
 		header := color.New(color.FgCyan, color.Bold).SprintFunc()
 
-		// Calculate column widths
+		// Calculate column widths using display width for Unicode support
 		keyWidth, statusWidth, typeWidth, assigneeWidth := 8, 11, 4, 8
 		for _, issue := range issues {
-			if len(issue.Key) > keyWidth {
-				keyWidth = len(issue.Key)
+			if w := width.StringWidth(issue.Key); w > keyWidth {
+				keyWidth = w
 			}
-			if len(issue.Status) > statusWidth {
-				statusWidth = len(issue.Status)
+			if w := width.StringWidth(issue.Status); w > statusWidth {
+				statusWidth = w
 			}
-			if len(issue.Type) > typeWidth {
-				typeWidth = len(issue.Type)
+			if w := width.StringWidth(issue.Type); w > typeWidth {
+				typeWidth = w
 			}
 			assignee := issue.Assignee
 			if assignee == "" {
 				assignee = "-"
 			}
-			if len(assignee) > assigneeWidth {
-				assigneeWidth = len(assignee)
+			if w := width.StringWidth(assignee); w > assigneeWidth {
+				assigneeWidth = w
 			}
 		}
 
@@ -231,7 +234,7 @@ func buildJQL() string {
 	return strings.Join(conditions, " AND ") + " ORDER BY updated DESC"
 }
 
-func searchIssues(client *api.Client, jql string, limit int) ([]IssueInfo, error) {
+func searchIssues(ctx context.Context, client *api.Client, jql string, limit int) ([]IssueInfo, error) {
 	var allIssues []IssueInfo
 	maxResults := 50
 	if limit > 0 && limit < maxResults {
@@ -248,7 +251,7 @@ func searchIssues(client *api.Client, jql string, limit int) ([]IssueInfo, error
 			path += "&nextPageToken=" + url.QueryEscape(nextPageToken)
 		}
 
-		body, err := client.Get(context.Background(), path)
+		body, err := client.Get(ctx, path)
 		if err != nil {
 			return nil, err
 		}
@@ -338,10 +341,12 @@ func colorPriority(priority string) string {
 	}
 }
 
-// padRight pads a string to the specified width with spaces.
-func padRight(s string, width int) string {
-	if len(s) >= width {
+// padRight pads a string to the specified display width with spaces.
+// Uses display width calculation to handle Unicode characters correctly.
+func padRight(s string, w int) string {
+	sw := width.StringWidth(s)
+	if sw >= w {
 		return s
 	}
-	return s + strings.Repeat(" ", width-len(s))
+	return s + strings.Repeat(" ", w-sw)
 }

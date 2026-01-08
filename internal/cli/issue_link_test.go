@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -31,7 +32,7 @@ func TestGetLinkTypes_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	linkTypes, err := jira.GetLinkTypes(client)
+	linkTypes, err := jira.GetLinkTypes(context.Background(), client)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -125,7 +126,7 @@ func TestCreateIssueLink_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := createIssueLink(client, "GCP-123", "GCP-456", "Blocks")
+	err := createIssueLink(context.Background(), client, "GCP-123", "GCP-456", "Blocks")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -165,7 +166,7 @@ func TestGetIssueLinks_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	links, err := getIssueLinks(client, "GCP-123")
+	links, err := getIssueLinks(context.Background(), client, "GCP-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -198,7 +199,7 @@ func TestGetIssueLinks_Empty(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	links, err := getIssueLinks(client, "GCP-123")
+	links, err := getIssueLinks(context.Background(), client, "GCP-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -223,7 +224,7 @@ func TestDeleteIssueLink_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := deleteIssueLink(client, "12345")
+	err := deleteIssueLink(context.Background(), client, "12345")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -261,7 +262,7 @@ func TestCreateRemoteLink_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createRemoteLink(client, "GCP-123", "https://github.com/org/repo/pull/42", "PR #42")
+	result, err := createRemoteLink(context.Background(), client, "GCP-123", "https://github.com/org/repo/pull/42", "PR #42")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -319,7 +320,7 @@ func TestGetIssue_WithLinks(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	issue, err := getIssue(client, "TEST-123")
+	issue, err := getIssue(context.Background(), client, "TEST-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -360,7 +361,7 @@ func TestCreateIssueLink_APIError(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := createIssueLink(client, "NOTEXIST-123", "NOTEXIST-456", "Blocks")
+	err := createIssueLink(context.Background(), client, "NOTEXIST-123", "NOTEXIST-456", "Blocks")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

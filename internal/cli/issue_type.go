@@ -8,6 +8,7 @@ import (
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
 	"github.com/gcarthew/ajira/internal/jira"
+	"github.com/gcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,8 @@ func init() {
 }
 
 func runIssueType(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
 	projectKey := Project()
 	if projectKey == "" {
 		return Errorf("project is required (use -p flag or set JIRA_PROJECT)")
@@ -39,7 +42,7 @@ func runIssueType(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	types, err := jira.GetIssueTypes(client, projectKey)
+	types, err := jira.GetIssueTypes(ctx, client, projectKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -64,11 +67,11 @@ func printIssueTypes(types []jira.IssueType) {
 	bold := color.New(color.Bold).SprintFunc()
 	header := color.New(color.FgCyan, color.Bold).SprintFunc()
 
-	// Calculate column widths
+	// Calculate column widths using display width for Unicode support
 	nameWidth := 4 // "NAME"
 	for _, t := range types {
-		if len(t.Name) > nameWidth {
-			nameWidth = len(t.Name)
+		if w := width.StringWidth(t.Name); w > nameWidth {
+			nameWidth = w
 		}
 	}
 

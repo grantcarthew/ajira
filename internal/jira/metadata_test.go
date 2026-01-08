@@ -40,7 +40,7 @@ func TestGetPriorities_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	priorities, err := GetPriorities(client)
+	priorities, err := GetPriorities(context.Background(), client)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -60,7 +60,7 @@ func TestGetPriorities_APIError(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	_, err := GetPriorities(client)
+	_, err := GetPriorities(context.Background(), client)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -75,7 +75,7 @@ func TestGetPriorities_MalformedJSON(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	_, err := GetPriorities(client)
+	_, err := GetPriorities(context.Background(), client)
 	if err == nil {
 		t.Fatal("expected error for malformed JSON, got nil")
 	}
@@ -105,7 +105,7 @@ func TestGetIssueTypes_ObjectFormat(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	types, err := GetIssueTypes(client, "TEST")
+	types, err := GetIssueTypes(context.Background(), client, "TEST")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -134,7 +134,7 @@ func TestGetIssueTypes_ArrayFormat(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	types, err := GetIssueTypes(client, "TEST")
+	types, err := GetIssueTypes(context.Background(), client, "TEST")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -158,7 +158,7 @@ func TestGetIssueTypes_APIError(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	_, err := GetIssueTypes(client, "NOTEXIST")
+	_, err := GetIssueTypes(context.Background(), client, "NOTEXIST")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -173,7 +173,7 @@ func TestGetIssueTypes_MalformedJSON(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	_, err := GetIssueTypes(client, "TEST")
+	_, err := GetIssueTypes(context.Background(), client, "TEST")
 	if err == nil {
 		t.Fatal("expected error for malformed JSON, got nil")
 	}
@@ -233,7 +233,7 @@ func TestGetStatuses_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	statuses, err := GetStatuses(client, "TEST")
+	statuses, err := GetStatuses(context.Background(), client, "TEST")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -306,7 +306,7 @@ func TestGetStatuses_Deduplication(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	statuses, err := GetStatuses(client, "TEST")
+	statuses, err := GetStatuses(context.Background(), client, "TEST")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -336,7 +336,7 @@ func TestGetStatuses_EmptyResponse(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	statuses, err := GetStatuses(client, "TEST")
+	statuses, err := GetStatuses(context.Background(), client, "TEST")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -353,7 +353,7 @@ func TestGetStatuses_APIError(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	_, err := GetStatuses(client, "TEST")
+	_, err := GetStatuses(context.Background(), client, "TEST")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -373,7 +373,7 @@ func TestValidatePriority_Valid(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := ValidatePriority(client, "High")
+	err := ValidatePriority(context.Background(), client, "High")
 	if err != nil {
 		t.Errorf("expected no error for valid priority, got: %v", err)
 	}
@@ -394,7 +394,7 @@ func TestValidatePriority_CaseInsensitive(t *testing.T) {
 
 	testCases := []string{"HIGH", "high", "HiGh"}
 	for _, tc := range testCases {
-		err := ValidatePriority(client, tc)
+		err := ValidatePriority(context.Background(), client, tc)
 		if err != nil {
 			t.Errorf("expected no error for %q (case insensitive), got: %v", tc, err)
 		}
@@ -414,7 +414,7 @@ func TestValidatePriority_Invalid(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := ValidatePriority(client, "Critical")
+	err := ValidatePriority(context.Background(), client, "Critical")
 	if err == nil {
 		t.Fatal("expected error for invalid priority, got nil")
 	}
@@ -428,7 +428,7 @@ func TestValidatePriority_Invalid(t *testing.T) {
 
 func TestValidatePriority_Empty(t *testing.T) {
 	// Empty priority should be valid (no validation needed)
-	err := ValidatePriority(nil, "")
+	err := ValidatePriority(context.Background(), nil, "")
 	if err != nil {
 		t.Errorf("expected no error for empty priority, got: %v", err)
 	}
@@ -441,7 +441,7 @@ func TestValidatePriority_APIError(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := ValidatePriority(client, "High")
+	err := ValidatePriority(context.Background(), client, "High")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -466,7 +466,7 @@ func TestValidateIssueType_Valid(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := ValidateIssueType(client, "TEST", "Bug")
+	err := ValidateIssueType(context.Background(), client, "TEST", "Bug")
 	if err != nil {
 		t.Errorf("expected no error for valid issue type, got: %v", err)
 	}
@@ -488,7 +488,7 @@ func TestValidateIssueType_CaseInsensitive(t *testing.T) {
 
 	testCases := []string{"BUG", "bug", "BuG"}
 	for _, tc := range testCases {
-		err := ValidateIssueType(client, "TEST", tc)
+		err := ValidateIssueType(context.Background(), client, "TEST", tc)
 		if err != nil {
 			t.Errorf("expected no error for %q (case insensitive), got: %v", tc, err)
 		}
@@ -509,7 +509,7 @@ func TestValidateIssueType_Invalid(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := ValidateIssueType(client, "TEST", "Epic")
+	err := ValidateIssueType(context.Background(), client, "TEST", "Epic")
 	if err == nil {
 		t.Fatal("expected error for invalid issue type, got nil")
 	}
@@ -522,7 +522,7 @@ func TestValidateIssueType_Invalid(t *testing.T) {
 }
 
 func TestValidateIssueType_Empty(t *testing.T) {
-	err := ValidateIssueType(nil, "TEST", "")
+	err := ValidateIssueType(context.Background(), nil, "TEST", "")
 	if err != nil {
 		t.Errorf("expected no error for empty issue type, got: %v", err)
 	}
@@ -535,7 +535,7 @@ func TestValidateIssueType_APIError(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := ValidateIssueType(client, "NOTEXIST", "Bug")
+	err := ValidateIssueType(context.Background(), client, "NOTEXIST", "Bug")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -564,7 +564,7 @@ func TestValidateStatus_Valid(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := ValidateStatus(client, "TEST", "In Progress")
+	err := ValidateStatus(context.Background(), client, "TEST", "In Progress")
 	if err != nil {
 		t.Errorf("expected no error for valid status, got: %v", err)
 	}
@@ -590,7 +590,7 @@ func TestValidateStatus_CaseInsensitive(t *testing.T) {
 
 	testCases := []string{"DONE", "done", "DoNe"}
 	for _, tc := range testCases {
-		err := ValidateStatus(client, "TEST", tc)
+		err := ValidateStatus(context.Background(), client, "TEST", tc)
 		if err != nil {
 			t.Errorf("expected no error for %q (case insensitive), got: %v", tc, err)
 		}
@@ -615,7 +615,7 @@ func TestValidateStatus_Invalid(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := ValidateStatus(client, "TEST", "Blocked")
+	err := ValidateStatus(context.Background(), client, "TEST", "Blocked")
 	if err == nil {
 		t.Fatal("expected error for invalid status, got nil")
 	}
@@ -628,7 +628,7 @@ func TestValidateStatus_Invalid(t *testing.T) {
 }
 
 func TestValidateStatus_Empty(t *testing.T) {
-	err := ValidateStatus(nil, "TEST", "")
+	err := ValidateStatus(context.Background(), nil, "TEST", "")
 	if err != nil {
 		t.Errorf("expected no error for empty status, got: %v", err)
 	}
@@ -641,7 +641,7 @@ func TestValidateStatus_APIError(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := ValidateStatus(client, "TEST", "Open")
+	err := ValidateStatus(context.Background(), client, "TEST", "Open")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

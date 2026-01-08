@@ -1,6 +1,7 @@
 package jira
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -9,12 +10,12 @@ import (
 
 // ValidatePriority checks if the given priority name is valid.
 // Returns nil if valid, or an error with valid options listed.
-func ValidatePriority(client *api.Client, priority string) error {
+func ValidatePriority(ctx context.Context, client *api.Client, priority string) error {
 	if priority == "" {
 		return nil
 	}
 
-	priorities, err := GetPriorities(client)
+	priorities, err := GetPriorities(ctx, client)
 	if err != nil {
 		return fmt.Errorf("failed to fetch priorities: %w", err)
 	}
@@ -32,12 +33,12 @@ func ValidatePriority(client *api.Client, priority string) error {
 
 // ValidateIssueType checks if the given issue type name is valid for the project.
 // Returns nil if valid, or an error with valid options listed.
-func ValidateIssueType(client *api.Client, projectKey, issueType string) error {
+func ValidateIssueType(ctx context.Context, client *api.Client, projectKey, issueType string) error {
 	if issueType == "" {
 		return nil
 	}
 
-	types, err := GetIssueTypes(client, projectKey)
+	types, err := GetIssueTypes(ctx, client, projectKey)
 	if err != nil {
 		return fmt.Errorf("failed to fetch issue types: %w", err)
 	}
@@ -55,12 +56,12 @@ func ValidateIssueType(client *api.Client, projectKey, issueType string) error {
 
 // ValidateStatus checks if the given status name is valid for the project.
 // Returns nil if valid, or an error with valid options listed.
-func ValidateStatus(client *api.Client, projectKey, status string) error {
+func ValidateStatus(ctx context.Context, client *api.Client, projectKey, status string) error {
 	if status == "" {
 		return nil
 	}
 
-	statuses, err := GetStatuses(client, projectKey)
+	statuses, err := GetStatuses(ctx, client, projectKey)
 	if err != nil {
 		return fmt.Errorf("failed to fetch statuses: %w", err)
 	}

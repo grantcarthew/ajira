@@ -43,6 +43,7 @@ func init() {
 }
 
 func runIssueAssign(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	issueKey := args[0]
 	userArg := args[1]
 
@@ -60,14 +61,14 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 		accountID = nil
 	} else if strings.EqualFold(userArg, "me") {
 		// Use current user's email from config
-		resolved, err := resolveUser(client, cfg.Email)
+		resolved, err := resolveUser(ctx, client, cfg.Email)
 		if err != nil {
 			return Errorf("failed to resolve current user: %v", err)
 		}
 		accountID = &resolved
 	} else {
 		// Resolve user to accountId
-		resolved, err := resolveUser(client, userArg)
+		resolved, err := resolveUser(ctx, client, userArg)
 		if err != nil {
 			if apiErr, ok := err.(*api.APIError); ok {
 				return Errorf("API error - %v", apiErr)
@@ -80,7 +81,7 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 		accountID = &resolved
 	}
 
-	err = assignIssue(client, issueKey, accountID)
+	err = assignIssue(ctx, client, issueKey, accountID)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -105,7 +106,7 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 
 // resolveUser resolves a user identifier to an accountId.
 // Accepts email address or accountId directly.
-func resolveUser(client *api.Client, user string) (string, error) {
+func resolveUser(ctx context.Context, client *api.Client, user string) (string, error) {
 	// If it looks like an accountId (no @), try using it directly
 	// Jira accountIds are typically alphanumeric strings
 	if !strings.Contains(user, "@") && len(user) > 20 {
@@ -116,7 +117,7 @@ func resolveUser(client *api.Client, user string) (string, error) {
 	// Search by email or display name
 	path := fmt.Sprintf("/user/search?query=%s&maxResults=1", url.QueryEscape(user))
 
-	body, err := client.Get(context.Background(), path)
+	body, err := client.Get(ctx, path)
 	if err != nil {
 		return "", err
 	}
@@ -133,7 +134,7 @@ func resolveUser(client *api.Client, user string) (string, error) {
 	return users[0].AccountID, nil
 }
 
-func assignIssue(client *api.Client, key string, accountID *string) error {
+func assignIssue(ctx context.Context, client *api.Client, key string, accountID *string) error {
 	req := assigneeRequest{AccountID: accountID}
 
 	body, err := json.Marshal(req)
@@ -142,6 +143,6 @@ func assignIssue(client *api.Client, key string, accountID *string) error {
 	}
 
 	path := fmt.Sprintf("/issue/%s/assignee", key)
-	_, err = client.Put(context.Background(), path, body)
+	_, err = client.Put(ctx, path, body)
 	return err
 }

@@ -74,6 +74,8 @@ func init() {
 }
 
 func runProjectList(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
 	cfg, err := config.Load()
 	if err != nil {
 		return Errorf("%v", err)
@@ -81,7 +83,7 @@ func runProjectList(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	projects, err := fetchAllProjects(client, projectQuery, projectLimit)
+	projects, err := fetchAllProjects(ctx, client, projectQuery, projectLimit)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -112,7 +114,7 @@ func runProjectList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func fetchAllProjects(client *api.Client, query string, limit int) ([]ProjectInfo, error) {
+func fetchAllProjects(ctx context.Context, client *api.Client, query string, limit int) ([]ProjectInfo, error) {
 	var allProjects []ProjectInfo
 	startAt := 0
 	maxResults := 50
@@ -123,7 +125,7 @@ func fetchAllProjects(client *api.Client, query string, limit int) ([]ProjectInf
 			path += "&query=" + query
 		}
 
-		body, err := client.Get(context.Background(), path)
+		body, err := client.Get(ctx, path)
 		if err != nil {
 			return nil, err
 		}

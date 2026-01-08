@@ -52,6 +52,7 @@ func init() {
 }
 
 func runIssueEdit(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	issueKey := args[0]
 
 	// Check if any field was provided
@@ -73,10 +74,10 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 	projectKey := extractProjectKey(issueKey)
 
 	// Validate issue type and priority before making the update request
-	if err := jira.ValidateIssueType(client, projectKey, editType); err != nil {
+	if err := jira.ValidateIssueType(ctx, client, projectKey, editType); err != nil {
 		return Errorf("%v", err)
 	}
-	if err := jira.ValidatePriority(client, editPriority); err != nil {
+	if err := jira.ValidatePriority(ctx, client, editPriority); err != nil {
 		return Errorf("%v", err)
 	}
 
@@ -125,7 +126,7 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		fields["labels"] = editLabels
 	}
 
-	err = updateIssue(client, issueKey, fields)
+	err = updateIssue(ctx, client, issueKey, fields)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -144,7 +145,7 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func updateIssue(client *api.Client, key string, fields map[string]any) error {
+func updateIssue(ctx context.Context, client *api.Client, key string, fields map[string]any) error {
 	req := issueEditRequest{Fields: fields}
 
 	body, err := json.Marshal(req)
@@ -153,6 +154,6 @@ func updateIssue(client *api.Client, key string, fields map[string]any) error {
 	}
 
 	path := fmt.Sprintf("/issue/%s", key)
-	_, err = client.Put(context.Background(), path, body)
+	_, err = client.Put(ctx, path, body)
 	return err
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
 	"github.com/gcarthew/ajira/internal/jira"
+	"github.com/gcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,8 @@ func init() {
 }
 
 func runIssuePriority(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
 	cfg, err := config.Load()
 	if err != nil {
 		return Errorf("%v", err)
@@ -34,7 +37,7 @@ func runIssuePriority(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	priorities, err := jira.GetPriorities(client)
+	priorities, err := jira.GetPriorities(ctx, client)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -59,11 +62,11 @@ func printPriorities(priorities []jira.Priority) {
 	bold := color.New(color.Bold).SprintFunc()
 	header := color.New(color.FgCyan, color.Bold).SprintFunc()
 
-	// Calculate column widths
+	// Calculate column widths using display width for Unicode support
 	nameWidth := 4 // "NAME"
 	for _, p := range priorities {
-		if len(p.Name) > nameWidth {
-			nameWidth = len(p.Name)
+		if w := width.StringWidth(p.Name); w > nameWidth {
+			nameWidth = w
 		}
 	}
 

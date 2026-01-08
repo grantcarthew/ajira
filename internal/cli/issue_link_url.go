@@ -53,6 +53,7 @@ func init() {
 }
 
 func runIssueLinkURL(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	issueKey := args[0]
 	url := args[1]
 	title := url // Default title is the URL
@@ -67,7 +68,7 @@ func runIssueLinkURL(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	result, err := createRemoteLink(client, issueKey, url, title)
+	result, err := createRemoteLink(ctx, client, issueKey, url, title)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -89,7 +90,7 @@ func runIssueLinkURL(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func createRemoteLink(client *api.Client, issueKey, url, title string) (*RemoteLinkResult, error) {
+func createRemoteLink(ctx context.Context, client *api.Client, issueKey, url, title string) (*RemoteLinkResult, error) {
 	req := remoteLinkRequest{
 		Object: remoteLinkObject{
 			URL:   url,
@@ -103,7 +104,7 @@ func createRemoteLink(client *api.Client, issueKey, url, title string) (*RemoteL
 	}
 
 	path := fmt.Sprintf("/issue/%s/remotelink", issueKey)
-	respBody, err := client.Post(context.Background(), path, body)
+	respBody, err := client.Post(ctx, path, body)
 	if err != nil {
 		return nil, err
 	}

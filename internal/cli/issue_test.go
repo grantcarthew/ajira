@@ -264,7 +264,7 @@ func TestSearchIssues_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	issues, err := searchIssues(client, "project = TEST", 50)
+	issues, err := searchIssues(context.Background(), client, "project = TEST", 50)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -311,7 +311,7 @@ func TestSearchIssues_WithLimit(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	issues, err := searchIssues(client, "project = TEST", 2)
+	issues, err := searchIssues(context.Background(), client, "project = TEST", 2)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -333,7 +333,7 @@ func TestSearchIssues_EmptyResult(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	issues, err := searchIssues(client, "project = EMPTY", 50)
+	issues, err := searchIssues(context.Background(), client, "project = EMPTY", 50)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -383,7 +383,7 @@ func TestGetIssue_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	issue, err := getIssue(client, "TEST-123")
+	issue, err := getIssue(context.Background(), client, "TEST-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -432,7 +432,7 @@ func TestGetIssue_NullDescription(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	issue, err := getIssue(client, "TEST-456")
+	issue, err := getIssue(context.Background(), client, "TEST-456")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -478,7 +478,7 @@ func TestCreateIssue_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(client, "TEST", "New issue", "Description here", "Task", "", nil)
+	result, err := createIssue(context.Background(), client, "TEST", "New issue", "Description here", "Task", "", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -512,7 +512,7 @@ func TestCreateIssue_WithPriorityAndLabels(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(client, "TEST", "Issue with extras", "", "Bug", "High", []string{"urgent", "frontend"})
+	result, err := createIssue(context.Background(), client, "TEST", "Issue with extras", "", "Bug", "High", []string{"urgent", "frontend"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -546,7 +546,7 @@ func TestUpdateIssue_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := updateIssue(client, "TEST-123", map[string]any{"summary": "Updated summary"})
+	err := updateIssue(context.Background(), client, "TEST-123", map[string]any{"summary": "Updated summary"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -567,7 +567,7 @@ func TestDeleteIssue_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := deleteIssue(client, "TEST-123")
+	err := deleteIssue(context.Background(), client, "TEST-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -593,7 +593,7 @@ func TestResolveUser_ByEmail(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	accountID, err := resolveUser(client, "john@example.com")
+	accountID, err := resolveUser(context.Background(), client, "john@example.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -605,7 +605,7 @@ func TestResolveUser_ByEmail(t *testing.T) {
 
 func TestResolveUser_DirectAccountID(t *testing.T) {
 	// Long string without @ should be treated as direct accountId
-	accountID, err := resolveUser(nil, "5f4dcc3b5aa765d61d8327deb882cf99")
+	accountID, err := resolveUser(context.Background(), nil, "5f4dcc3b5aa765d61d8327deb882cf99")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -623,7 +623,7 @@ func TestResolveUser_NotFound(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	accountID, err := resolveUser(client, "nobody@example.com")
+	accountID, err := resolveUser(context.Background(), client, "nobody@example.com")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -658,7 +658,7 @@ func TestAssignIssue_Success(t *testing.T) {
 
 	client := api.NewClient(testConfig(server.URL))
 	accountID := "user123"
-	err := assignIssue(client, "TEST-123", &accountID)
+	err := assignIssue(context.Background(), client, "TEST-123", &accountID)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -680,7 +680,7 @@ func TestAssignIssue_Unassign(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := assignIssue(client, "TEST-123", nil)
+	err := assignIssue(context.Background(), client, "TEST-123", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -706,7 +706,7 @@ func TestGetTransitions_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	transitions, err := getTransitions(client, "TEST-123")
+	transitions, err := getTransitions(context.Background(), client, "TEST-123")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -750,7 +750,7 @@ func TestDoTransition_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := doTransition(client, "TEST-123", "21")
+	err := doTransition(context.Background(), client, "TEST-123", "21")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -810,7 +810,7 @@ func TestGetComments_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	comments, err := getComments(client, "TEST-123", 5)
+	comments, err := getComments(context.Background(), client, "TEST-123", 5)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -860,7 +860,7 @@ func TestAddComment_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := addComment(client, "TEST-123", "This is a **bold** comment")
+	result, err := addComment(context.Background(), client, "TEST-123", "This is a **bold** comment")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -903,7 +903,7 @@ func TestSearchIssues_APIError(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	_, err := searchIssues(client, "invalid jql !!!", 50)
+	_, err := searchIssues(context.Background(), client, "invalid jql !!!", 50)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -928,7 +928,7 @@ func TestGetIssue_NotFound(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	_, err := getIssue(client, "NOTEXIST-999")
+	_, err := getIssue(context.Background(), client, "NOTEXIST-999")
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -1076,7 +1076,7 @@ func TestSearchIssues_Pagination(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	issues, err := searchIssues(client, "project = TEST", 100)
+	issues, err := searchIssues(context.Background(), client, "project = TEST", 100)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -1109,7 +1109,7 @@ func TestSearchIssues_PaginationSafetyGuard(t *testing.T) {
 
 	client := api.NewClient(testConfig(server.URL))
 	// No limit set - would loop forever without safety guard
-	issues, err := searchIssues(client, "project = TEST", 0)
+	issues, err := searchIssues(context.Background(), client, "project = TEST", 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

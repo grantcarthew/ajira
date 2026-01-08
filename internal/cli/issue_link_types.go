@@ -8,6 +8,7 @@ import (
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
 	"github.com/gcarthew/ajira/internal/jira"
+	"github.com/gcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -27,6 +28,8 @@ func init() {
 }
 
 func runIssueLinkTypes(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
 	cfg, err := config.Load()
 	if err != nil {
 		return Errorf("%v", err)
@@ -34,7 +37,7 @@ func runIssueLinkTypes(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	linkTypes, err := jira.GetLinkTypes(client)
+	linkTypes, err := jira.GetLinkTypes(ctx, client)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -59,15 +62,15 @@ func printLinkTypes(linkTypes []jira.LinkType) {
 	bold := color.New(color.Bold).SprintFunc()
 	header := color.New(color.FgCyan, color.Bold).SprintFunc()
 
-	// Calculate column widths
+	// Calculate column widths using display width for Unicode support
 	nameWidth := 4    // "NAME"
 	outwardWidth := 7 // "OUTWARD"
 	for _, lt := range linkTypes {
-		if len(lt.Name) > nameWidth {
-			nameWidth = len(lt.Name)
+		if w := width.StringWidth(lt.Name); w > nameWidth {
+			nameWidth = w
 		}
-		if len(lt.Outward) > outwardWidth {
-			outwardWidth = len(lt.Outward)
+		if w := width.StringWidth(lt.Outward); w > outwardWidth {
+			outwardWidth = w
 		}
 	}
 

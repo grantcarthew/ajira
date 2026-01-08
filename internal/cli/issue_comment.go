@@ -60,6 +60,7 @@ func init() {
 }
 
 func runIssueCommentAdd(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	issueKey := args[0]
 
 	// Get comment text from: positional arg > file > body flag
@@ -79,7 +80,7 @@ func runIssueCommentAdd(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	result, err := addComment(client, issueKey, commentText)
+	result, err := addComment(ctx, client, issueKey, commentText)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -128,7 +129,7 @@ func getCommentText(args []string) (string, error) {
 	return "", nil
 }
 
-func addComment(client *api.Client, issueKey, text string) (*CommentResult, error) {
+func addComment(ctx context.Context, client *api.Client, issueKey, text string) (*CommentResult, error) {
 	adf, err := converter.MarkdownToADF(text)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert comment: %w", err)
@@ -142,7 +143,7 @@ func addComment(client *api.Client, issueKey, text string) (*CommentResult, erro
 	}
 
 	path := fmt.Sprintf("/issue/%s/comment", issueKey)
-	respBody, err := client.Post(context.Background(), path, body)
+	respBody, err := client.Post(ctx, path, body)
 	if err != nil {
 		return nil, err
 	}

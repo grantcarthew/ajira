@@ -82,6 +82,8 @@ func init() {
 }
 
 func runIssueCreate(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+
 	if createSummary == "" {
 		return Errorf("summary is required (use -s or --summary)")
 	}
@@ -99,10 +101,10 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 	client := api.NewClient(cfg)
 
 	// Validate issue type and priority before making the create request
-	if err := jira.ValidateIssueType(client, projectKey, createType); err != nil {
+	if err := jira.ValidateIssueType(ctx, client, projectKey, createType); err != nil {
 		return Errorf("%v", err)
 	}
-	if err := jira.ValidatePriority(client, createPriority); err != nil {
+	if err := jira.ValidatePriority(ctx, client, createPriority); err != nil {
 		return Errorf("%v", err)
 	}
 
@@ -112,7 +114,7 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 		return Errorf("failed to read description: %v", err)
 	}
 
-	result, err := createIssue(client, projectKey, createSummary, description, createType, createPriority, createLabels)
+	result, err := createIssue(ctx, client, projectKey, createSummary, description, createType, createPriority, createLabels)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -155,7 +157,7 @@ func getDescription() (string, error) {
 	return createBody, nil
 }
 
-func createIssue(client *api.Client, project, summary, description, issueType, priority string, labels []string) (*CreateResult, error) {
+func createIssue(ctx context.Context, client *api.Client, project, summary, description, issueType, priority string, labels []string) (*CreateResult, error) {
 	req := issueCreateRequest{
 		Fields: issueCreateFields{
 			Project:   projectKey{Key: project},
@@ -186,7 +188,7 @@ func createIssue(client *api.Client, project, summary, description, issueType, p
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	respBody, err := client.Post(context.Background(), "/issue", body)
+	respBody, err := client.Post(ctx, "/issue", body)
 	if err != nil {
 		return nil, err
 	}

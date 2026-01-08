@@ -131,6 +131,7 @@ func init() {
 }
 
 func runIssueView(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	issueKey := args[0]
 
 	cfg, err := config.Load()
@@ -140,7 +141,7 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	issue, err := getIssue(client, issueKey)
+	issue, err := getIssue(ctx, client, issueKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -150,7 +151,7 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 
 	// Fetch comments if requested
 	if viewCommentCount > 0 {
-		comments, err := getComments(client, issueKey, viewCommentCount)
+		comments, err := getComments(ctx, client, issueKey, viewCommentCount)
 		if err != nil {
 			// Non-fatal: just skip comments on error
 			comments = nil
@@ -171,10 +172,10 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getIssue(client *api.Client, key string) (*IssueDetail, error) {
+func getIssue(ctx context.Context, client *api.Client, key string) (*IssueDetail, error) {
 	path := fmt.Sprintf("/issue/%s", key)
 
-	body, err := client.Get(context.Background(), path)
+	body, err := client.Get(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -305,10 +306,10 @@ func formatDateTime(iso string) string {
 }
 
 // getComments fetches recent comments for an issue.
-func getComments(client *api.Client, key string, limit int) ([]CommentInfo, error) {
+func getComments(ctx context.Context, client *api.Client, key string, limit int) ([]CommentInfo, error) {
 	path := fmt.Sprintf("/issue/%s/comment?maxResults=%d&orderBy=-created", key, limit)
 
-	body, err := client.Get(context.Background(), path)
+	body, err := client.Get(ctx, path)
 	if err != nil {
 		return nil, err
 	}

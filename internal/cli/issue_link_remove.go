@@ -66,6 +66,7 @@ func init() {
 }
 
 func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	key1 := args[0]
 	key2 := args[1]
 
@@ -77,7 +78,7 @@ func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
 	client := api.NewClient(cfg)
 
 	// Fetch links from key1
-	links, err := getIssueLinks(client, key1)
+	links, err := getIssueLinks(ctx, client, key1)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return Errorf("API error - %v", apiErr)
@@ -102,7 +103,7 @@ func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
 
 	// Delete each link
 	for _, linkID := range linksToRemove {
-		err := deleteIssueLink(client, linkID)
+		err := deleteIssueLink(ctx, client, linkID)
 		if err != nil {
 			if apiErr, ok := err.(*api.APIError); ok {
 				return Errorf("API error - %v", apiErr)
@@ -126,10 +127,10 @@ func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getIssueLinks(client *api.Client, key string) ([]issueLink, error) {
+func getIssueLinks(ctx context.Context, client *api.Client, key string) ([]issueLink, error) {
 	path := fmt.Sprintf("/issue/%s?fields=issuelinks", key)
 
-	body, err := client.Get(context.Background(), path)
+	body, err := client.Get(ctx, path)
 	if err != nil {
 		return nil, err
 	}
@@ -142,8 +143,8 @@ func getIssueLinks(client *api.Client, key string) ([]issueLink, error) {
 	return resp.Fields.IssueLinks, nil
 }
 
-func deleteIssueLink(client *api.Client, linkID string) error {
+func deleteIssueLink(ctx context.Context, client *api.Client, linkID string) error {
 	path := fmt.Sprintf("/issueLink/%s", linkID)
-	_, err := client.Delete(context.Background(), path)
+	_, err := client.Delete(ctx, path)
 	return err
 }
