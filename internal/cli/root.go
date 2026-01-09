@@ -56,6 +56,10 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "Output in JSON format")
 	rootCmd.PersistentFlags().StringVarP(&project, "project", "p", "", "Default project key (or set JIRA_PROJECT)")
 	rootCmd.Version = Version
+	rootCmd.SetVersionTemplate(`ajira version {{.Version}}
+Repository: https://github.com/grantcarthew/ajira
+Report issues: https://github.com/grantcarthew/ajira/issues/new
+`)
 
 	// Custom usage template to avoid duplicate usage lines
 	rootCmd.SetUsageTemplate(`Usage:
