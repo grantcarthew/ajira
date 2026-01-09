@@ -226,6 +226,147 @@ func TestBuildJQL_MultipleFilters(t *testing.T) {
 	}
 }
 
+func TestBuildJQL_WithReporter(t *testing.T) {
+	resetIssueListFlags()
+	issueListReporter = "john@example.com"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, `reporter = "john@example.com"`) {
+		t.Errorf("expected reporter filter, got %q", jql)
+	}
+}
+
+func TestBuildJQL_WithReporterMe(t *testing.T) {
+	resetIssueListFlags()
+	issueListReporter = "me"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "reporter = currentUser()") {
+		t.Errorf("expected reporter = currentUser(), got %q", jql)
+	}
+}
+
+func TestBuildJQL_WithPriority(t *testing.T) {
+	resetIssueListFlags()
+	issueListPriority = "High"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, `priority = "High"`) {
+		t.Errorf("expected priority filter, got %q", jql)
+	}
+}
+
+func TestBuildJQL_WithLabels(t *testing.T) {
+	resetIssueListFlags()
+	issueListLabels = []string{"bug"}
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, `labels IN ("bug")`) {
+		t.Errorf("expected labels IN filter, got %q", jql)
+	}
+}
+
+func TestBuildJQL_WithMultipleLabels(t *testing.T) {
+	resetIssueListFlags()
+	issueListLabels = []string{"bug", "urgent", "backend"}
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, `labels IN ("bug", "urgent", "backend")`) {
+		t.Errorf("expected labels IN filter with multiple labels, got %q", jql)
+	}
+}
+
+func TestBuildJQL_WithWatching(t *testing.T) {
+	resetIssueListFlags()
+	issueListWatching = true
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "watcher = currentUser()") {
+		t.Errorf("expected watcher = currentUser(), got %q", jql)
+	}
+}
+
+func TestBuildJQL_WithOrderBy(t *testing.T) {
+	resetIssueListFlags()
+	issueListOrderBy = "created"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "ORDER BY created DESC") {
+		t.Errorf("expected ORDER BY created DESC, got %q", jql)
+	}
+}
+
+func TestBuildJQL_WithOrderByAndReverse(t *testing.T) {
+	resetIssueListFlags()
+	issueListOrderBy = "priority"
+	issueListReverse = true
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "ORDER BY priority ASC") {
+		t.Errorf("expected ORDER BY priority ASC, got %q", jql)
+	}
+}
+
+func TestBuildJQL_DefaultOrderBy(t *testing.T) {
+	resetIssueListFlags()
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "ORDER BY updated DESC") {
+		t.Errorf("expected default ORDER BY updated DESC, got %q", jql)
+	}
+}
+
+func TestBuildJQL_AllNewFilters(t *testing.T) {
+	resetIssueListFlags()
+	issueListReporter = "me"
+	issueListPriority = "Medium"
+	issueListLabels = []string{"feature"}
+	issueListWatching = true
+	issueListOrderBy = "key"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "reporter = currentUser()") {
+		t.Errorf("expected reporter filter, got %q", jql)
+	}
+	if !strings.Contains(jql, `priority = "Medium"`) {
+		t.Errorf("expected priority filter, got %q", jql)
+	}
+	if !strings.Contains(jql, `labels IN ("feature")`) {
+		t.Errorf("expected labels filter, got %q", jql)
+	}
+	if !strings.Contains(jql, "watcher = currentUser()") {
+		t.Errorf("expected watcher filter, got %q", jql)
+	}
+	if !strings.Contains(jql, "ORDER BY key DESC") {
+		t.Errorf("expected ORDER BY key DESC, got %q", jql)
+	}
+}
+
+// resetIssueListFlags resets all issue list flag variables to their zero values.
+func resetIssueListFlags() {
+	issueListQuery = ""
+	issueListStatus = ""
+	issueListType = ""
+	issueListAssignee = ""
+	issueListReporter = ""
+	issueListPriority = ""
+	issueListLabels = nil
+	issueListWatching = false
+	issueListOrderBy = ""
+	issueListReverse = false
+	project = ""
+}
+
 // Test searchIssues function
 func TestSearchIssues_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -10,6 +10,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
+	"github.com/gcarthew/ajira/internal/jira"
 	"github.com/gcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
@@ -73,6 +74,12 @@ var (
 	issueListStatus   string
 	issueListType     string
 	issueListAssignee string
+	issueListReporter string
+	issueListPriority string
+	issueListLabels   []string
+	issueListWatching bool
+	issueListOrderBy  string
+	issueListReverse  bool
 	issueListLimit    int
 )
 
@@ -93,6 +100,12 @@ func init() {
 	issueListCmd.Flags().StringVarP(&issueListStatus, "status", "s", "", "Filter by status")
 	issueListCmd.Flags().StringVarP(&issueListType, "type", "t", "", "Filter by issue type")
 	issueListCmd.Flags().StringVarP(&issueListAssignee, "assignee", "a", "", "Filter by assignee (email, accountId, 'me', or 'unassigned')")
+	issueListCmd.Flags().StringVarP(&issueListReporter, "reporter", "r", "", "Filter by reporter (email, accountId, or 'me')")
+	issueListCmd.Flags().StringVarP(&issueListPriority, "priority", "P", "", "Filter by priority")
+	issueListCmd.Flags().StringSliceVarP(&issueListLabels, "labels", "L", nil, "Filter by labels (comma-separated)")
+	issueListCmd.Flags().BoolVarP(&issueListWatching, "watching", "w", false, "Filter to issues you are watching")
+	issueListCmd.Flags().StringVar(&issueListOrderBy, "order-by", "", "Sort field (created, updated, priority, key, rank)")
+	issueListCmd.Flags().BoolVar(&issueListReverse, "reverse", false, "Reverse sort order (ASC instead of DESC)")
 	issueListCmd.Flags().IntVarP(&issueListLimit, "limit", "l", 50, "Maximum issues to return")
 
 	issueCmd.AddCommand(issueListCmd)
@@ -107,6 +120,17 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 	}
 
 	client := api.NewClient(cfg)
+
+	// Validate filter values before building JQL
+	if err := jira.ValidatePriority(ctx, client, issueListPriority); err != nil {
+		return Errorf("%v", err)
+	}
+	if err := jira.ValidateStatus(ctx, client, Project(), issueListStatus); err != nil {
+		return Errorf("%v", err)
+	}
+	if err := jira.ValidateIssueType(ctx, client, Project(), issueListType); err != nil {
+		return Errorf("%v", err)
+	}
 
 	jql := buildJQL()
 	if jql == "" {
@@ -223,12 +247,50 @@ func buildJQL() string {
 			conditions = append(conditions, fmt.Sprintf("assignee = \"%s\"", issueListAssignee))
 		}
 	}
+	if issueListReporter != "" {
+		if strings.ToLower(issueListReporter) == "me" {
+			conditions = append(conditions, "reporter = currentUser()")
+		} else {
+			conditions = append(conditions, fmt.Sprintf("reporter = \"%s\"", issueListReporter))
+		}
+	}
+	if issueListPriority != "" {
+		conditions = append(conditions, fmt.Sprintf("priority = \"%s\"", issueListPriority))
+	}
+	if len(issueListLabels) > 0 {
+		quoted := make([]string, len(issueListLabels))
+		for i, label := range issueListLabels {
+			quoted[i] = fmt.Sprintf("\"%s\"", label)
+		}
+		conditions = append(conditions, fmt.Sprintf("labels IN (%s)", strings.Join(quoted, ", ")))
+	}
+	if issueListWatching {
+		conditions = append(conditions, "watcher = currentUser()")
+	}
 
 	if len(conditions) == 0 {
 		return ""
 	}
 
-	return strings.Join(conditions, " AND ") + " ORDER BY updated DESC"
+	// Build ORDER BY clause
+	orderBy := buildOrderBy()
+
+	return strings.Join(conditions, " AND ") + orderBy
+}
+
+// buildOrderBy constructs the ORDER BY clause based on flags.
+func buildOrderBy() string {
+	field := issueListOrderBy
+	if field == "" {
+		field = "updated"
+	}
+
+	direction := "DESC"
+	if issueListReverse {
+		direction = "ASC"
+	}
+
+	return fmt.Sprintf(" ORDER BY %s %s", field, direction)
 }
 
 func searchIssues(ctx context.Context, client *api.Client, jql string, limit int) ([]IssueInfo, error) {

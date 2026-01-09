@@ -18,6 +18,10 @@ ajira issue list
 ajira issue list -l 10
 ajira issue list -s "In Progress"
 ajira issue list -t Bug -a me
+ajira issue list -r me -P High
+ajira issue list -L bug,urgent
+ajira issue list -w
+ajira issue list --order-by created --reverse
 ajira issue list -q "status = Done AND updated >= -7d"
 ```
 
