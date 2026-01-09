@@ -137,7 +137,7 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	client := api.NewClient(cfg)
@@ -145,9 +145,9 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 	issue, err := getIssue(ctx, client, issueKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to fetch issue: %v", err)
+		return fmt.Errorf("Failed to fetch issue: %v", err)
 	}
 
 	// Fetch comments if requested
@@ -163,7 +163,7 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 	if JSONOutput() {
 		output, err := json.MarshalIndent(issue, "", "  ")
 		if err != nil {
-			return Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("Failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {
@@ -183,7 +183,7 @@ func getIssue(ctx context.Context, client *api.Client, key string) (*IssueDetail
 
 	var resp issueDetailResponse
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
+		return nil, fmt.Errorf("Failed to parse response: %w", err)
 	}
 
 	detail := &IssueDetail{
@@ -314,7 +314,7 @@ func getComments(ctx context.Context, client *api.Client, key string, limit int)
 
 	var resp commentsResponse
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
+		return nil, fmt.Errorf("Failed to parse response: %w", err)
 	}
 
 	var comments []CommentInfo

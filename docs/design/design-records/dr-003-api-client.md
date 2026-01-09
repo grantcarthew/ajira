@@ -20,7 +20,8 @@ Use Go standard library `net/http` with Basic Authentication.
 Client structure:
 
 - Single `Client` struct holding HTTP client and configuration
-- Generic request method for all HTTP operations
+- Typed methods for each HTTP verb (`Get`, `Post`, `Put`, `Delete`)
+- Private `request` method handles common logic (auth, headers, error parsing)
 - Typed response parsing at call sites
 
 Authentication:
@@ -46,7 +47,7 @@ Request/Response:
 - Standard library has no external dependencies
 - Basic Auth is Jira's recommended method for API tokens
 - Structured errors allow callers to inspect status codes and messages
-- Generic request method reduces code duplication across endpoints
+- Typed methods provide clear API; private `request` reduces duplication
 
 ## Structure
 

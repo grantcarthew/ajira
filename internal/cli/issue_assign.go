@@ -49,7 +49,7 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	client := api.NewClient(cfg)
@@ -63,7 +63,7 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 		// Use current user's email from config
 		resolved, err := resolveUser(ctx, client, cfg.Email)
 		if err != nil {
-			return Errorf("failed to resolve current user: %v", err)
+			return fmt.Errorf("Failed to resolve current user: %v", err)
 		}
 		accountID = &resolved
 	} else {
@@ -71,12 +71,12 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 		resolved, err := resolveUser(ctx, client, userArg)
 		if err != nil {
 			if apiErr, ok := err.(*api.APIError); ok {
-				return Errorf("API error - %v", apiErr)
+				return fmt.Errorf("API error: %v", apiErr)
 			}
-			return Errorf("failed to resolve user: %v", err)
+			return fmt.Errorf("Failed to resolve user: %v", err)
 		}
 		if resolved == "" {
-			return Errorf("user not found: %s", userArg)
+			return fmt.Errorf("User not found: %s", userArg)
 		}
 		accountID = &resolved
 	}
@@ -84,9 +84,9 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 	err = assignIssue(ctx, client, issueKey, accountID)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to assign issue: %v", err)
+		return fmt.Errorf("Failed to assign issue: %v", err)
 	}
 
 	if JSONOutput() {
@@ -124,7 +124,7 @@ func resolveUser(ctx context.Context, client *api.Client, user string) (string, 
 
 	var users userSearchResponse
 	if err := json.Unmarshal(body, &users); err != nil {
-		return "", fmt.Errorf("failed to parse response: %w", err)
+		return "", fmt.Errorf("Failed to parse response: %w", err)
 	}
 
 	if len(users) == 0 {
@@ -139,7 +139,7 @@ func assignIssue(ctx context.Context, client *api.Client, key string, accountID 
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
+		return fmt.Errorf("Failed to marshal request: %w", err)
 	}
 
 	path := fmt.Sprintf("/issue/%s/assignee", key)

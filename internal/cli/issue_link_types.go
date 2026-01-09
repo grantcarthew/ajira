@@ -32,7 +32,7 @@ func runIssueLinkTypes(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	client := api.NewClient(cfg)
@@ -40,15 +40,15 @@ func runIssueLinkTypes(cmd *cobra.Command, args []string) error {
 	linkTypes, err := jira.GetLinkTypes(ctx, client)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to fetch link types: %v", err)
+		return fmt.Errorf("Failed to fetch link types: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(linkTypes, "", "  ")
 		if err != nil {
-			return Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("Failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {

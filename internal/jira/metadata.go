@@ -106,7 +106,7 @@ func GetIssueTypes(ctx context.Context, client *api.Client, projectKey string) (
 		// Try parsing as direct array (different API versions)
 		var types []issueTypeResponse
 		if err2 := json.Unmarshal(body, &types); err2 != nil {
-			return nil, fmt.Errorf("failed to parse response: %w", err)
+			return nil, fmt.Errorf("failed to parse response (object: %v, array: %v)", err, err2)
 		}
 		resp.IssueTypes = types
 	}

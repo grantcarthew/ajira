@@ -2,7 +2,7 @@
 
 > **Purpose**: Repeatable process for releasing new versions of ajira
 > **Audience**: AI agents and maintainers performing releases
-> **Last Updated**: 2026-01-07
+> **Last Updated**: 2026-01-09
 
 This document provides step-by-step instructions for releasing ajira. Execute each step in order.
 
@@ -95,6 +95,7 @@ gofmt -l .
 
 # Run linters
 go vet ./...
+golangci-lint run
 ineffassign ./...
 
 # Check cyclomatic complexity (functions over 15)
@@ -117,6 +118,7 @@ git status
 
 - `gofmt -l .` produces no output (all files formatted)
 - `go vet ./...` reports no issues
+- `golangci-lint run` reports no errors (warnings acceptable)
 - `ineffassign ./...` reports no issues
 - `gocyclo -over 15 .` reports no functions (or acceptable exceptions)
 - All tests pass
@@ -128,6 +130,11 @@ git status
 **Linter installation** (if not already installed):
 
 ```bash
+# golangci-lint (comprehensive linter)
+brew install golangci-lint
+# or: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+# Individual linters
 go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 go install github.com/gordonklaus/ineffassign@latest
 ```
@@ -446,6 +453,7 @@ rg -i "TODO|FIXME|XXX" --type go  # Should be empty or acceptable
 
 # 2. Validation
 go test -v ./...
+golangci-lint run
 git status  # Should be clean
 
 # 3. Update CHANGELOG.md manually, then commit

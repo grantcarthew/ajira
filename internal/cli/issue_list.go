@@ -116,20 +116,26 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	client := api.NewClient(cfg)
 
 	// Validate filter values before building JQL
 	if err := jira.ValidatePriority(ctx, client, issueListPriority); err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
+	}
+	if issueListStatus != "" && Project() == "" {
+		return fmt.Errorf("--status requires a project; use -p flag or set JIRA_PROJECT")
 	}
 	if err := jira.ValidateStatus(ctx, client, Project(), issueListStatus); err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
+	}
+	if issueListType != "" && Project() == "" {
+		return fmt.Errorf("--type requires a project; use -p flag or set JIRA_PROJECT")
 	}
 	if err := jira.ValidateIssueType(ctx, client, Project(), issueListType); err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	jql := buildJQL()
@@ -145,15 +151,15 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 	issues, err := searchIssues(ctx, client, jql, issueListLimit)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to search issues: %v", err)
+		return fmt.Errorf("Failed to search issues: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(issues, "", "  ")
 		if err != nil {
-			return Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("Failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {
@@ -317,7 +323,7 @@ func searchIssues(ctx context.Context, client *api.Client, jql string, limit int
 
 		var resp issueSearchResponse
 		if err := json.Unmarshal(body, &resp); err != nil {
-			return nil, fmt.Errorf("failed to parse response: %w", err)
+			return nil, fmt.Errorf("Failed to parse response: %w", err)
 		}
 
 		for _, issue := range resp.Issues {

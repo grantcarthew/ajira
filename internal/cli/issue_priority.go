@@ -32,7 +32,7 @@ func runIssuePriority(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	client := api.NewClient(cfg)
@@ -40,15 +40,15 @@ func runIssuePriority(cmd *cobra.Command, args []string) error {
 	priorities, err := jira.GetPriorities(ctx, client)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to fetch priorities: %v", err)
+		return fmt.Errorf("Failed to fetch priorities: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(priorities, "", "  ")
 		if err != nil {
-			return Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("Failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {

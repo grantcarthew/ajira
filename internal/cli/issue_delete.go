@@ -30,7 +30,7 @@ func runIssueDelete(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	client := api.NewClient(cfg)
@@ -38,9 +38,9 @@ func runIssueDelete(cmd *cobra.Command, args []string) error {
 	err = deleteIssue(ctx, client, issueKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to delete issue: %v", err)
+		return fmt.Errorf("Failed to delete issue: %v", err)
 	}
 
 	if JSONOutput() {

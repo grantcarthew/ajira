@@ -60,12 +60,12 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		editType != "" || editPriority != "" || editLabels != nil
 
 	if !hasChanges {
-		return Errorf("no fields to update (use --summary, --description, --file, --type, --priority, or --labels)")
+		return fmt.Errorf("No fields to update (use --summary, --description, --file, --type, --priority, or --labels)")
 	}
 
 	cfg, err := config.Load()
 	if err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	client := api.NewClient(cfg)
@@ -75,10 +75,10 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 
 	// Validate issue type and priority before making the update request
 	if err := jira.ValidateIssueType(ctx, client, projectKey, editType); err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 	if err := jira.ValidatePriority(ctx, client, editPriority); err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	// Build fields to update
@@ -94,13 +94,13 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		if editFile == "-" {
 			data, err := io.ReadAll(os.Stdin)
 			if err != nil {
-				return Errorf("failed to read stdin: %v", err)
+				return fmt.Errorf("Failed to read stdin: %v", err)
 			}
 			description = string(data)
 		} else {
 			data, err := os.ReadFile(editFile)
 			if err != nil {
-				return Errorf("failed to read file: %v", err)
+				return fmt.Errorf("Failed to read file: %v", err)
 			}
 			description = string(data)
 		}
@@ -109,7 +109,7 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 	if description != "" {
 		adf, err := converter.MarkdownToADF(description)
 		if err != nil {
-			return Errorf("failed to convert description: %v", err)
+			return fmt.Errorf("Failed to convert description: %v", err)
 		}
 		fields["description"] = adf
 	}
@@ -129,9 +129,9 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 	err = updateIssue(ctx, client, issueKey, fields)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to update issue: %v", err)
+		return fmt.Errorf("Failed to update issue: %v", err)
 	}
 
 	if JSONOutput() {
@@ -150,7 +150,7 @@ func updateIssue(ctx context.Context, client *api.Client, key string, fields map
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
+		return fmt.Errorf("Failed to marshal request: %w", err)
 	}
 
 	path := fmt.Sprintf("/issue/%s", key)

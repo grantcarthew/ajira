@@ -40,6 +40,7 @@ type APIError struct {
 	Status     string
 	Messages   []string
 	Errors     map[string]string
+	RawBody    string // Raw response body when JSON parsing fails
 	Method     string
 	Path       string
 }
@@ -53,6 +54,9 @@ func (e *APIError) Error() string {
 		parts = append(parts, fmt.Sprintf("%s: %s", field, msg))
 	}
 	if len(parts) == 0 {
+		if e.RawBody != "" {
+			return fmt.Sprintf("%s %s: %s - %s", e.Method, e.Path, e.Status, e.RawBody)
+		}
 		return fmt.Sprintf("%s %s: %s", e.Method, e.Path, e.Status)
 	}
 	return fmt.Sprintf("%s %s: %s - %s", e.Method, e.Path, e.Status, strings.Join(parts, "; "))
@@ -127,6 +131,9 @@ func (c *Client) request(ctx context.Context, method, path string, body []byte) 
 		if json.Unmarshal(respBody, &jiraErr) == nil {
 			apiErr.Messages = jiraErr.ErrorMessages
 			apiErr.Errors = jiraErr.Errors
+		} else if len(respBody) > 0 {
+			// Capture raw body when JSON parsing fails (e.g., HTML error pages)
+			apiErr.RawBody = string(respBody)
 		}
 
 		return nil, apiErr

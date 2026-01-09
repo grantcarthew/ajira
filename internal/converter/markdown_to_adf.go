@@ -115,6 +115,12 @@ func convertCodeBlock(n *ast.CodeBlock, source []byte) *ADFNode {
 	if len(text) > 0 && text[len(text)-1] == '\n' {
 		text = text[:len(text)-1]
 	}
+
+	// Jira ADF rejects empty text nodes in code blocks - use space placeholder
+	if strings.TrimSpace(text) == "" {
+		text = " "
+	}
+
 	return &ADFNode{
 		Type: NodeTypeCodeBlock,
 		Content: []ADFNode{
@@ -410,26 +416,6 @@ func convertInlineNodeMulti(n ast.Node, source []byte) []ADFNode {
 	}
 }
 
-// convertInlineNode converts a single inline node to an ADF text node with marks.
-// Deprecated: Use convertInlineNodeMulti for proper nested mark handling.
-func convertInlineNode(n ast.Node, source []byte) *ADFNode {
-	nodes := convertInlineNodeMulti(n, source)
-	if len(nodes) == 1 {
-		return &nodes[0]
-	}
-	// For backward compatibility, concatenate if multiple nodes
-	if len(nodes) > 1 {
-		var text string
-		var marks []ADFMark
-		for _, node := range nodes {
-			text += node.Text
-			marks = append(marks, node.Marks...)
-		}
-		return &ADFNode{Type: NodeTypeText, Text: text, Marks: marks}
-	}
-	return nil
-}
-
 // addMarkToNodes adds a mark to all text nodes in the slice.
 // It respects ADF mark compatibility rules - the 'code' mark can only
 // combine with 'link', so other marks are skipped for code spans.
@@ -516,27 +502,6 @@ func convertEmphasisMulti(n *ast.Emphasis, source []byte) []ADFNode {
 	return addMarkToNodes(nodes, ADFMark{Type: markType})
 }
 
-// convertEmphasis converts emphasis - kept for backward compatibility.
-func convertEmphasis(n *ast.Emphasis, source []byte) *ADFNode {
-	nodes := convertEmphasisMulti(n, source)
-	if len(nodes) == 1 {
-		return &nodes[0]
-	}
-	if len(nodes) > 1 {
-		// This shouldn't happen in normal use, but handle gracefully
-		var text string
-		var marks []ADFMark
-		for _, node := range nodes {
-			text += node.Text
-			if len(marks) == 0 {
-				marks = node.Marks
-			}
-		}
-		return &ADFNode{Type: NodeTypeText, Text: text, Marks: marks}
-	}
-	return nil
-}
-
 // convertStrikethroughMulti converts strikethrough to multiple ADF nodes, preserving nested marks.
 func convertStrikethroughMulti(n *extast.Strikethrough, source []byte) []ADFNode {
 	var nodes []ADFNode
@@ -545,26 +510,6 @@ func convertStrikethroughMulti(n *extast.Strikethrough, source []byte) []ADFNode
 	}
 
 	return addMarkToNodes(nodes, ADFMark{Type: MarkTypeStrike})
-}
-
-// convertStrikethrough converts strikethrough - kept for backward compatibility.
-func convertStrikethrough(n *extast.Strikethrough, source []byte) *ADFNode {
-	nodes := convertStrikethroughMulti(n, source)
-	if len(nodes) == 1 {
-		return &nodes[0]
-	}
-	if len(nodes) > 1 {
-		var text string
-		var marks []ADFMark
-		for _, node := range nodes {
-			text += node.Text
-			if len(marks) == 0 {
-				marks = node.Marks
-			}
-		}
-		return &ADFNode{Type: NodeTypeText, Text: text, Marks: marks}
-	}
-	return nil
 }
 
 func convertLink(n *ast.Link, source []byte) *ADFNode {

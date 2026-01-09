@@ -103,11 +103,6 @@ func Project() string {
 	return project
 }
 
-// Errorf returns a formatted error.
-func Errorf(format string, args ...interface{}) error {
-	return fmt.Errorf(format, args...)
-}
-
 // IssueURL returns the browse URL for an issue key.
 func IssueURL(baseURL, key string) string {
 	return fmt.Sprintf("%s/browse/%s", baseURL, key)

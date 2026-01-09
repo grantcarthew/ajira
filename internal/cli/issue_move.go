@@ -63,7 +63,7 @@ func runIssueMove(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	client := api.NewClient(cfg)
@@ -72,9 +72,9 @@ func runIssueMove(cmd *cobra.Command, args []string) error {
 	transitions, err := getTransitions(ctx, client, issueKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to get transitions: %v", err)
+		return fmt.Errorf("Failed to get transitions: %v", err)
 	}
 
 	// List mode: show available transitions
@@ -112,15 +112,15 @@ func runIssueMove(cmd *cobra.Command, args []string) error {
 		for _, t := range transitions {
 			available = append(available, t.Name)
 		}
-		return Errorf("transition not available: %s (available: %s)", targetStatus, strings.Join(available, ", "))
+		return fmt.Errorf("Transition not available: %s (available: %s)", targetStatus, strings.Join(available, ", "))
 	}
 
 	err = doTransition(ctx, client, issueKey, matchedTransition.ID)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to transition issue: %v", err)
+		return fmt.Errorf("Failed to transition issue: %v", err)
 	}
 
 	if JSONOutput() {
@@ -147,7 +147,7 @@ func getTransitions(ctx context.Context, client *api.Client, key string) ([]tran
 
 	var resp transitionsResponse
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
+		return nil, fmt.Errorf("Failed to parse response: %w", err)
 	}
 
 	return resp.Transitions, nil
@@ -160,7 +160,7 @@ func doTransition(ctx context.Context, client *api.Client, key, transitionID str
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
+		return fmt.Errorf("Failed to marshal request: %w", err)
 	}
 
 	path := fmt.Sprintf("/issue/%s/transitions", key)

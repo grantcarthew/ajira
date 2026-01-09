@@ -66,16 +66,16 @@ func runIssueCommentAdd(cmd *cobra.Command, args []string) error {
 	// Get comment text from: positional arg > file > body flag
 	commentText, err := getCommentText(args)
 	if err != nil {
-		return Errorf("failed to read comment: %v", err)
+		return fmt.Errorf("Failed to read comment: %v", err)
 	}
 
 	if commentText == "" {
-		return Errorf("comment text is required (provide as argument, --body, or --file)")
+		return fmt.Errorf("Comment text is required (provide as argument, --body, or --file)")
 	}
 
 	cfg, err := config.Load()
 	if err != nil {
-		return Errorf("%v", err)
+		return fmt.Errorf("%v", err)
 	}
 
 	client := api.NewClient(cfg)
@@ -83,15 +83,15 @@ func runIssueCommentAdd(cmd *cobra.Command, args []string) error {
 	result, err := addComment(ctx, client, issueKey, commentText)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return Errorf("API error - %v", apiErr)
+			return fmt.Errorf("API error: %v", apiErr)
 		}
-		return Errorf("failed to add comment: %v", err)
+		return fmt.Errorf("Failed to add comment: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
-			return Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("Failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {
@@ -132,14 +132,14 @@ func getCommentText(args []string) (string, error) {
 func addComment(ctx context.Context, client *api.Client, issueKey, text string) (*CommentResult, error) {
 	adf, err := converter.MarkdownToADF(text)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert comment: %w", err)
+		return nil, fmt.Errorf("Failed to convert comment: %w", err)
 	}
 
 	req := commentAddRequest{Body: adf}
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal request: %w", err)
+		return nil, fmt.Errorf("Failed to marshal request: %w", err)
 	}
 
 	path := fmt.Sprintf("/issue/%s/comment", issueKey)
@@ -150,7 +150,7 @@ func addComment(ctx context.Context, client *api.Client, issueKey, text string) 
 
 	var result CommentResult
 	if err := json.Unmarshal(respBody, &result); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
+		return nil, fmt.Errorf("Failed to parse response: %w", err)
 	}
 
 	return &result, nil

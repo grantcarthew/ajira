@@ -249,7 +249,7 @@ Expected differences on round-trip:
 |----------|------------------|--------|
 | `__bold__` | `**bold**` | Syntax normalization |
 | `***` | `---` | Both valid horizontal rules |
-| `\|------\|` | `\| --- \|` | Table separator normalization |
+| `|------|` | `| --- |` | Table separator normalization |
 | `:---:` | `---` | Column alignment lost (ADF limitation) |
 | 3-space indent | 2-space indent | List indentation normalization |
 | `>` (blank quote line) | `>` + space | Trailing space variation |

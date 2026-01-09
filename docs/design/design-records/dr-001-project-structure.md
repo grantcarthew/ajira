@@ -22,13 +22,12 @@ ajira/
 ├── cmd/ajira/main.go       # Application entry point
 ├── internal/
 │   ├── cli/                # Cobra commands and CLI logic
-│   │   ├── root.go
-│   │   ├── me.go
-│   │   └── project.go
 │   ├── api/                # Jira REST API client
-│   │   └── client.go
-│   └── config/             # Environment configuration
-│       └── config.go
+│   ├── config/             # Environment configuration
+│   ├── converter/          # Markdown ↔ ADF conversion
+│   ├── jira/               # Jira field metadata and validation
+│   └── width/              # Unicode display width calculation
+├── docs/                   # Documentation and design records
 ├── go.mod
 └── go.sum
 ```

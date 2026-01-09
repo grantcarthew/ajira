@@ -1106,6 +1106,32 @@ func TestMarkdownToADF_IndentedCodeBlock(t *testing.T) {
 	}
 }
 
+func TestMarkdownToADF_IndentedCodeBlockEmpty(t *testing.T) {
+	// Indented code block with only whitespace should get space placeholder
+	md := "    \n    "
+	adf, err := MarkdownToADF(md)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(adf.Content) == 0 {
+		// Empty content is acceptable - parser may not create a code block
+		return
+	}
+	codeBlock := adf.Content[0]
+	if codeBlock.Type != NodeTypeCodeBlock {
+		return // Not a code block, that's fine
+	}
+	// If we do have a code block, verify it has non-empty text
+	if len(codeBlock.Content) == 0 {
+		t.Error("code block should have content")
+		return
+	}
+	text := codeBlock.Content[0].Text
+	if text == "" {
+		t.Error("empty code block should have space placeholder, got empty string")
+	}
+}
+
 func TestMarkdownToADF_InlineCodeWithSpecialChars(t *testing.T) {
 	md := "Use `<div class=\"test\">`"
 	adf, err := MarkdownToADF(md)
