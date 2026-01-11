@@ -45,7 +45,7 @@ func init() {
 	issueEditCmd.Flags().StringVarP(&editBody, "description", "d", "", "New description in Markdown")
 	issueEditCmd.Flags().StringVarP(&editFile, "file", "f", "", "Read description from file (use - for stdin)")
 	issueEditCmd.Flags().StringVarP(&editType, "type", "t", "", "New issue type")
-	issueEditCmd.Flags().StringVar(&editPriority, "priority", "", "New priority")
+	issueEditCmd.Flags().StringVarP(&editPriority, "priority", "P", "", "New priority")
 	issueEditCmd.Flags().StringSliceVar(&editLabels, "labels", nil, "New labels (comma-separated, replaces existing)")
 
 	issueCmd.AddCommand(issueEditCmd)

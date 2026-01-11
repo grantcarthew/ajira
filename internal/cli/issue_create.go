@@ -73,7 +73,7 @@ func init() {
 	issueCreateCmd.Flags().StringVarP(&createBody, "description", "d", "", "Issue description in Markdown")
 	issueCreateCmd.Flags().StringVarP(&createFile, "file", "f", "", "Read description from file (use - for stdin)")
 	issueCreateCmd.Flags().StringVarP(&createType, "type", "t", "Task", "Issue type (Task, Bug, Story, etc.)")
-	issueCreateCmd.Flags().StringVar(&createPriority, "priority", "", "Issue priority")
+	issueCreateCmd.Flags().StringVarP(&createPriority, "priority", "P", "", "Issue priority")
 	issueCreateCmd.Flags().StringSliceVar(&createLabels, "labels", nil, "Issue labels (comma-separated)")
 
 	issueCreateCmd.MarkFlagRequired("summary")

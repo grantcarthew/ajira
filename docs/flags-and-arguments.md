@@ -75,7 +75,7 @@ ajira issue create [flags]
 | `--description` | `-d` | string | | Issue description in Markdown |
 | `--file` | `-f` | string | | Read description from file (- for stdin) |
 | `--type` | `-t` | string | Task | Issue type |
-| `--priority` | | string | | Issue priority |
+| `--priority` | `-P` | string | | Issue priority |
 | `--labels` | | []string | | Issue labels (comma-separated) |
 
 ### issue edit
@@ -94,7 +94,7 @@ ajira issue edit <issue-key> [flags]
 | `--description` | `-d` | string | | New description in Markdown |
 | `--file` | `-f` | string | | Read description from file (- for stdin) |
 | `--type` | `-t` | string | | New issue type |
-| `--priority` | | string | | New priority |
+| `--priority` | `-P` | string | | New priority |
 | `--labels` | | []string | | New labels (replaces existing) |
 
 ### issue assign
