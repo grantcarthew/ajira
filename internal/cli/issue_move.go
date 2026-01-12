@@ -52,7 +52,7 @@ var issueMoveCmd = &cobra.Command{
 }
 
 func init() {
-	issueMoveCmd.Flags().BoolVarP(&moveListTransitions, "list", "l", false, "List available transitions")
+	issueMoveCmd.Flags().BoolVar(&moveListTransitions, "list", false, "List available transitions")
 
 	issueCmd.AddCommand(issueMoveCmd)
 }

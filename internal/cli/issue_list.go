@@ -87,17 +87,17 @@ var issueListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List and search issues",
 	Long:  "List Jira issues using JQL or convenience filters.",
-	Example: `  ajira issue list                        # List issues in default project
-  ajira issue list -s "In Progress"       # Filter by status
-  ajira issue list -a me -t Bug           # My bugs
-  ajira issue list -q "updated >= -7d"    # JQL query`,
+	Example: `  ajira issue list                           # List issues in default project
+  ajira issue list --status "In Progress"    # Filter by status
+  ajira issue list -a me -t Bug              # My bugs
+  ajira issue list -q "updated >= -7d"       # JQL query`,
 	SilenceUsage: true,
 	RunE:         runIssueList,
 }
 
 func init() {
 	issueListCmd.Flags().StringVarP(&issueListQuery, "query", "q", "", "JQL query (overrides other filters)")
-	issueListCmd.Flags().StringVarP(&issueListStatus, "status", "s", "", "Filter by status")
+	issueListCmd.Flags().StringVar(&issueListStatus, "status", "", "Filter by status")
 	issueListCmd.Flags().StringVarP(&issueListType, "type", "t", "", "Filter by issue type")
 	issueListCmd.Flags().StringVarP(&issueListAssignee, "assignee", "a", "", "Filter by assignee (email, accountId, 'me', or 'unassigned')")
 	issueListCmd.Flags().StringVarP(&issueListReporter, "reporter", "r", "", "Filter by reporter (email, accountId, or 'me')")

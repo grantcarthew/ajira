@@ -107,7 +107,7 @@ ajira me --json
 ajira issue list
 
 # Filter by status
-ajira issue list -s "In Progress"
+ajira issue list --status "In Progress"
 
 # Filter by assignee and type
 ajira issue list -a me -t Bug
@@ -242,7 +242,7 @@ ajira issue move "$KEY" "In Progress"
 ### Bulk Transition Issues
 
 ```bash
-ajira issue list -s "To Do" --json | jq -r '.[].key' | while read key; do
+ajira issue list --status "To Do" --json | jq -r '.[].key' | while read key; do
   ajira issue move "$key" "In Progress"
 done
 ```

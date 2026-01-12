@@ -16,7 +16,7 @@ See `ajira help schemas` for JSON output field lists.
 ```
 ajira issue list
 ajira issue list -l 10
-ajira issue list -s "In Progress"
+ajira issue list --status "In Progress"
 ajira issue list -t Bug -a me
 ajira issue list -r me -P High
 ajira issue list -L bug,urgent
@@ -88,7 +88,7 @@ ajira issue assign $KEY me
 ```
 
 ```
-ajira issue list -s "To Do" --json | jq -r '.[].key' | while read key; do
+ajira issue list --status "To Do" --json | jq -r '.[].key' | while read key; do
   ajira issue move "$key" "In Progress"
 done
 ```

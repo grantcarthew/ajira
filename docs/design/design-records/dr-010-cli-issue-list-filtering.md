@@ -48,7 +48,7 @@ Sorting flags:
 Filters combine with AND logic:
 
 ```
-ajira issue list -s "In Progress" -r me --labels bug
+ajira issue list --status "In Progress" -r me --labels bug
 ```
 
 Generates:

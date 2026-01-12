@@ -145,7 +145,7 @@ ajira issue list [flags]
 |------|-------|---------|-------------|
 | `--project` | `-p` | env | Project key |
 | `--query` | `-q` | | Raw JQL query |
-| `--status` | `-s` | | Filter by status |
+| `--status` | | | Filter by status |
 | `--type` | `-t` | | Filter by issue type |
 | `--assignee` | `-a` | | Filter by assignee (email, account ID, or "unassigned") |
 | `--reporter` | `-r` | | Filter by reporter |
@@ -170,7 +170,7 @@ ajira issue list
 ajira issue list -a $(ajira me | grep "Account ID" | cut -d' ' -f3)
 
 # List high priority bugs in progress
-ajira issue list -t Bug -y High -s "In Progress"
+ajira issue list -t Bug -y High --status "In Progress"
 
 # Raw JQL query
 ajira issue list -q "assignee = currentUser() AND status != Done"

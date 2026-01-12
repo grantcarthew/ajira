@@ -24,10 +24,13 @@ No arguments or local flags.
 ### project list
 
 ```
-ajira project list
+ajira project list [flags]
 ```
 
-No arguments or local flags.
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--query` | `-q` | string | | Filter by project name/key |
+| `--limit` | `-l` | int | 0 | Maximum projects to return (0 = all) |
 
 ### issue list
 
@@ -38,7 +41,7 @@ ajira issue list [flags]
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
 | `--query` | `-q` | string | | JQL query (overrides other filters) |
-| `--status` | `-s` | string | | Filter by status |
+| `--status` | | string | | Filter by status |
 | `--type` | `-t` | string | | Filter by issue type |
 | `--assignee` | `-a` | string | | Filter by assignee (email, accountId, 'me', 'unassigned') |
 | `--reporter` | `-r` | string | | Filter by reporter (email, accountId, or 'me') |
@@ -123,7 +126,27 @@ ajira issue move <issue-key> [status] [flags]
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
-| `--list` | `-l` | bool | false | List available transitions |
+| `--list` | | bool | false | List available transitions |
+
+### issue clone
+
+```
+ajira issue clone <issue-key> [flags]
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `issue-key` | Yes | Issue key to clone |
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--summary` | `-s` | string | | Override summary |
+| `--type` | `-t` | string | | Override issue type |
+| `--priority` | `-P` | string | | Override priority |
+| `--assignee` | `-a` | string | | Override assignee (email, accountId, 'me', 'unassigned') |
+| `--reporter` | `-r` | string | | Override reporter (email, accountId, or 'me') |
+| `--labels` | `-L` | []string | | Override labels (comma-separated) |
+| `--link` | | string | | Link to original issue (default: Clones, or specify type) |
 
 ### issue delete
 
@@ -231,6 +254,6 @@ No arguments or local flags.
 
 Reserved globally: `-j`, `-p`
 
-Used on `issue list`: `-q`, `-s`, `-t`, `-a`, `-r`, `-P`, `-L`, `-w`, `-l`
+Used on `issue list`: `-q`, `-t`, `-a`, `-r`, `-P`, `-L`, `-w`, `-l`
 
-Available for new flags on `issue list`: `-b`, `-c`, `-d`, `-e`, `-f`, `-g`, `-h`, `-i`, `-k`, `-m`, `-n`, `-o`, `-u`, `-v`, `-x`, `-y`, `-z` and remaining uppercase variants.
+Available for new flags on `issue list`: `-b`, `-c`, `-d`, `-e`, `-f`, `-g`, `-h`, `-i`, `-k`, `-m`, `-n`, `-o`, `-s`, `-u`, `-v`, `-x`, `-y`, `-z` and remaining uppercase variants.

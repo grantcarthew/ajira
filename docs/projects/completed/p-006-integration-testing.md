@@ -60,7 +60,7 @@ Phase 2: Issue Listing and Viewing
 
 - [x] `ajira issue list` returns issues from default project
 - [x] `ajira issue list -q "JQL"` filters correctly
-- [x] `ajira issue list -s "Status"` filters by status
+- [x] `ajira issue list --status "Status"` filters by status
 - [x] `ajira issue list -t "Type"` filters by type
 - [x] `ajira issue list -a "user"` filters by assignee
 - [x] `ajira issue list -a unassigned` shows unassigned issues
