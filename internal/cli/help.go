@@ -19,7 +19,7 @@ var helpCmd = &cobra.Command{
 	Long:  "Help provides help for commands and topics (agents, schemas).",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			rootCmd.Help()
+			_ = rootCmd.Help()
 			return
 		}
 		// Find the command and show its help
@@ -28,7 +28,7 @@ var helpCmd = &cobra.Command{
 			fmt.Printf("Unknown help topic: %s\n", args[0])
 			return
 		}
-		target.Help()
+		_ = target.Help()
 	},
 }
 

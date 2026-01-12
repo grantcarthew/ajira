@@ -76,7 +76,7 @@ func init() {
 	issueCreateCmd.Flags().StringVarP(&createPriority, "priority", "P", "", "Issue priority")
 	issueCreateCmd.Flags().StringSliceVar(&createLabels, "labels", nil, "Issue labels (comma-separated)")
 
-	issueCreateCmd.MarkFlagRequired("summary")
+	_ = issueCreateCmd.MarkFlagRequired("summary")
 
 	issueCmd.AddCommand(issueCreateCmd)
 }

@@ -33,7 +33,7 @@ func TestGetSourceIssue_Success(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -68,7 +68,7 @@ func TestResolveCloneUser_Override(t *testing.T) {
 				{"accountId": "resolved123", "displayName": "Resolved User"},
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(resp)
+			_ = json.NewEncoder(w).Encode(resp)
 			return
 		}
 		t.Errorf("unexpected path: %s", r.URL.Path)
@@ -142,7 +142,7 @@ func TestValidateLinkType_Valid(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -155,14 +155,14 @@ func TestValidateLinkType_Valid(t *testing.T) {
 
 func TestValidateLinkType_Invalid(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := map[string]interface{}{
+		resp := map[string]any{
 			"issueLinkTypes": []map[string]string{
 				{"id": "1", "name": "Clones", "inward": "is cloned by", "outward": "clones"},
 				{"id": "2", "name": "Blocks", "inward": "is blocked by", "outward": "blocks"},
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -189,13 +189,13 @@ func TestValidateLinkType_Empty(t *testing.T) {
 
 func TestValidateLinkType_CaseInsensitive(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := map[string]interface{}{
+		resp := map[string]any{
 			"issueLinkTypes": []map[string]string{
 				{"id": "1", "name": "Clones", "inward": "is cloned by", "outward": "clones"},
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -239,7 +239,7 @@ func TestCreateClonedIssue_Success(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 

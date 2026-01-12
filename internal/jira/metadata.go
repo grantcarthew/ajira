@@ -80,11 +80,7 @@ func GetPriorities(ctx context.Context, client *api.Client) ([]Priority, error) 
 
 	priorities := make([]Priority, len(resp))
 	for i, p := range resp {
-		priorities[i] = Priority{
-			ID:          p.ID,
-			Name:        p.Name,
-			Description: p.Description,
-		}
+		priorities[i] = Priority(p)
 	}
 
 	return priorities, nil
@@ -113,12 +109,7 @@ func GetIssueTypes(ctx context.Context, client *api.Client, projectKey string) (
 
 	issueTypes := make([]IssueType, len(resp.IssueTypes))
 	for i, t := range resp.IssueTypes {
-		issueTypes[i] = IssueType{
-			ID:          t.ID,
-			Name:        t.Name,
-			Description: t.Description,
-			Subtask:     t.Subtask,
-		}
+		issueTypes[i] = IssueType(t)
 	}
 
 	return issueTypes, nil

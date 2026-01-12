@@ -1,21 +1,9 @@
 package converter
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 )
-
-// Test helpers
-
-func mustMarshal(t *testing.T, v any) []byte {
-	t.Helper()
-	data, err := json.Marshal(v)
-	if err != nil {
-		t.Fatalf("failed to marshal: %v", err)
-	}
-	return data
-}
 
 // MarkdownToADF tests
 
@@ -3123,12 +3111,8 @@ func TestMarkdownToADF_EmptyHeading(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// Should handle empty heading gracefully
-	if len(adf.Content) > 0 {
-		if adf.Content[0].Type == NodeTypeHeading {
-			// Empty heading is valid
-		}
-	}
+	// Should handle empty heading gracefully - just verify no crash and valid structure
+	_ = adf.Content // Verify Content is accessible
 }
 
 func TestMarkdownToADF_TableWithoutHeader(t *testing.T) {

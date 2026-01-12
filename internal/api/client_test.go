@@ -44,7 +44,7 @@ func TestClient_Get_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	}))
 	defer server.Close()
 
@@ -74,7 +74,7 @@ func TestClient_Post_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]string{"id": "123"})
+		_ = json.NewEncoder(w).Encode(map[string]string{"id": "123"})
 	}))
 	defer server.Close()
 
@@ -97,7 +97,7 @@ func TestClient_APIError_WithMessages(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"errorMessages": []string{"Issue does not exist"},
 			"errors":        map[string]string{},
 		})
@@ -130,7 +130,7 @@ func TestClient_APIError_WithFieldErrors(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"errorMessages": []string{},
 			"errors": map[string]string{
 				"summary": "Summary is required",
@@ -250,7 +250,7 @@ func TestClient_MalformedResponse(t *testing.T) {
 		// Return HTML (like a proxy error page) instead of JSON
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("<html><body>Proxy Error</body></html>"))
+		_, _ = w.Write([]byte("<html><body>Proxy Error</body></html>"))
 	}))
 	defer server.Close()
 
@@ -271,7 +271,7 @@ func TestClient_MalformedErrorResponse(t *testing.T) {
 		// Return non-JSON on error status
 		w.Header().Set("Content-Type", "text/html")
 		w.WriteHeader(http.StatusBadGateway)
-		w.Write([]byte("<html><body>502 Bad Gateway</body></html>"))
+		_, _ = w.Write([]byte("<html><body>502 Bad Gateway</body></html>"))
 	}))
 	defer server.Close()
 

@@ -17,6 +17,7 @@ type Config struct {
 	Email       string
 	APIToken    string
 	Project     string
+	Board       string
 	HTTPTimeout time.Duration
 }
 
@@ -50,6 +51,7 @@ func Load() (*Config, error) {
 	}
 
 	cfg.Project = os.Getenv("JIRA_PROJECT")
+	cfg.Board = os.Getenv("JIRA_BOARD")
 
 	if len(errs) > 0 {
 		return nil, errors.Join(errs...)

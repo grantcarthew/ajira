@@ -35,7 +35,7 @@ func TestGetPriorities_Success(t *testing.T) {
 			{ID: "3", Name: "Medium", Description: "Medium priority"},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -70,7 +70,7 @@ func TestGetPriorities_MalformedJSON(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("not valid json"))
+		_, _ = w.Write([]byte("not valid json"))
 	}))
 	defer server.Close()
 
@@ -100,7 +100,7 @@ func TestGetIssueTypes_ObjectFormat(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -129,7 +129,7 @@ func TestGetIssueTypes_ArrayFormat(t *testing.T) {
 			{ID: "2", Name: "Epic", Description: "An epic", Subtask: false},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -151,7 +151,7 @@ func TestGetIssueTypes_APIError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]any{
 			"errorMessages": []string{"Project not found"},
 		})
 	}))
@@ -168,7 +168,7 @@ func TestGetIssueTypes_MalformedJSON(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("{invalid json"))
+		_, _ = w.Write([]byte("{invalid json"))
 	}))
 	defer server.Close()
 
@@ -228,7 +228,7 @@ func TestGetStatuses_Success(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -301,7 +301,7 @@ func TestGetStatuses_Deduplication(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -331,7 +331,7 @@ func TestGetStatuses_Deduplication(t *testing.T) {
 func TestGetStatuses_EmptyResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode([]projectStatusesResponse{})
+		_ = json.NewEncoder(w).Encode([]projectStatusesResponse{})
 	}))
 	defer server.Close()
 
@@ -368,7 +368,7 @@ func TestValidatePriority_Valid(t *testing.T) {
 			{ID: "3", Name: "Medium"},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -386,7 +386,7 @@ func TestValidatePriority_CaseInsensitive(t *testing.T) {
 			{ID: "2", Name: "High"},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -409,7 +409,7 @@ func TestValidatePriority_Invalid(t *testing.T) {
 			{ID: "3", Name: "Medium"},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -453,7 +453,7 @@ func TestValidatePriority_APIError(t *testing.T) {
 // TestValidateIssueType tests issue type validation.
 func TestValidateIssueType_Valid(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := map[string]interface{}{
+		resp := map[string]any{
 			"issueTypes": []issueTypeResponse{
 				{ID: "1", Name: "Bug"},
 				{ID: "2", Name: "Task"},
@@ -461,7 +461,7 @@ func TestValidateIssueType_Valid(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -474,13 +474,13 @@ func TestValidateIssueType_Valid(t *testing.T) {
 
 func TestValidateIssueType_CaseInsensitive(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := map[string]interface{}{
+		resp := map[string]any{
 			"issueTypes": []issueTypeResponse{
 				{ID: "1", Name: "Bug"},
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -497,14 +497,14 @@ func TestValidateIssueType_CaseInsensitive(t *testing.T) {
 
 func TestValidateIssueType_Invalid(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		resp := map[string]interface{}{
+		resp := map[string]any{
 			"issueTypes": []issueTypeResponse{
 				{ID: "1", Name: "Bug"},
 				{ID: "2", Name: "Task"},
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -559,7 +559,7 @@ func TestValidateStatus_Valid(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -582,7 +582,7 @@ func TestValidateStatus_CaseInsensitive(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -610,7 +610,7 @@ func TestValidateStatus_Invalid(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 

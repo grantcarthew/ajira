@@ -20,25 +20,26 @@ Add support for Jira Agile features: epics, sprints, and boards. These are core 
 
 In Scope:
 
-Epic commands:
+Board commands:
 
-- `ajira epic list` - List epics in project
-- `ajira epic list <key>` - List issues in an epic
-- `ajira epic create` - Create a new epic
+- `ajira board list` - List boards (requires project context)
+
+Sprint commands (require JIRA_BOARD or --board):
+
+- `ajira sprint list` - List sprints with state/current filters
+- `ajira sprint add <sprint-id> <issue-keys...>` - Add issues to sprint
+
+Epic commands (use project context via JQL):
+
+- `ajira epic list` - List epics (wrapper around issue list -t Epic)
+- `ajira epic create` - Create epic (wrapper around issue create -t Epic)
 - `ajira epic add <epic-key> <issue-keys...>` - Add issues to epic
 - `ajira epic remove <issue-keys...>` - Remove issues from epic
 
-Sprint commands:
+Issue list extensions:
 
-- `ajira sprint list` - List sprints
-- `ajira sprint list <id>` - List issues in sprint
-- `ajira sprint list --current` - Current active sprint
-- `ajira sprint list --state <state>` - Filter by state (active, future, closed)
-- `ajira sprint add <sprint-id> <issue-keys...>` - Add issues to sprint
-
-Board commands:
-
-- `ajira board list` - List boards in project
+- `ajira issue list --sprint <id>` - Filter issues by sprint
+- `ajira issue list --epic <key>` - Filter issues by epic
 
 Out of Scope:
 
@@ -49,18 +50,19 @@ Out of Scope:
 
 ## Success Criteria
 
-- [ ] `epic list` displays epics with key, name, status
-- [ ] `epic list <key>` shows issues in epic with standard filters
-- [ ] `epic create` creates epic with name and optional fields
+- [ ] `board list` shows boards with id, name, type, project
+- [ ] `sprint list` shows sprints with id, name, state, dates, goal
+- [ ] `sprint list --state` filters by active/future/closed
+- [ ] `sprint list --current` shows active sprints
+- [ ] `sprint add` adds issues to sprint
+- [ ] `epic list` displays epics with key, status, priority, summary
+- [ ] `epic create` creates epic with summary and optional fields
 - [ ] `epic add` adds multiple issues to an epic
 - [ ] `epic remove` removes issues from their epic
-- [ ] `sprint list` shows sprints with id, name, state, dates
-- [ ] `sprint list <id>` shows issues in sprint
-- [ ] `sprint list --current` shows current sprint issues
-- [ ] `sprint add` adds issues to sprint
-- [ ] `board list` shows boards with id and name
+- [ ] `issue list --sprint` filters issues by sprint ID
+- [ ] `issue list --epic` filters issues by epic key
 - [ ] All commands support `--json` output
-- [ ] Tests cover epic and sprint operations
+- [ ] Tests cover board, sprint, and epic operations
 
 ## Deliverables
 
@@ -73,22 +75,24 @@ Out of Scope:
 - `internal/cli/sprint_list.go` - Sprint list implementation
 - `internal/cli/sprint_add.go` - Add issues to sprint
 - `internal/cli/board.go` - Board list command
-- DR-011: Agile Command Structure
+- DR-012: CLI Agile Commands
 - Integration tests for agile operations
 
-## Research Areas
+## Research Completed
 
-- Jira Agile REST API (different from standard Jira API)
-- Epic field handling (epic name vs epic link in classic vs next-gen)
-- Sprint API endpoints and authentication
-- Board types (scrum vs kanban) and their differences
+Jira Agile REST API:
 
-## Questions and Uncertainties
+- Uses `/rest/agile/1.0/` base path (separate from standard API)
+- Sprint operations require board context
+- Epic Agile API has limitations with next-gen projects
+- Using JQL for epic operations provides better compatibility
 
-- How do epic fields differ between classic and next-gen projects?
-- Is the Agile API available on all Jira instances?
-- How to handle projects without boards?
-- Should sprint commands require board ID or infer from project?
+Design decisions:
+
+- Sprint commands require JIRA_BOARD or --board flag
+- Epic commands use JQL via project context (no board required)
+- Epic add/remove use Agile API (limited next-gen support)
+- Issue list extended with --sprint and --epic flags
 
 ## Dependencies
 

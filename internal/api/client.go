@@ -46,10 +46,7 @@ type APIError struct {
 }
 
 func (e *APIError) Error() string {
-	var parts []string
-	for _, msg := range e.Messages {
-		parts = append(parts, msg)
-	}
+	parts := append([]string{}, e.Messages...)
 	for field, msg := range e.Errors {
 		parts = append(parts, fmt.Sprintf("%s: %s", field, msg))
 	}
@@ -90,7 +87,11 @@ func (c *Client) Delete(ctx context.Context, path string) ([]byte, error) {
 }
 
 func (c *Client) request(ctx context.Context, method, path string, body []byte) ([]byte, error) {
-	url := c.baseURL + basePathV3 + path
+	return c.doRequest(ctx, method, basePathV3+path, body)
+}
+
+func (c *Client) doRequest(ctx context.Context, method, path string, body []byte) ([]byte, error) {
+	url := c.baseURL + path
 
 	var bodyReader io.Reader
 	if body != nil {
@@ -132,7 +133,6 @@ func (c *Client) request(ctx context.Context, method, path string, body []byte) 
 			apiErr.Messages = jiraErr.ErrorMessages
 			apiErr.Errors = jiraErr.Errors
 		} else if len(respBody) > 0 {
-			// Capture raw body when JSON parsing fails (e.g., HTML error pages)
 			apiErr.RawBody = string(respBody)
 		}
 

@@ -97,6 +97,7 @@ gofmt -l .
 go vet ./...
 golangci-lint run
 ineffassign ./...
+govulncheck ./...
 
 # Check cyclomatic complexity (functions over 15)
 gocyclo -over 15 .
@@ -120,6 +121,7 @@ git status
 - `go vet ./...` reports no issues
 - `golangci-lint run` reports no errors (warnings acceptable)
 - `ineffassign ./...` reports no issues
+- `govulncheck ./...` reports no vulnerabilities
 - `gocyclo -over 15 .` reports no functions (or acceptable exceptions)
 - All tests pass
 - Build completes without errors
@@ -137,6 +139,7 @@ brew install golangci-lint
 # Individual linters
 go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 go install github.com/gordonklaus/ineffassign@latest
+go install golang.org/x/vuln/cmd/govulncheck@latest
 ```
 
 **If any validation fails, stop and fix issues before proceeding.**
@@ -454,6 +457,7 @@ rg -i "TODO|FIXME|XXX" --type go  # Should be empty or acceptable
 # 2. Validation
 go test -v ./...
 golangci-lint run
+govulncheck ./...
 git status  # Should be clean
 
 # 3. Update CHANGELOG.md manually, then commit

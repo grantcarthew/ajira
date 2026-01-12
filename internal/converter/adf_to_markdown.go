@@ -55,17 +55,6 @@ func isBlockElement(node ADFNode) bool {
 	}
 }
 
-// isListItem returns true if the node is a list or list item.
-func isListItem(node ADFNode) bool {
-	switch node.Type {
-	case NodeTypeBulletList, NodeTypeOrderedList, NodeTypeTaskList,
-		NodeTypeListItem, NodeTypeTaskItem:
-		return true
-	default:
-		return false
-	}
-}
-
 // renderNode renders a single ADF node to Markdown.
 func renderNode(node ADFNode, depth int) string {
 	switch node.Type {

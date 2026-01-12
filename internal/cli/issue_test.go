@@ -364,7 +364,68 @@ func resetIssueListFlags() {
 	issueListWatching = false
 	issueListOrderBy = ""
 	issueListReverse = false
+	issueListSprint = ""
+	issueListEpic = ""
 	project = ""
+}
+
+func TestBuildJQL_WithSprint(t *testing.T) {
+	resetIssueListFlags()
+	issueListSprint = "42"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "sprint = 42") {
+		t.Errorf("expected sprint = 42, got %q", jql)
+	}
+}
+
+func TestBuildJQL_WithEpic(t *testing.T) {
+	resetIssueListFlags()
+	issueListEpic = "GCP-50"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "parent = GCP-50") {
+		t.Errorf("expected parent = GCP-50, got %q", jql)
+	}
+}
+
+func TestBuildJQL_WithSprintAndEpic(t *testing.T) {
+	resetIssueListFlags()
+	issueListSprint = "42"
+	issueListEpic = "GCP-50"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "sprint = 42") {
+		t.Errorf("expected sprint = 42, got %q", jql)
+	}
+	if !strings.Contains(jql, "parent = GCP-50") {
+		t.Errorf("expected parent = GCP-50, got %q", jql)
+	}
+	if !strings.Contains(jql, " AND ") {
+		t.Errorf("expected AND in JQL, got %q", jql)
+	}
+}
+
+func TestBuildJQL_SprintWithOtherFilters(t *testing.T) {
+	resetIssueListFlags()
+	issueListSprint = "42"
+	issueListStatus = "In Progress"
+	issueListAssignee = "me"
+	project = "TEST"
+
+	jql := buildJQL()
+	if !strings.Contains(jql, "sprint = 42") {
+		t.Errorf("expected sprint filter, got %q", jql)
+	}
+	if !strings.Contains(jql, `status = "In Progress"`) {
+		t.Errorf("expected status filter, got %q", jql)
+	}
+	if !strings.Contains(jql, "assignee = currentUser()") {
+		t.Errorf("expected assignee filter, got %q", jql)
+	}
 }
 
 // Test searchIssues function
@@ -400,7 +461,7 @@ func TestSearchIssues_Success(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -447,7 +508,7 @@ func TestSearchIssues_WithLimit(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -469,7 +530,7 @@ func TestSearchIssues_EmptyResult(t *testing.T) {
 			Issues: []issueValue{},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -519,7 +580,7 @@ func TestGetIssue_Success(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -568,7 +629,7 @@ func TestGetIssue_NullDescription(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -610,7 +671,7 @@ func TestCreateIssue_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(CreateResult{
+		_ = json.NewEncoder(w).Encode(CreateResult{
 			Key:  "TEST-999",
 			ID:   "12345",
 			Self: "https://example.atlassian.net/rest/api/3/issue/12345",
@@ -648,7 +709,7 @@ func TestCreateIssue_WithPriorityAndLabels(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(CreateResult{Key: "TEST-1000"})
+		_ = json.NewEncoder(w).Encode(CreateResult{Key: "TEST-1000"})
 	}))
 	defer server.Close()
 
@@ -729,7 +790,7 @@ func TestResolveUser_ByEmail(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -759,7 +820,7 @@ func TestResolveUser_DirectAccountID(t *testing.T) {
 func TestResolveUser_NotFound(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(userSearchResponse{})
+		_ = json.NewEncoder(w).Encode(userSearchResponse{})
 	}))
 	defer server.Close()
 
@@ -842,7 +903,7 @@ func TestGetTransitions_Success(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -946,7 +1007,7 @@ func TestGetComments_Success(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -992,7 +1053,7 @@ func TestAddComment_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(CommentResult{
+		_ = json.NewEncoder(w).Encode(CommentResult{
 			ID:      "10003",
 			Self:    "https://example.atlassian.net/rest/api/3/issue/TEST-123/comment/10003",
 			Created: "2024-01-16T16:00:00.000+0000",
@@ -1037,7 +1098,7 @@ func TestSearchIssues_APIError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"errorMessages": []string{"Invalid JQL query"},
 		})
 	}))
@@ -1062,7 +1123,7 @@ func TestGetIssue_NotFound(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"errorMessages": []string{"Issue does not exist or you do not have permission to see it."},
 		})
 	}))
@@ -1212,7 +1273,7 @@ func TestSearchIssues_Pagination(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 
@@ -1244,7 +1305,7 @@ func TestSearchIssues_PaginationSafetyGuard(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resp)
+		_ = json.NewEncoder(w).Encode(resp)
 	}))
 	defer server.Close()
 

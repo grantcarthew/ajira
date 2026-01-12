@@ -81,6 +81,8 @@ var (
 	issueListOrderBy  string
 	issueListReverse  bool
 	issueListLimit    int
+	issueListSprint   string
+	issueListEpic     string
 )
 
 var issueListCmd = &cobra.Command{
@@ -90,7 +92,9 @@ var issueListCmd = &cobra.Command{
 	Example: `  ajira issue list                           # List issues in default project
   ajira issue list --status "In Progress"    # Filter by status
   ajira issue list -a me -t Bug              # My bugs
-  ajira issue list -q "updated >= -7d"       # JQL query`,
+  ajira issue list -q "updated >= -7d"       # JQL query
+  ajira issue list --sprint 42               # Issues in sprint
+  ajira issue list --epic GCP-50             # Issues in epic`,
 	SilenceUsage: true,
 	RunE:         runIssueList,
 }
@@ -107,6 +111,8 @@ func init() {
 	issueListCmd.Flags().StringVar(&issueListOrderBy, "order-by", "", "Sort field (created, updated, priority, key, rank)")
 	issueListCmd.Flags().BoolVar(&issueListReverse, "reverse", false, "Reverse sort order (ASC instead of DESC)")
 	issueListCmd.Flags().IntVarP(&issueListLimit, "limit", "l", 50, "Maximum issues to return")
+	issueListCmd.Flags().StringVar(&issueListSprint, "sprint", "", "Filter by sprint ID")
+	issueListCmd.Flags().StringVar(&issueListEpic, "epic", "", "Filter by epic key")
 
 	issueCmd.AddCommand(issueListCmd)
 }
@@ -273,6 +279,12 @@ func buildJQL() string {
 	if issueListWatching {
 		conditions = append(conditions, "watcher = currentUser()")
 	}
+	if issueListSprint != "" {
+		conditions = append(conditions, fmt.Sprintf("sprint = %s", issueListSprint))
+	}
+	if issueListEpic != "" {
+		conditions = append(conditions, fmt.Sprintf("parent = %s", issueListEpic))
+	}
 
 	if len(conditions) == 0 {
 		return ""
@@ -309,7 +321,7 @@ func searchIssues(ctx context.Context, client *api.Client, jql string, limit int
 	nextPageToken := ""
 	const maxPages = 100 // Safety guard against infinite pagination loops
 
-	for page := 0; page < maxPages; page++ {
+	for range maxPages {
 		path := fmt.Sprintf("/search/jql?jql=%s&maxResults=%d&fields=summary,status,issuetype,priority,assignee",
 			url.QueryEscape(jql), maxResults)
 		if nextPageToken != "" {
@@ -386,23 +398,6 @@ func colorStatus(status, category string) string {
 		return faint(status)
 	default:
 		return status
-	}
-}
-
-// colorPriority returns a colored priority string.
-func colorPriority(priority string) string {
-	red := color.New(color.FgRed).SprintFunc()
-	yellow := color.New(color.FgYellow).SprintFunc()
-
-	switch strings.ToLower(priority) {
-	case "highest", "critical", "blocker":
-		return red(priority)
-	case "high":
-		return red(priority)
-	case "medium":
-		return yellow(priority)
-	default:
-		return priority
 	}
 }
 

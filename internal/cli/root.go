@@ -19,6 +19,7 @@ var (
 	// Global flags
 	jsonOutput bool
 	project    string
+	board      string
 )
 
 var rootCmd = &cobra.Command{
@@ -32,6 +33,7 @@ Environment Variables:
   JIRA_EMAIL       User email for authentication (required)
   JIRA_API_TOKEN   API token for authentication (required)
   JIRA_PROJECT     Default project key (optional)
+  JIRA_BOARD       Default board ID for agile commands (optional)
 
 Quick Start:
   ajira me                          Verify authentication
@@ -49,12 +51,17 @@ AI Agents: Run "ajira help agents" for a token-efficient reference.`,
 		if project == "" {
 			project = os.Getenv("JIRA_PROJECT")
 		}
+		// Set board from env if not specified via flag
+		if board == "" {
+			board = os.Getenv("JIRA_BOARD")
+		}
 	},
 }
 
 func init() {
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "Output in JSON format")
 	rootCmd.PersistentFlags().StringVarP(&project, "project", "p", "", "Default project key (or set JIRA_PROJECT)")
+	rootCmd.PersistentFlags().StringVar(&board, "board", "", "Default board ID for agile commands (or set JIRA_BOARD)")
 	rootCmd.Version = Version
 	rootCmd.SetVersionTemplate(`ajira version {{.Version}}
 Repository: https://github.com/grantcarthew/ajira
@@ -101,6 +108,11 @@ func JSONOutput() bool {
 // Project returns the current project key.
 func Project() string {
 	return project
+}
+
+// Board returns the current board ID.
+func Board() string {
+	return board
 }
 
 // IssueURL returns the browse URL for an issue key.

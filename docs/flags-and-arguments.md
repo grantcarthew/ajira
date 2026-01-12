@@ -10,6 +10,7 @@ These persistent flags are inherited by all commands.
 |------|-------|------|---------|-------------|
 | `--json` | `-j` | bool | false | Output in JSON format |
 | `--project` | `-p` | string | $JIRA_PROJECT | Default project key |
+| `--board` | | string | $JIRA_BOARD | Default board ID for agile commands |
 
 ## Commands
 
@@ -51,6 +52,8 @@ ajira issue list [flags]
 | `--order-by` | | string | updated | Sort field (created, updated, priority, key, rank) |
 | `--reverse` | | bool | false | Reverse sort order (ASC instead of DESC) |
 | `--limit` | `-l` | int | 50 | Maximum issues to return |
+| `--sprint` | | string | | Filter by sprint ID |
+| `--epic` | | string | | Filter by epic key |
 
 ### issue view
 
@@ -249,6 +252,95 @@ ajira issue priority
 ```
 
 No arguments or local flags.
+
+### board list
+
+```
+ajira board list [flags]
+```
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--limit` | `-l` | int | 0 | Maximum boards to return (0 = all) |
+
+### sprint list
+
+```
+ajira sprint list [flags]
+```
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--state` | | string | | Filter by state (active, future, closed) |
+| `--current` | | bool | false | Show current active sprints (shorthand for --state active) |
+| `--limit` | `-l` | int | 0 | Maximum sprints to return (0 = all) |
+
+Note: Requires `--board` flag or `JIRA_BOARD` environment variable.
+
+### sprint add
+
+```
+ajira sprint add <sprint-id> <issue-keys...>
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `sprint-id` | Yes | Target sprint ID |
+| `issue-keys` | Yes | One or more issue keys to add |
+
+No local flags.
+
+### epic list
+
+```
+ajira epic list [flags]
+```
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--status` | | string | | Filter by status |
+| `--assignee` | `-a` | string | | Filter by assignee (email, accountId, 'me', 'unassigned') |
+| `--priority` | `-P` | string | | Filter by priority |
+| `--limit` | `-l` | int | 50 | Maximum epics to return |
+
+### epic create
+
+```
+ajira epic create [flags]
+```
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--summary` | `-s` | string | | Epic summary (required) |
+| `--description` | `-d` | string | | Epic description in Markdown |
+| `--file` | `-f` | string | | Read description from file (- for stdin) |
+| `--priority` | `-P` | string | | Epic priority |
+| `--labels` | | []string | | Epic labels (comma-separated) |
+
+### epic add
+
+```
+ajira epic add <epic-key> <issue-keys...>
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `epic-key` | Yes | Target epic key |
+| `issue-keys` | Yes | One or more issue keys to add |
+
+No local flags.
+
+### epic remove
+
+```
+ajira epic remove <issue-keys...>
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `issue-keys` | Yes | One or more issue keys to remove from their epic |
+
+No local flags.
 
 ## Short Flag Availability
 

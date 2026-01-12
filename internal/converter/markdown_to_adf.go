@@ -410,7 +410,8 @@ func convertInlineNodeMulti(n ast.Node, source []byte) []ADFNode {
 		return nil // Handled at block level
 	case *ast.Image:
 		// Images out of scope, return alt text
-		return []ADFNode{{Type: NodeTypeText, Text: string(node.Text(source))}}
+		// Use Text() to traverse children for alt text (deprecated but appropriate here)
+		return []ADFNode{{Type: NodeTypeText, Text: string(node.Text(source))}} //nolint:staticcheck
 	default:
 		return nil
 	}
