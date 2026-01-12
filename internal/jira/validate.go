@@ -76,3 +76,26 @@ func ValidateStatus(ctx context.Context, client *api.Client, projectKey, status 
 
 	return fmt.Errorf("invalid status %q, valid options: %s", status, strings.Join(names, ", "))
 }
+
+// ValidateLinkType checks if the given link type name is valid.
+// Returns nil if valid, or an error with valid options listed.
+func ValidateLinkType(ctx context.Context, client *api.Client, linkType string) error {
+	if linkType == "" {
+		return nil
+	}
+
+	linkTypes, err := GetLinkTypes(ctx, client)
+	if err != nil {
+		return fmt.Errorf("failed to fetch link types: %w", err)
+	}
+
+	var names []string
+	for _, lt := range linkTypes {
+		names = append(names, lt.Name)
+		if strings.EqualFold(lt.Name, linkType) {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("invalid link type %q, valid options: %s", linkType, strings.Join(names, ", "))
+}
