@@ -1,8 +1,8 @@
 # P-010: Agile Features
 
-- Status: Proposed
-- Started:
-- Completed:
+- Status: Completed
+- Started: 2026-01-13
+- Completed: 2026-01-13
 
 ## Overview
 
@@ -50,19 +50,19 @@ Out of Scope:
 
 ## Success Criteria
 
-- [ ] `board list` shows boards with id, name, type, project
-- [ ] `sprint list` shows sprints with id, name, state, dates, goal
-- [ ] `sprint list --state` filters by active/future/closed
-- [ ] `sprint list --current` shows active sprints
-- [ ] `sprint add` adds issues to sprint
-- [ ] `epic list` displays epics with key, status, priority, summary
-- [ ] `epic create` creates epic with summary and optional fields
-- [ ] `epic add` adds multiple issues to an epic
-- [ ] `epic remove` removes issues from their epic
-- [ ] `issue list --sprint` filters issues by sprint ID
-- [ ] `issue list --epic` filters issues by epic key
-- [ ] All commands support `--json` output
-- [ ] Tests cover board, sprint, and epic operations
+- [x] `board list` shows boards with id, name, type, project
+- [x] `sprint list` shows sprints with id, name, state, dates, goal
+- [x] `sprint list --state` filters by active/future/closed
+- [x] `sprint list --current` shows active sprints
+- [x] `sprint add` adds issues to sprint
+- [x] `epic list` displays epics with key, status, priority, summary
+- [x] `epic create` creates epic with summary and optional fields
+- [x] `epic add` adds multiple issues to an epic
+- [x] `epic remove` removes issues from their epic
+- [x] `issue list --sprint` filters issues by sprint ID
+- [x] `issue list --epic` filters issues by epic key
+- [x] All commands support `--json` output
+- [x] Tests cover board, sprint, and epic operations
 
 ## Deliverables
 

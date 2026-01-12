@@ -16,15 +16,15 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 | P-004 | Issue Commands | Completed | 2026-01-05 | 2026-01-05 |
 | P-005 | Comment Functionality | Completed | 2026-01-05 | 2026-01-05 |
 | P-006 | Integration Testing | Completed | 2026-01-05 | 2026-01-07 |
-| P-007 | Issue Linking | Proposed | | |
-| P-008 | Issue List Enhancements | Proposed | | |
-| P-009 | Issue Clone | Proposed | | |
-| P-010 | Agile Features | Proposed | | |
+| P-007 | Issue Linking | Completed | 2026-01-08 | 2026-01-08 |
+| P-008 | Issue List Enhancements | Completed | 2026-01-09 | 2026-01-09 |
+| P-009 | Issue Clone | Completed | 2026-01-12 | 2026-01-12 |
+| P-010 | Agile Features | Completed | 2026-01-13 | 2026-01-13 |
 | P-011 | Issue Command Enhancements | Proposed | | |
 | P-012 | Time Tracking | Proposed | | |
 | P-013 | Automation Support | Proposed | | |
 | P-014 | Auxiliary Commands | Proposed | | |
-| P-015 | CLI Help System | Proposed | | |
+| P-015 | CLI Help System | Completed | 2026-01-07 | 2026-01-07 |
 
 Note: Completed projects are in `completed/`
 

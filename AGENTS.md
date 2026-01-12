@@ -65,9 +65,9 @@ docs/              Documentation and design records
 
 Projects are stored in `docs/projects/`. Update this section when starting a new project.
 
-Active Project: P-010 Agile Features - `docs/projects/p-010-cli-agile-features.md`
+Active Project: P-011 Issue Command Enhancements - `docs/projects/p-011-cli-issue-command-enhancements.md`
 
-Completed: P-009 Issue Clone (2026-01-12), P-008 Issue List Enhancements (2026-01-09), P-007 Issue Linking (2026-01-08), P-015 CLI Help System (2026-01-07), P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
+Completed: P-010 Agile Features (2026-01-13), P-009 Issue Clone (2026-01-12), P-008 Issue List Enhancements (2026-01-09), P-007 Issue Linking (2026-01-08), P-015 CLI Help System (2026-01-07), P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
 
 ## Development Guidelines
 
