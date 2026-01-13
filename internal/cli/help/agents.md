@@ -40,6 +40,9 @@ ajira issue create -s "Add feature" -t Story -d "Description here"
 ajira issue create -s "From file" -f description.md
 echo "Stdin description" | ajira issue create -s "From stdin" -f -
 ajira issue create -s "With labels" --labels bug,urgent --priority High
+ajira issue create -s "Subtask" -t Sub-task --parent PROJ-50
+ajira issue create -s "With components" -C Backend,API
+ajira issue create -s "With version" --fix-version 1.0.0
 ```
 
 ## Modify Issue
@@ -47,12 +50,20 @@ ajira issue create -s "With labels" --labels bug,urgent --priority High
 ```
 ajira issue edit PROJ-123 -s "New summary"
 ajira issue edit PROJ-123 -d "New description"
+ajira issue edit PROJ-123 --parent PROJ-50
+ajira issue edit PROJ-123 --parent none
+ajira issue edit PROJ-123 --add-labels urgent,reviewed
+ajira issue edit PROJ-123 --remove-labels stale
+ajira issue edit PROJ-123 --add-component Frontend
+ajira issue edit PROJ-123 --add-fix-version 1.1.0
 ajira issue assign PROJ-123 user@example.com
 ajira issue assign PROJ-123 me
 ajira issue assign PROJ-123 unassigned
 ajira issue move PROJ-123 "In Progress"
+ajira issue move PROJ-123 Done -m "Completed"
 ajira issue move PROJ-123
 ajira issue delete PROJ-123
+ajira issue delete PROJ-123 --cascade
 ```
 
 ## Comments

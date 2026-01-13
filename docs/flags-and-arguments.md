@@ -83,6 +83,9 @@ ajira issue create [flags]
 | `--type` | `-t` | string | Task | Issue type |
 | `--priority` | `-P` | string | | Issue priority |
 | `--labels` | | []string | | Issue labels (comma-separated) |
+| `--parent` | | string | | Parent issue or epic key |
+| `--component` | `-C` | []string | | Component(s) (comma-separated) |
+| `--fix-version` | | []string | | Fix version(s) (comma-separated) |
 
 ### issue edit
 
@@ -102,6 +105,15 @@ ajira issue edit <issue-key> [flags]
 | `--type` | `-t` | string | | New issue type |
 | `--priority` | `-P` | string | | New priority |
 | `--labels` | | []string | | New labels (replaces existing) |
+| `--parent` | | string | | Parent issue/epic key (none/remove/clear/unset to remove) |
+| `--add-labels` | | []string | | Add label(s) without replacing |
+| `--remove-labels` | | []string | | Remove specific label(s) |
+| `--component` | `-C` | []string | | Replace all components |
+| `--add-component` | | []string | | Add component(s) |
+| `--remove-component` | | []string | | Remove component(s) |
+| `--fix-version` | | []string | | Replace all fix versions |
+| `--add-fix-version` | | []string | | Add fix version(s) |
+| `--remove-fix-version` | | []string | | Remove fix version(s) |
 
 ### issue assign
 
@@ -130,6 +142,9 @@ ajira issue move <issue-key> [status] [flags]
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
 | `--list` | | bool | false | List available transitions |
+| `--comment` | `-m` | string | | Add comment during transition |
+| `--resolution` | `-R` | string | | Set resolution (e.g., Done, Won't Do) |
+| `--assignee` | `-a` | string | | Set assignee (email, accountId, 'me') |
 
 ### issue clone
 
@@ -154,14 +169,16 @@ ajira issue clone <issue-key> [flags]
 ### issue delete
 
 ```
-ajira issue delete <issue-key>
+ajira issue delete <issue-key> [flags]
 ```
 
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `issue-key` | Yes | Issue key to delete |
 
-No local flags.
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--cascade` | | bool | false | Delete issue with all subtasks |
 
 ### issue comment add
 
@@ -348,4 +365,10 @@ Reserved globally: `-j`, `-p`
 
 Used on `issue list`: `-q`, `-t`, `-a`, `-r`, `-P`, `-L`, `-w`, `-l`
 
-Available for new flags on `issue list`: `-b`, `-c`, `-d`, `-e`, `-f`, `-g`, `-h`, `-i`, `-k`, `-m`, `-n`, `-o`, `-s`, `-u`, `-v`, `-x`, `-y`, `-z` and remaining uppercase variants.
+Used on `issue create`: `-s`, `-d`, `-f`, `-t`, `-P`, `-C`
+
+Used on `issue edit`: `-s`, `-d`, `-f`, `-t`, `-P`, `-C`
+
+Used on `issue move`: `-m`, `-R`, `-a`
+
+Available for new flags on `issue list`: `-b`, `-c`, `-e`, `-g`, `-h`, `-i`, `-k`, `-n`, `-o`, `-u`, `-v`, `-x`, `-y`, `-z` and remaining uppercase variants.
