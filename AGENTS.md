@@ -65,7 +65,7 @@ docs/              Documentation and design records
 
 Projects are stored in `docs/projects/`. Update this section when starting a new project.
 
-Active Project: P-012 Time Tracking - `docs/projects/p-012-cli-time-tracking.md`
+Active Project: P-013 Automation Support - `docs/projects/p-013-cli-automation-support.md`
 
 Completed: P-011 Issue Command Enhancements (2026-01-13), P-010 Agile Features (2026-01-13), P-009 Issue Clone (2026-01-12), P-008 Issue List Enhancements (2026-01-09), P-007 Issue Linking (2026-01-08), P-015 CLI Help System (2026-01-07), P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
 

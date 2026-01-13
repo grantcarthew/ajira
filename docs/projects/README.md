@@ -21,12 +21,11 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 | P-009 | Issue Clone | Completed | 2026-01-12 | 2026-01-12 |
 | P-010 | Agile Features | Completed | 2026-01-13 | 2026-01-13 |
 | P-011 | Issue Command Enhancements | Completed | 2026-01-13 | 2026-01-13 |
-| P-012 | Time Tracking | Proposed | | |
 | P-013 | Automation Support | Proposed | | |
 | P-014 | Auxiliary Commands | Proposed | | |
 | P-015 | CLI Help System | Completed | 2026-01-07 | 2026-01-07 |
 
-Note: Completed projects are in `completed/`
+Note: Completed projects are in `completed/`, deferred projects are in `deferred/`
 
 ---
 
@@ -35,6 +34,7 @@ Note: Completed projects are in `completed/`
 - **Proposed** - Project defined, not yet started
 - **In Progress** - Currently being worked on
 - **Completed** - All success criteria met, deliverables created (move to `completed/`)
+- **Deferred** - Postponed indefinitely (move to `deferred/`)
 - **Blocked** - Waiting on external dependency or decision
 
 ---

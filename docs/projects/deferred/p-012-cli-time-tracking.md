@@ -1,8 +1,10 @@
 # P-012: Time Tracking
 
-- Status: Proposed
+- Status: Deferred
 - Started:
 - Completed:
+- Deferred: 2026-01-13
+- Reason: Time tracking not actively used in target Jira instance
 
 ## Overview
 
