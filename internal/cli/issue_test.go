@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -680,7 +681,7 @@ func TestCreateIssue_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(context.Background(), client, "TEST", "New issue", "Description here", "Task", "", nil)
+	result, err := createIssue(context.Background(), client, "TEST", "New issue", "Description here", "Task", "", nil, "", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -714,13 +715,43 @@ func TestCreateIssue_WithPriorityAndLabels(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(context.Background(), client, "TEST", "Issue with extras", "", "Bug", "High", []string{"urgent", "frontend"})
+	result, err := createIssue(context.Background(), client, "TEST", "Issue with extras", "", "Bug", "High", []string{"urgent", "frontend"}, "", nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	if result.Key != "TEST-1000" {
 		t.Errorf("expected key TEST-1000, got %s", result.Key)
+	}
+}
+
+// Test createIssue with parent
+func TestCreateIssue_WithParent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req issueCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if req.Fields.Parent == nil {
+			t.Error("expected parent to be set")
+		} else if req.Fields.Parent.Key != "TEST-50" {
+			t.Errorf("expected parent key TEST-50, got %s", req.Fields.Parent.Key)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"id":"1001","key":"TEST-1001","self":"https://example.atlassian.net/rest/api/3/issue/1001"}`)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	result, err := createIssue(context.Background(), client, "TEST", "Subtask", "", "Sub-task", "", nil, "TEST-50", nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Key != "TEST-1001" {
+		t.Errorf("expected key TEST-1001, got %s", result.Key)
 	}
 }
 
@@ -748,7 +779,134 @@ func TestUpdateIssue_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := updateIssue(context.Background(), client, "TEST-123", map[string]any{"summary": "Updated summary"})
+	err := updateIssue(context.Background(), client, "TEST-123", map[string]any{"summary": "Updated summary"}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// Test updateIssue with parent
+func TestUpdateIssue_WithParent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req issueEditRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		parent, ok := req.Fields["parent"]
+		if !ok {
+			t.Error("expected parent field to be set")
+		}
+		parentMap, ok := parent.(map[string]any)
+		if !ok {
+			t.Errorf("expected parent to be a map, got %T", parent)
+		}
+		if parentMap["key"] != "TEST-50" {
+			t.Errorf("expected parent key TEST-50, got %v", parentMap["key"])
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := updateIssue(context.Background(), client, "TEST-123", map[string]any{
+		"parent": map[string]string{"key": "TEST-50"},
+	}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// Test updateIssue removing parent
+func TestUpdateIssue_RemoveParent(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req issueEditRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		parent, ok := req.Fields["parent"]
+		if !ok {
+			t.Error("expected parent field to be present")
+		}
+		if parent != nil {
+			t.Errorf("expected parent to be null, got %v", parent)
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := updateIssue(context.Background(), client, "TEST-123", map[string]any{
+		"parent": nil,
+	}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// Test isParentRemovalKeyword function
+func TestIsParentRemovalKeyword(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"none", true},
+		{"None", true},
+		{"NONE", true},
+		{"remove", true},
+		{"clear", true},
+		{"unset", true},
+		{"TEST-123", false},
+		{"", false},
+		{"parent", false},
+	}
+
+	for _, tc := range tests {
+		result := isParentRemovalKeyword(tc.input)
+		if result != tc.expected {
+			t.Errorf("isParentRemovalKeyword(%q) = %v, expected %v", tc.input, result, tc.expected)
+		}
+	}
+}
+
+// Test updateIssue with label add/remove
+func TestUpdateIssue_AddRemoveLabels(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req issueEditRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if req.Update == nil {
+			t.Error("expected update map to be set")
+		}
+		labels, ok := req.Update["labels"]
+		if !ok {
+			t.Error("expected labels in update map")
+		}
+		labelOps, ok := labels.([]any)
+		if !ok {
+			t.Errorf("expected labels to be an array, got %T", labels)
+		}
+		if len(labelOps) != 2 {
+			t.Errorf("expected 2 label operations, got %d", len(labelOps))
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	update := map[string]any{
+		"labels": []map[string]string{
+			{"add": "new-label"},
+			{"remove": "old-label"},
+		},
+	}
+	err := updateIssue(context.Background(), client, "TEST-123", nil, update)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -769,7 +927,31 @@ func TestDeleteIssue_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := deleteIssue(context.Background(), client, "TEST-123")
+	err := deleteIssue(context.Background(), client, "TEST-123", false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// Test deleteIssue with cascade
+func TestDeleteIssue_Cascade(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Errorf("expected DELETE, got %s", r.Method)
+		}
+		if !strings.Contains(r.URL.Path, "/issue/TEST-123") {
+			t.Errorf("expected /issue/TEST-123 path, got %s", r.URL.Path)
+		}
+		if r.URL.Query().Get("deleteSubtasks") != "true" {
+			t.Errorf("expected deleteSubtasks=true query param, got %s", r.URL.RawQuery)
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := deleteIssue(context.Background(), client, "TEST-123", true)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -952,7 +1134,103 @@ func TestDoTransition_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	err := doTransition(context.Background(), client, "TEST-123", "21")
+	err := doTransition(context.Background(), client, "TEST-123", "21", nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// Test doTransition with comment
+func TestDoTransition_WithComment(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+		}
+
+		var req transitionRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if req.Transition.ID != "31" {
+			t.Errorf("expected transition ID '31', got %s", req.Transition.ID)
+		}
+		if req.Update == nil {
+			t.Error("expected update map to be set")
+		}
+		if _, ok := req.Update["comment"]; !ok {
+			t.Error("expected comment in update map")
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	update := map[string]any{
+		"comment": []map[string]any{
+			{"add": map[string]any{"body": "test comment"}},
+		},
+	}
+	err := doTransition(context.Background(), client, "TEST-123", "31", nil, update)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// Test doTransition with resolution
+func TestDoTransition_WithResolution(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req transitionRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if req.Fields == nil {
+			t.Error("expected fields map to be set")
+		}
+		if _, ok := req.Fields["resolution"]; !ok {
+			t.Error("expected resolution in fields map")
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	fields := map[string]any{
+		"resolution": map[string]string{"name": "Done"},
+	}
+	err := doTransition(context.Background(), client, "TEST-123", "31", fields, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// Test doTransition with assignee
+func TestDoTransition_WithAssignee(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req transitionRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if req.Fields == nil {
+			t.Error("expected fields map to be set")
+		}
+		if _, ok := req.Fields["assignee"]; !ok {
+			t.Error("expected assignee in fields map")
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	fields := map[string]any{
+		"assignee": map[string]string{"accountId": "abc123"},
+	}
+	err := doTransition(context.Background(), client, "TEST-123", "31", fields, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

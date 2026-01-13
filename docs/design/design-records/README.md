@@ -18,5 +18,6 @@ Design Records (DRs) document significant technical decisions made during develo
 | DR-010 | [Issue List Filtering and Sorting](dr-010-cli-issue-list-filtering.md) | Accepted | 2026-01-09 |
 | DR-011 | [Issue Clone Command](dr-011-cli-issue-clone.md) | Accepted | 2026-01-12 |
 | DR-012 | [CLI Agile Commands](dr-012-cli-agile-commands.md) | Proposed | 2026-01-12 |
+| DR-013 | [Issue Field Update Patterns](dr-013-cli-issue-field-updates.md) | Accepted | 2026-01-13 |
 
 Note: Superseded design records are in `superseded/`

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
+	"github.com/gcarthew/ajira/internal/converter"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +29,9 @@ type transitionStatus struct {
 
 // transitionRequest represents the request body for transitioning an issue.
 type transitionRequest struct {
-	Transition transitionRef `json:"transition"`
+	Transition transitionRef  `json:"transition"`
+	Fields     map[string]any `json:"fields,omitempty"`
+	Update     map[string]any `json:"update,omitempty"`
 }
 
 type transitionRef struct {
@@ -37,15 +40,21 @@ type transitionRef struct {
 
 var (
 	moveListTransitions bool
+	moveComment         string
+	moveResolution      string
+	moveAssignee        string
 )
 
 var issueMoveCmd = &cobra.Command{
 	Use:   "move <issue-key> [status]",
 	Short: "Transition an issue to a new status",
 	Long:  "Move a Jira issue to a new status via workflow transition.",
-	Example: `  ajira issue move PROJ-123                    # List available transitions
-  ajira issue move PROJ-123 "In Progress"      # Move to In Progress
-  ajira issue move PROJ-123 Done               # Move to Done`,
+	Example: `  ajira issue move PROJ-123                              # List available transitions
+  ajira issue move PROJ-123 "In Progress"                # Move to In Progress
+  ajira issue move PROJ-123 Done                         # Move to Done
+  ajira issue move PROJ-123 Done -m "Completed work"     # Move with comment
+  ajira issue move PROJ-123 Done -R Done                 # Move with resolution
+  ajira issue move PROJ-123 "In Progress" -a me          # Move and assign`,
 	Args:         cobra.RangeArgs(1, 2),
 	SilenceUsage: true,
 	RunE:         runIssueMove,
@@ -53,6 +62,9 @@ var issueMoveCmd = &cobra.Command{
 
 func init() {
 	issueMoveCmd.Flags().BoolVar(&moveListTransitions, "list", false, "List available transitions")
+	issueMoveCmd.Flags().StringVarP(&moveComment, "comment", "m", "", "Add comment during transition")
+	issueMoveCmd.Flags().StringVarP(&moveResolution, "resolution", "R", "", "Set resolution (e.g., Done, Won't Do)")
+	issueMoveCmd.Flags().StringVarP(&moveAssignee, "assignee", "a", "", "Set assignee (email, accountId, me)")
 
 	issueCmd.AddCommand(issueMoveCmd)
 }
@@ -115,7 +127,49 @@ func runIssueMove(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Transition not available: %s (available: %s)", targetStatus, strings.Join(available, ", "))
 	}
 
-	err = doTransition(ctx, client, issueKey, matchedTransition.ID)
+	// Build fields and update maps for transition
+	var fields map[string]any
+	var update map[string]any
+
+	if moveResolution != "" || moveAssignee != "" {
+		fields = make(map[string]any)
+	}
+
+	if moveResolution != "" {
+		fields["resolution"] = map[string]string{"name": moveResolution}
+	}
+
+	if moveAssignee != "" {
+		var accountID string
+		if strings.EqualFold(moveAssignee, "me") {
+			accountID, err = resolveUser(ctx, client, cfg.Email)
+			if err != nil {
+				return fmt.Errorf("Failed to resolve current user: %v", err)
+			}
+		} else {
+			accountID, err = resolveUser(ctx, client, moveAssignee)
+			if err != nil {
+				return fmt.Errorf("Failed to resolve user: %v", err)
+			}
+			if accountID == "" {
+				return fmt.Errorf("User not found: %s", moveAssignee)
+			}
+		}
+		fields["assignee"] = map[string]string{"accountId": accountID}
+	}
+
+	if moveComment != "" {
+		update = make(map[string]any)
+		adf, err := converter.MarkdownToADF(moveComment)
+		if err != nil {
+			return fmt.Errorf("Failed to convert comment: %v", err)
+		}
+		update["comment"] = []map[string]any{
+			{"add": map[string]any{"body": adf}},
+		}
+	}
+
+	err = doTransition(ctx, client, issueKey, matchedTransition.ID, fields, update)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %v", apiErr)
@@ -153,9 +207,11 @@ func getTransitions(ctx context.Context, client *api.Client, key string) ([]tran
 	return resp.Transitions, nil
 }
 
-func doTransition(ctx context.Context, client *api.Client, key, transitionID string) error {
+func doTransition(ctx context.Context, client *api.Client, key, transitionID string, fields, update map[string]any) error {
 	req := transitionRequest{
 		Transition: transitionRef{ID: transitionID},
+		Fields:     fields,
+		Update:     update,
 	}
 
 	body, err := json.Marshal(req)

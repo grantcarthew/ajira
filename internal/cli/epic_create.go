@@ -76,7 +76,7 @@ func runEpicCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Failed to read description: %v", err)
 	}
 
-	result, err := createIssue(ctx, client, projectKey, epicCreateSummary, description, "Epic", epicCreatePriority, epicCreateLabels)
+	result, err := createIssue(ctx, client, projectKey, epicCreateSummary, description, "Epic", epicCreatePriority, epicCreateLabels, "", nil, nil)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %v", apiErr)

@@ -10,17 +10,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var deleteCascade bool
+
 var issueDeleteCmd = &cobra.Command{
 	Use:          "delete <issue-key>",
 	Short:        "Delete an issue",
 	Long:         "Permanently delete a Jira issue. This action cannot be undone.",
-	Example:      `  ajira issue delete PROJ-123    # Delete issue permanently`,
+	Example: `  ajira issue delete PROJ-123             # Delete issue permanently
+  ajira issue delete PROJ-123 --cascade   # Delete issue and all subtasks`,
 	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
 	RunE:         runIssueDelete,
 }
 
 func init() {
+	issueDeleteCmd.Flags().BoolVar(&deleteCascade, "cascade", false, "Delete issue with all subtasks")
+
 	issueCmd.AddCommand(issueDeleteCmd)
 }
 
@@ -35,7 +40,7 @@ func runIssueDelete(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
-	err = deleteIssue(ctx, client, issueKey)
+	err = deleteIssue(ctx, client, issueKey, deleteCascade)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %v", apiErr)
@@ -54,8 +59,11 @@ func runIssueDelete(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func deleteIssue(ctx context.Context, client *api.Client, key string) error {
+func deleteIssue(ctx context.Context, client *api.Client, key string, cascade bool) error {
 	path := fmt.Sprintf("/issue/%s", key)
+	if cascade {
+		path += "?deleteSubtasks=true"
+	}
 	_, err := client.Delete(ctx, path)
 	return err
 }

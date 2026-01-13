@@ -27,12 +27,27 @@ type issueCreateRequest struct {
 }
 
 type issueCreateFields struct {
-	Project     projectKey     `json:"project"`
-	Summary     string         `json:"summary"`
-	Description *converter.ADF `json:"description,omitempty"`
-	IssueType   issueTypeName  `json:"issuetype"`
-	Priority    *priorityName  `json:"priority,omitempty"`
-	Labels      []string       `json:"labels,omitempty"`
+	Project     projectKey      `json:"project"`
+	Summary     string          `json:"summary"`
+	Description *converter.ADF  `json:"description,omitempty"`
+	IssueType   issueTypeName   `json:"issuetype"`
+	Priority    *priorityName   `json:"priority,omitempty"`
+	Labels      []string        `json:"labels,omitempty"`
+	Parent      *parentKey      `json:"parent,omitempty"`
+	Components  []componentName `json:"components,omitempty"`
+	FixVersions []versionName   `json:"fixVersions,omitempty"`
+}
+
+type parentKey struct {
+	Key string `json:"key"`
+}
+
+type componentName struct {
+	Name string `json:"name"`
+}
+
+type versionName struct {
+	Name string `json:"name"`
 }
 
 type projectKey struct {
@@ -48,12 +63,15 @@ type priorityName struct {
 }
 
 var (
-	createSummary  string
-	createBody     string
-	createFile     string
-	createType     string
-	createPriority string
-	createLabels   []string
+	createSummary     string
+	createBody        string
+	createFile        string
+	createType        string
+	createPriority    string
+	createLabels      []string
+	createParent      string
+	createComponents  []string
+	createFixVersions []string
 )
 
 var issueCreateCmd = &cobra.Command{
@@ -63,7 +81,10 @@ var issueCreateCmd = &cobra.Command{
 	Example: `  ajira issue create -s "Fix login bug"                    # Create task
   ajira issue create -s "New feature" -t Story             # Create story
   ajira issue create -s "Bug" -d "Description in Markdown" # With description
-  ajira issue create -s "From file" -f description.md      # Description from file`,
+  ajira issue create -s "From file" -f description.md      # Description from file
+  ajira issue create -s "Subtask" --parent PROJ-50         # Create under parent/epic
+  ajira issue create -s "Task" -C Backend,API              # With components
+  ajira issue create -s "Task" --fix-version 1.0.0         # With fix version`,
 	SilenceUsage: true,
 	RunE:         runIssueCreate,
 }
@@ -75,6 +96,9 @@ func init() {
 	issueCreateCmd.Flags().StringVarP(&createType, "type", "t", "Task", "Issue type (Task, Bug, Story, etc.)")
 	issueCreateCmd.Flags().StringVarP(&createPriority, "priority", "P", "", "Issue priority")
 	issueCreateCmd.Flags().StringSliceVar(&createLabels, "labels", nil, "Issue labels (comma-separated)")
+	issueCreateCmd.Flags().StringVar(&createParent, "parent", "", "Parent issue or epic key")
+	issueCreateCmd.Flags().StringSliceVarP(&createComponents, "component", "C", nil, "Component(s) (comma-separated)")
+	issueCreateCmd.Flags().StringSliceVar(&createFixVersions, "fix-version", nil, "Fix version(s) (comma-separated)")
 
 	_ = issueCreateCmd.MarkFlagRequired("summary")
 
@@ -114,7 +138,7 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("Failed to read description: %v", err)
 	}
 
-	result, err := createIssue(ctx, client, projectKey, createSummary, description, createType, createPriority, createLabels)
+	result, err := createIssue(ctx, client, projectKey, createSummary, description, createType, createPriority, createLabels, createParent, createComponents, createFixVersions)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %v", apiErr)
@@ -157,7 +181,7 @@ func getDescription() (string, error) {
 	return createBody, nil
 }
 
-func createIssue(ctx context.Context, client *api.Client, project, summary, description, issueType, priority string, labels []string) (*CreateResult, error) {
+func createIssue(ctx context.Context, client *api.Client, project, summary, description, issueType, priority string, labels []string, parent string, components, fixVersions []string) (*CreateResult, error) {
 	req := issueCreateRequest{
 		Fields: issueCreateFields{
 			Project:   projectKey{Key: project},
@@ -181,6 +205,22 @@ func createIssue(ctx context.Context, client *api.Client, project, summary, desc
 
 	if len(labels) > 0 {
 		req.Fields.Labels = labels
+	}
+
+	if parent != "" {
+		req.Fields.Parent = &parentKey{Key: parent}
+	}
+
+	if len(components) > 0 {
+		for _, c := range components {
+			req.Fields.Components = append(req.Fields.Components, componentName{Name: c})
+		}
+	}
+
+	if len(fixVersions) > 0 {
+		for _, v := range fixVersions {
+			req.Fields.FixVersions = append(req.Fields.FixVersions, versionName{Name: v})
+		}
 	}
 
 	body, err := json.Marshal(req)
