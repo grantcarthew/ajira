@@ -58,20 +58,21 @@ cmd/ajira/         Main entry point
 internal/cli/      Command implementations
 internal/jira/     Jira API client
 internal/markdown/ Markdown to ADF conversion
-docs/              Documentation and design records
+.ai/               AI agent working files (projects, design records, tasks)
+docs/              Human-facing documentation
 ```
 
 ## Active Project
 
-Projects are stored in `docs/projects/`. Update this section when starting a new project.
+Projects are stored in `.ai/projects/`. Update this section when starting a new project.
 
-Active Project: P-013 Automation Support - `docs/projects/p-013-cli-automation-support.md`
+Active Project: p-013 Automation Support - `.ai/projects/p-013-cli-automation-support.md`
 
-Completed: P-011 Issue Command Enhancements (2026-01-13), P-010 Agile Features (2026-01-13), P-009 Issue Clone (2026-01-12), P-008 Issue List Enhancements (2026-01-09), P-007 Issue Linking (2026-01-08), P-015 CLI Help System (2026-01-07), P-006 Integration Testing (2026-01-07), P-005 Comment Functionality (2026-01-05)
+Completed: p-011 Issue Command Enhancements (2026-01-13), p-010 Agile Features (2026-01-13), p-009 Issue Clone (2026-01-12), p-008 Issue List Enhancements (2026-01-09), p-007 Issue Linking (2026-01-08), p-015 CLI Help System (2026-01-07), p-006 Integration Testing (2026-01-07), p-005 Comment Functionality (2026-01-05)
 
 ## Development Guidelines
 
-- Read `docs/workflow.md` for feature development process
-- Read `docs/projects/p-writing-guide.md` for project documentation
-- Read `docs/design/dr-writing-guide.md` for design record format
-- Design records are in `docs/design/design-records/`
+- Read `.ai/workflow.md` for feature development process
+- Read `.ai/projects/p-writing-guide.md` for project documentation
+- Read `.ai/design/dr-writing-guide.md` for design record format
+- Design records are in `.ai/design/design-records/`
