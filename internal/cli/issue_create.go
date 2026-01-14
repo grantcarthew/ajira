@@ -109,12 +109,12 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	if createSummary == "" {
-		return fmt.Errorf("Summary is required (use -s or --summary)")
+		return fmt.Errorf("summary is required (use -s or --summary)")
 	}
 
 	projectKey := Project()
 	if projectKey == "" {
-		return fmt.Errorf("Project is required (use -p flag or set JIRA_PROJECT)")
+		return fmt.Errorf("project is required (use -p flag or set JIRA_PROJECT)")
 	}
 
 	cfg, err := config.Load()
@@ -135,21 +135,21 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 	// Get description from body, file, or stdin
 	description, err := getDescription()
 	if err != nil {
-		return fmt.Errorf("Failed to read description: %v", err)
+		return fmt.Errorf("failed to read description: %v", err)
 	}
 
 	result, err := createIssue(ctx, client, projectKey, createSummary, description, createType, createPriority, createLabels, createParent, createComponents, createFixVersions)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to create issue: %v", err)
+		return fmt.Errorf("failed to create issue: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
-			return fmt.Errorf("Failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {
@@ -194,7 +194,7 @@ func createIssue(ctx context.Context, client *api.Client, project, summary, desc
 	if description != "" {
 		adf, err := converter.MarkdownToADF(description)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to convert description: %w", err)
+			return nil, fmt.Errorf("failed to convert description: %w", err)
 		}
 		req.Fields.Description = adf
 	}
@@ -225,7 +225,7 @@ func createIssue(ctx context.Context, client *api.Client, project, summary, desc
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to marshal request: %w", err)
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	respBody, err := client.Post(ctx, "/issue", body)
@@ -235,7 +235,7 @@ func createIssue(ctx context.Context, client *api.Client, project, summary, desc
 
 	var result CreateResult
 	if err := json.Unmarshal(respBody, &result); err != nil {
-		return nil, fmt.Errorf("Failed to parse response: %w", err)
+		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	return &result, nil

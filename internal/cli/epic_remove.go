@@ -15,56 +15,84 @@ type epicRemoveRequest struct {
 	Issues []string `json:"issues"`
 }
 
+var epicRemoveStdin bool
+
 var epicRemoveCmd = &cobra.Command{
 	Use:   "remove <issue-keys...>",
 	Short: "Remove issues from epic",
-	Long:  "Remove issues from their current epic. No epic key is needed as this clears the epic link.",
+	Long: `Remove issues from their current epic. No epic key is needed as this clears the epic link.
+
+With --stdin, reads issue keys from stdin (one per line).`,
 	Example: `  ajira epic remove GCP-101 GCP-102
-  ajira epic remove GCP-100`,
-	Args:         cobra.MinimumNArgs(1),
+  ajira epic remove GCP-100
+  echo -e "GCP-1\nGCP-2" | ajira epic remove --stdin`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if epicRemoveStdin {
+			if len(args) != 0 {
+				return fmt.Errorf("with --stdin, no arguments should be provided")
+			}
+		} else {
+			if len(args) < 1 {
+				return fmt.Errorf("requires at least 1 argument: <issue-keys...>")
+			}
+		}
+		return nil
+	},
 	SilenceUsage: true,
 	RunE:         runEpicRemove,
 }
 
 func init() {
+	epicRemoveCmd.Flags().BoolVar(&epicRemoveStdin, "stdin", false, "Read issue keys from stdin (one per line)")
 	epicCmd.AddCommand(epicRemoveCmd)
 }
 
 func runEpicRemove(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
-	issueKeys := args
+	var issueKeys []string
+	var err error
+
+	if epicRemoveStdin {
+		issueKeys, err = ReadKeysFromStdin()
+		if err != nil {
+			return err
+		}
+		if len(issueKeys) == 0 {
+			return fmt.Errorf("no issue keys provided via stdin")
+		}
+	} else {
+		issueKeys = args
+	}
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
 
+	// Dry-run mode
+	if DryRun() {
+		PrintDryRunBatch(issueKeys, "remove from epic")
+		return nil
+	}
+
 	err = removeIssuesFromEpic(ctx, client, issueKeys)
 	if err != nil {
-		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
-		}
-		return fmt.Errorf("failed to remove issues from epic: %v", err)
+		return err
 	}
 
 	if JSONOutput() {
-		result := map[string]any{
+		PrintSuccessJSON(map[string]any{
 			"issues": issueKeys,
 			"count":  len(issueKeys),
-		}
-		output, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
-		}
-		fmt.Println(string(output))
+		})
 	} else {
 		if len(issueKeys) == 1 {
-			fmt.Println("Removed 1 issue from epic")
+			PrintSuccess("Removed 1 issue from epic")
 		} else {
-			fmt.Printf("Removed %d issues from epic\n", len(issueKeys))
+			PrintSuccess(fmt.Sprintf("Removed %d issues from epic", len(issueKeys)))
 		}
 	}
 

@@ -15,18 +15,35 @@ type sprintAddRequest struct {
 	Issues []string `json:"issues"`
 }
 
+var sprintAddStdin bool
+
 var sprintAddCmd = &cobra.Command{
 	Use:   "add <sprint-id> <issue-keys...>",
 	Short: "Add issues to a sprint",
-	Long:  "Move issues to a sprint. Issues can only be moved to open or active sprints.",
+	Long: `Move issues to a sprint. Issues can only be moved to open or active sprints.
+
+With --stdin, reads issue keys from stdin (one per line).`,
 	Example: `  ajira sprint add 42 GCP-123 GCP-124 GCP-125
-  ajira sprint add 42 GCP-100`,
-	Args:         cobra.MinimumNArgs(2),
+  ajira sprint add 42 GCP-100
+  echo -e "GCP-1\nGCP-2" | ajira sprint add 42 --stdin`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if sprintAddStdin {
+			if len(args) != 1 {
+				return fmt.Errorf("with --stdin, requires exactly 1 argument: <sprint-id>")
+			}
+		} else {
+			if len(args) < 2 {
+				return fmt.Errorf("requires at least 2 arguments: <sprint-id> <issue-keys...>")
+			}
+		}
+		return nil
+	},
 	SilenceUsage: true,
 	RunE:         runSprintAdd,
 }
 
 func init() {
+	sprintAddCmd.Flags().BoolVar(&sprintAddStdin, "stdin", false, "Read issue keys from stdin (one per line)")
 	sprintCmd.AddCommand(sprintAddCmd)
 }
 
@@ -34,39 +51,51 @@ func runSprintAdd(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	sprintID := args[0]
-	issueKeys := args[1:]
+
+	var issueKeys []string
+	var err error
+
+	if sprintAddStdin {
+		issueKeys, err = ReadKeysFromStdin()
+		if err != nil {
+			return err
+		}
+		if len(issueKeys) == 0 {
+			return fmt.Errorf("no issue keys provided via stdin")
+		}
+	} else {
+		issueKeys = args[1:]
+	}
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
 
+	// Dry-run mode
+	if DryRun() {
+		PrintDryRunBatch(issueKeys, fmt.Sprintf("add to sprint %s", sprintID))
+		return nil
+	}
+
 	err = addIssuesToSprint(ctx, client, sprintID, issueKeys)
 	if err != nil {
-		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
-		}
-		return fmt.Errorf("failed to add issues to sprint: %v", err)
+		return err
 	}
 
 	if JSONOutput() {
-		result := map[string]any{
+		PrintSuccessJSON(map[string]any{
 			"sprintId": sprintID,
 			"issues":   issueKeys,
 			"count":    len(issueKeys),
-		}
-		output, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
-		}
-		fmt.Println(string(output))
+		})
 	} else {
 		if len(issueKeys) == 1 {
-			fmt.Printf("Added 1 issue to sprint %s\n", sprintID)
+			PrintSuccess(fmt.Sprintf("Added 1 issue to sprint %s", sprintID))
 		} else {
-			fmt.Printf("Added %d issues to sprint %s\n", len(issueKeys), sprintID)
+			PrintSuccess(fmt.Sprintf("Added %d issues to sprint %s", len(issueKeys), sprintID))
 		}
 	}
 

@@ -83,7 +83,7 @@ func runBoardList(cmd *cobra.Command, args []string) error {
 	boards, err := listBoards(ctx, client, Project(), boardListLimit)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
 		return fmt.Errorf("failed to list boards: %v", err)
 	}

@@ -11,6 +11,21 @@ These persistent flags are inherited by all commands.
 | `--json` | `-j` | bool | false | Output in JSON format |
 | `--project` | `-p` | string | $JIRA_PROJECT | Default project key |
 | `--board` | | string | $JIRA_BOARD | Default board ID for agile commands |
+| `--dry-run` | | bool | false | Show planned actions without executing |
+| `--verbose` | | bool | false | Show HTTP request/response details to stderr |
+| `--quiet` | | bool | false | Suppress non-essential output (errors still shown) |
+| `--no-color` | | bool | false | Disable coloured output even in TTY contexts |
+
+## Exit Codes
+
+| Code | Name | Description |
+|------|------|-------------|
+| 0 | Success | Successful execution |
+| 1 | UserError | User/input error (invalid arguments, missing values) |
+| 2 | APIError | API error (4xx/5xx responses, except auth) |
+| 3 | NetError | Network/connection error |
+| 4 | AuthError | Authentication error (401, 403) |
+| 5 | Partial | Partial failure in batch operations |
 
 ## Commands
 
@@ -119,24 +134,28 @@ ajira issue edit <issue-key> [flags]
 
 ```
 ajira issue assign <issue-key> <user>
+ajira issue assign --stdin <user>
 ```
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `issue-key` | Yes | Issue key to assign |
+| `issue-key` | Yes | Issue key to assign (not with --stdin) |
 | `user` | Yes | User email, accountId, 'me', or 'unassigned' |
 
-No local flags.
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--stdin` | | bool | false | Read issue keys from stdin (one per line) |
 
 ### issue move
 
 ```
 ajira issue move <issue-key> [status] [flags]
+ajira issue move --stdin <status> [flags]
 ```
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `issue-key` | Yes | Issue key to transition |
+| `issue-key` | Yes | Issue key to transition (not with --stdin) |
 | `status` | No | Target status (omit to list available) |
 
 | Flag | Short | Type | Default | Description |
@@ -145,6 +164,7 @@ ajira issue move <issue-key> [status] [flags]
 | `--comment` | `-m` | string | | Add comment during transition |
 | `--resolution` | `-R` | string | | Set resolution (e.g., Done, Won't Do) |
 | `--assignee` | `-a` | string | | Set assignee (email, accountId, 'me') |
+| `--stdin` | | bool | false | Read issue keys from stdin (one per line) |
 
 ### issue clone
 
@@ -170,31 +190,35 @@ ajira issue clone <issue-key> [flags]
 
 ```
 ajira issue delete <issue-key> [flags]
+ajira issue delete --stdin [flags]
 ```
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `issue-key` | Yes | Issue key to delete |
+| `issue-key` | Yes | Issue key to delete (not with --stdin) |
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
 | `--cascade` | | bool | false | Delete issue with all subtasks |
+| `--stdin` | | bool | false | Read issue keys from stdin (one per line) |
 
 ### issue comment add
 
 ```
 ajira issue comment add <issue-key> [text] [flags]
+ajira issue comment add --stdin <text> [flags]
 ```
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `issue-key` | Yes | Issue key |
+| `issue-key` | Yes | Issue key (not with --stdin) |
 | `text` | No | Comment text (alternative to flags) |
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
 | `--body` | `-b` | string | | Comment text in Markdown |
 | `--file` | `-f` | string | | Read comment from file (- for stdin) |
+| `--stdin` | | bool | false | Read issue keys from stdin (cannot use with --file -) |
 
 ### issue link add
 
@@ -298,14 +322,17 @@ Note: Requires `--board` flag or `JIRA_BOARD` environment variable.
 
 ```
 ajira sprint add <sprint-id> <issue-keys...>
+ajira sprint add <sprint-id> --stdin
 ```
 
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `sprint-id` | Yes | Target sprint ID |
-| `issue-keys` | Yes | One or more issue keys to add |
+| `issue-keys` | Yes | One or more issue keys to add (not with --stdin) |
 
-No local flags.
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--stdin` | | bool | false | Read issue keys from stdin (one per line) |
 
 ### epic list
 
@@ -338,26 +365,32 @@ ajira epic create [flags]
 
 ```
 ajira epic add <epic-key> <issue-keys...>
+ajira epic add <epic-key> --stdin
 ```
 
 | Argument | Required | Description |
 |----------|----------|-------------|
 | `epic-key` | Yes | Target epic key |
-| `issue-keys` | Yes | One or more issue keys to add |
+| `issue-keys` | Yes | One or more issue keys to add (not with --stdin) |
 
-No local flags.
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--stdin` | | bool | false | Read issue keys from stdin (one per line) |
 
 ### epic remove
 
 ```
 ajira epic remove <issue-keys...>
+ajira epic remove --stdin
 ```
 
 | Argument | Required | Description |
 |----------|----------|-------------|
-| `issue-keys` | Yes | One or more issue keys to remove from their epic |
+| `issue-keys` | Yes | One or more issue keys to remove from their epic (not with --stdin) |
 
-No local flags.
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--stdin` | | bool | false | Read issue keys from stdin (one per line) |
 
 ## Short Flag Availability
 

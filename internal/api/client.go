@@ -7,12 +7,28 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gcarthew/ajira/internal/config"
 )
 
 const basePathV3 = "/rest/api/3"
+
+// Rate limit retry configuration
+const (
+	maxRetries     = 3
+	initialBackoff = 1 * time.Second
+)
+
+// verboseWriter is the destination for verbose output (nil = disabled).
+var verboseWriter io.Writer
+
+// SetVerboseOutput enables verbose HTTP logging to the given writer.
+func SetVerboseOutput(w io.Writer) {
+	verboseWriter = w
+}
 
 // Client is a Jira REST API client.
 type Client struct {
@@ -91,6 +107,10 @@ func (c *Client) request(ctx context.Context, method, path string, body []byte) 
 }
 
 func (c *Client) doRequest(ctx context.Context, method, path string, body []byte) ([]byte, error) {
+	return c.doRequestWithRetry(ctx, method, path, body, 0)
+}
+
+func (c *Client) doRequestWithRetry(ctx context.Context, method, path string, body []byte, attempt int) ([]byte, error) {
 	url := c.baseURL + path
 
 	var bodyReader io.Reader
@@ -109,11 +129,37 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body []byte
 		req.Header.Set("Content-Type", "application/json")
 	}
 
+	start := time.Now()
 	resp, err := c.httpClient.Do(req)
+	duration := time.Since(start)
+
 	if err != nil {
+		if verboseWriter != nil {
+			fmt.Fprintf(verboseWriter, "%s %s error (%s)\n", method, path, duration.Round(time.Millisecond))
+		}
 		return nil, fmt.Errorf("executing request: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if verboseWriter != nil {
+		fmt.Fprintf(verboseWriter, "%s %s %s (%s)\n", method, path, resp.Status, duration.Round(time.Millisecond))
+	}
+
+	// Handle rate limiting with retry
+	if resp.StatusCode == 429 && attempt < maxRetries {
+		retryAfter := getRetryAfter(resp, attempt)
+		if verboseWriter != nil {
+			fmt.Fprintf(verboseWriter, "Rate limited, retrying in %s (attempt %d/%d)\n", retryAfter, attempt+1, maxRetries)
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(retryAfter):
+		}
+
+		return c.doRequestWithRetry(ctx, method, path, body, attempt+1)
+	}
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -140,4 +186,21 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body []byte
 	}
 
 	return respBody, nil
+}
+
+// getRetryAfter extracts the retry delay from a 429 response.
+// Uses Retry-After header if present, otherwise exponential backoff.
+func getRetryAfter(resp *http.Response, attempt int) time.Duration {
+	if retryAfter := resp.Header.Get("Retry-After"); retryAfter != "" {
+		// Try parsing as seconds
+		if seconds, err := strconv.Atoi(retryAfter); err == nil {
+			return time.Duration(seconds) * time.Second
+		}
+		// Try parsing as HTTP date
+		if t, err := http.ParseTime(retryAfter); err == nil {
+			return time.Until(t)
+		}
+	}
+	// Exponential backoff: 1s, 2s, 4s for attempts 0, 1, 2
+	return initialBackoff * (1 << attempt)
 }

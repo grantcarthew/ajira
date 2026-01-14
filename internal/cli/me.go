@@ -45,20 +45,20 @@ func runMe(cmd *cobra.Command, args []string) error {
 	body, err := client.Get(ctx, "/myself")
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to connect to Jira API: %v", err)
+		return fmt.Errorf("failed to connect to Jira API: %v", err)
 	}
 
 	var user User
 	if err := json.Unmarshal(body, &user); err != nil {
-		return fmt.Errorf("Failed to parse response: %v", err)
+		return fmt.Errorf("failed to parse response: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(user, "", "  ")
 		if err != nil {
-			return fmt.Errorf("Failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {

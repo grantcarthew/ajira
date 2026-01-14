@@ -81,9 +81,9 @@ func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
 	links, err := getIssueLinks(ctx, client, key1)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to fetch issue links: %v", err)
+		return fmt.Errorf("failed to fetch issue links: %v", err)
 	}
 
 	// Find links connecting to key2
@@ -98,7 +98,7 @@ func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(linksToRemove) == 0 {
-		return fmt.Errorf("No links found between %s and %s", key1, key2)
+		return fmt.Errorf("no links found between %s and %s", key1, key2)
 	}
 
 	// Delete each link
@@ -106,9 +106,9 @@ func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
 		err := deleteIssueLink(ctx, client, linkID)
 		if err != nil {
 			if apiErr, ok := err.(*api.APIError); ok {
-				return fmt.Errorf("API error: %v", apiErr)
+				return fmt.Errorf("API error: %w", apiErr)
 			}
-			return fmt.Errorf("Failed to delete link %s: %v", linkID, err)
+			return fmt.Errorf("failed to delete link %s: %v", linkID, err)
 		}
 	}
 
@@ -137,7 +137,7 @@ func getIssueLinks(ctx context.Context, client *api.Client, key string) ([]issue
 
 	var resp issueLinksResponse
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("Failed to parse response: %w", err)
+		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	return resp.Fields.IssueLinks, nil

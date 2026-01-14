@@ -91,7 +91,7 @@ func runSprintList(cmd *cobra.Command, args []string) error {
 	sprints, err := listSprints(ctx, client, boardID, state, sprintListLimit)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
 		return fmt.Errorf("failed to list sprints: %v", err)
 	}

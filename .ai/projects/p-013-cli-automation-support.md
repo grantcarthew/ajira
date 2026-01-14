@@ -1,8 +1,9 @@
 # p-013: Automation Support
 
-- Status: Pending
-- Started:
+- Status: In Progress
+- Started: 2026-01-14
 - Completed:
+- Design: dr-014-cli-automation-support.md
 
 ## Overview
 
@@ -33,8 +34,8 @@ Exit codes:
 Global flags:
 
 - `--dry-run` - Show what would happen without executing
-- `--verbose`, `-v` - Show API requests/responses
-- `--quiet`, `-q` - Suppress non-essential output
+- `--verbose` - Show API requests/responses (no short flag, -v is version)
+- `--quiet` - Suppress non-essential output (no short flag, -q is used by --query)
 - `--no-color` - Disable ANSI colours for TTY contexts wanting plain output
 
 Batch operations:
@@ -46,8 +47,7 @@ Batch operations:
 Rate limiting:
 
 - Detect 429 responses
-- Automatic retry with backoff
-- `--rate-limit-info` - Show remaining API quota
+- Automatic retry with backoff (3 retries, exponential)
 
 Out of Scope:
 
@@ -57,14 +57,14 @@ Out of Scope:
 
 ## Success Criteria
 
-- [ ] Exit codes are consistent and documented
-- [ ] `--dry-run` shows planned actions without executing
-- [ ] `--verbose` displays HTTP request/response details
-- [ ] `--quiet` reduces output to essentials only
-- [ ] Commands accept issue keys from stdin with `--stdin`
-- [ ] Rate limiting triggers automatic retry with backoff
-- [ ] All exit code scenarios are tested
-- [ ] Documentation includes automation examples
+- [x] Exit codes are consistent and documented
+- [x] `--dry-run` shows planned actions without executing
+- [x] `--verbose` displays HTTP request/response details
+- [x] `--quiet` reduces output to essentials only
+- [x] Commands accept issue keys from stdin with `--stdin`
+- [x] Rate limiting triggers automatic retry with backoff
+- [x] All exit code scenarios are tested
+- [x] Documentation includes automation examples
 
 ## Deliverables
 
@@ -211,130 +211,6 @@ Jira Cloud rate limit headers:
 - `RateLimit-Reason` - Context about why limit was hit (burst, quota, etc.)
 - Returns `429 Too Many Requests` when limit exceeded
 - Note: Headers may not appear on every response; only guaranteed on 429
-
-## Decision Points
-
-1. Verbose short flag conflict
-
-dr-004 assigns `-v` to `--version`. Options for `--verbose`:
-
-- A: Use `-V` (uppercase) for verbose
-- B: Use no short flag for verbose
-- C: Change version to `-V` and use `-v` for verbose (breaking change)
-
-2. Dry-run validation behaviour
-
-Should `--dry-run` make read-only API calls to validate inputs?
-- A: No API calls - just show intended action based on inputs
-- B: Validate inputs (user exists, status available) but don't mutate
-- Trade-off: Option B is more useful but slower and requires network
-
-3. Batch operation failure behaviour
-
-When processing multiple issue keys via `--stdin`:
-- A: Continue all, report all failures at end
-- B: Stop on first failure
-- C: Add `--continue-on-error` flag (default: stop)
-
-4. Exit code for partial batch failures
-
-If batch has some successes and some failures:
-- A: Return failure exit code (non-zero)
-- B: Return success if any succeeded
-- C: New exit code (e.g., 5) for partial failure
-
-5. Verbose output format
-
-How to format HTTP request/response details:
-- A: Full wire format (headers, body, timing)
-- B: Simplified (method, URL, status code, duration)
-- C: Structured log format with levels
-
-6. --no-color necessity
-
-Non-TTY output is already plain (glamour disabled). Is `--no-color` still needed?
-- A: Yes - for TTY contexts that want plain output
-- B: No - existing behaviour is sufficient
-
-7. Multi-step command dry-run
-
-Commands like `clone` make multiple API calls (create, then link). In dry-run:
-- A: Show all planned actions as a sequence
-- B: Show only the primary action
-
-8. Verbose output destination
-
-Where should verbose HTTP logging be written?
-- A: stderr (conventional for debug/diagnostic output)
-- B: stdout (mixed with command output)
-
-9. Quiet mode and error messages
-
-Should `--quiet` suppress error messages?
-- A: No - errors always shown (quiet only affects success output)
-- B: Yes - suppress everything except exit code
-
-10. Dry-run output format
-
-Should `--dry-run` output respect `--json` flag?
-- A: Yes - dry-run output follows same format rules
-- B: No - dry-run always human-readable regardless of --json
-
-11. Flag propagation mechanism
-
-How should global automation flags (dry-run, verbose, quiet) be passed to commands?
-- A: Context values (idiomatic Go, thread-safe)
-- B: Package-level variables (simpler, matches current --json pattern)
-
-12. Rate limit retry configuration
-
-Should retry behaviour be configurable?
-- A: Fixed sensible defaults (3 retries, exponential backoff)
-- B: Configurable via flags (--max-retries, --retry-delay)
-- C: Configurable via environment variables
-
-13. Stdin conflict with --file flag
-
-Commands using `--file -` for content already consume stdin. When using `--stdin` for batch keys:
-- A: Mutual exclusion - error if both are used
-- B: Read keys from file with new flag (e.g., `--keys-file`)
-- Note: Affects `comment add` which has both `--file` and would need `--stdin`
-
-14. Batch dry-run sequence
-
-How should `--dry-run` behave with batch operations via `--stdin`?
-- A: Show all planned actions upfront before any execution
-- B: Process sequentially, showing each planned action as it would execute
-- Note: Option A gives clearer overview; Option B mirrors actual execution flow
-
-15. Batch result reporting
-
-How should batch operation results be reported?
-- A: List each result (success/failure per key)
-- B: Summary only (e.g., "3 of 5 succeeded")
-- C: Both - individual results plus summary
-
-16. Rate limit info source
-
-The `--rate-limit-info` flag - what should it display?
-- A: Make an API call specifically to check remaining quota
-- B: Display cached info from the last API request in this session
-- C: Make a lightweight API call (e.g., GET /myself) to fetch current limits
-- Note: Jira rate limit headers are returned with every response
-
-17. Existing multi-key commands stdin behaviour
-
-Commands already accepting multiple keys via args (sprint add, epic add, epic remove):
-- A: `--stdin` replaces all positional keys (args ignored if --stdin present)
-- B: `--stdin` supplements positional keys (combine both)
-- Note: Option A is simpler and avoids confusion
-
-18. Move command multi-step dry-run
-
-The `issue move` command with `--assignee` makes multiple API calls (resolve user, then transition). In dry-run:
-- A: Show both steps - "Would resolve user X to account Y" then "Would transition PROJ-123 to Done"
-- B: Show consolidated action - "Would transition PROJ-123 to Done and assign to X"
-- Note: Same consideration applies to any command with resolution steps
 
 ## Dependencies
 

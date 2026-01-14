@@ -103,18 +103,18 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		editFixVersions != nil || editAddFixVersions != nil || editRemoveFixVersions != nil
 
 	if !hasChanges {
-		return fmt.Errorf("No fields to update")
+		return fmt.Errorf("no fields to update")
 	}
 
 	// Check for conflicting flags
 	if editLabels != nil && (editAddLabels != nil || editRemoveLabels != nil) {
-		return fmt.Errorf("Cannot use --labels with --add-labels or --remove-labels")
+		return fmt.Errorf("cannot use --labels with --add-labels or --remove-labels")
 	}
 	if editComponents != nil && (editAddComponents != nil || editRemoveComponents != nil) {
-		return fmt.Errorf("Cannot use --component with --add-component or --remove-component")
+		return fmt.Errorf("cannot use --component with --add-component or --remove-component")
 	}
 	if editFixVersions != nil && (editAddFixVersions != nil || editRemoveFixVersions != nil) {
-		return fmt.Errorf("Cannot use --fix-version with --add-fix-version or --remove-fix-version")
+		return fmt.Errorf("cannot use --fix-version with --add-fix-version or --remove-fix-version")
 	}
 
 	cfg, err := config.Load()
@@ -148,13 +148,13 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		if editFile == "-" {
 			data, err := io.ReadAll(os.Stdin)
 			if err != nil {
-				return fmt.Errorf("Failed to read stdin: %v", err)
+				return fmt.Errorf("failed to read stdin: %v", err)
 			}
 			description = string(data)
 		} else {
 			data, err := os.ReadFile(editFile)
 			if err != nil {
-				return fmt.Errorf("Failed to read file: %v", err)
+				return fmt.Errorf("failed to read file: %v", err)
 			}
 			description = string(data)
 		}
@@ -163,7 +163,7 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 	if description != "" {
 		adf, err := converter.MarkdownToADF(description)
 		if err != nil {
-			return fmt.Errorf("Failed to convert description: %v", err)
+			return fmt.Errorf("failed to convert description: %v", err)
 		}
 		fields["description"] = adf
 	}
@@ -257,9 +257,9 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 	err = updateIssue(ctx, client, issueKey, fields, update)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to update issue: %v", err)
+		return fmt.Errorf("failed to update issue: %v", err)
 	}
 
 	if JSONOutput() {
@@ -281,7 +281,7 @@ func updateIssue(ctx context.Context, client *api.Client, key string, fields, up
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("Failed to marshal request: %w", err)
+		return fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	path := fmt.Sprintf("/issue/%s", key)

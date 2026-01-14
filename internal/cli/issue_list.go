@@ -157,15 +157,15 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 	issues, err := searchIssues(ctx, client, jql, issueListLimit)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to search issues: %v", err)
+		return fmt.Errorf("failed to search issues: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(issues, "", "  ")
 		if err != nil {
-			return fmt.Errorf("Failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {
@@ -335,7 +335,7 @@ func searchIssues(ctx context.Context, client *api.Client, jql string, limit int
 
 		var resp issueSearchResponse
 		if err := json.Unmarshal(body, &resp); err != nil {
-			return nil, fmt.Errorf("Failed to parse response: %w", err)
+			return nil, fmt.Errorf("failed to parse response: %w", err)
 		}
 
 		for _, issue := range resp.Issues {

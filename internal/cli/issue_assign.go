@@ -26,82 +26,134 @@ type userSearchResult struct {
 	EmailAddress string `json:"emailAddress"`
 }
 
+var assignStdin bool
+
 var issueAssignCmd = &cobra.Command{
 	Use:   "assign <issue-key> <user>",
 	Short: "Assign an issue to a user",
-	Long:  "Assign a Jira issue to a user. Use 'me' for yourself, or 'unassigned' to remove the assignee.",
+	Long: `Assign a Jira issue to a user. Use 'me' for yourself, or 'unassigned' to remove the assignee.
+
+With --stdin, reads issue keys from stdin (one per line) and assigns them all to the specified user.`,
 	Example: `  ajira issue assign PROJ-123 me                   # Assign to yourself
   ajira issue assign PROJ-123 user@example.com     # Assign by email
-  ajira issue assign PROJ-123 unassigned           # Remove assignee`,
-	Args:         cobra.ExactArgs(2),
+  ajira issue assign PROJ-123 unassigned           # Remove assignee
+  echo -e "PROJ-1\nPROJ-2" | ajira issue assign --stdin me  # Batch assign`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if assignStdin {
+			if len(args) != 1 {
+				return fmt.Errorf("with --stdin, requires exactly 1 argument: <user>")
+			}
+		} else {
+			if len(args) != 2 {
+				return fmt.Errorf("requires exactly 2 arguments: <issue-key> <user>")
+			}
+		}
+		return nil
+	},
 	SilenceUsage: true,
 	RunE:         runIssueAssign,
 }
 
 func init() {
+	issueAssignCmd.Flags().BoolVar(&assignStdin, "stdin", false, "Read issue keys from stdin (one per line)")
 	issueCmd.AddCommand(issueAssignCmd)
 }
 
 func runIssueAssign(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	issueKey := args[0]
-	userArg := args[1]
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
 
-	var accountID *string
+	// Determine user argument position based on --stdin
+	var userArg string
+	var issueKeys []string
 
+	if assignStdin {
+		userArg = args[0]
+		issueKeys, err = ReadKeysFromStdin()
+		if err != nil {
+			return err
+		}
+		if len(issueKeys) == 0 {
+			return fmt.Errorf("no issue keys provided via stdin")
+		}
+	} else {
+		issueKeys = []string{args[0]}
+		userArg = args[1]
+	}
+
+	// Resolve user to accountId
+	var accountID *string
 	if strings.EqualFold(userArg, "unassigned") {
-		// null accountId removes assignee
 		accountID = nil
 	} else if strings.EqualFold(userArg, "me") {
-		// Use current user's email from config
 		resolved, err := resolveUser(ctx, client, cfg.Email)
 		if err != nil {
-			return fmt.Errorf("Failed to resolve current user: %v", err)
+			return fmt.Errorf("failed to resolve current user: %w", err)
 		}
 		accountID = &resolved
 	} else {
-		// Resolve user to accountId
 		resolved, err := resolveUser(ctx, client, userArg)
 		if err != nil {
-			if apiErr, ok := err.(*api.APIError); ok {
-				return fmt.Errorf("API error: %v", apiErr)
-			}
-			return fmt.Errorf("Failed to resolve user: %v", err)
+			return err
 		}
 		if resolved == "" {
-			return fmt.Errorf("User not found: %s", userArg)
+			return fmt.Errorf("user not found: %s", userArg)
 		}
 		accountID = &resolved
 	}
 
-	err = assignIssue(ctx, client, issueKey, accountID)
-	if err != nil {
-		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+	// Dry-run mode
+	if DryRun() {
+		assignee := userArg
+		if accountID == nil {
+			assignee = "unassigned"
 		}
-		return fmt.Errorf("Failed to assign issue: %v", err)
+		if len(issueKeys) == 1 {
+			PrintDryRun(fmt.Sprintf("assign %s to %s", issueKeys[0], assignee))
+		} else {
+			PrintDryRunBatch(issueKeys, fmt.Sprintf("assign to %s", assignee))
+		}
+		return nil
 	}
 
-	if JSONOutput() {
-		assignee := "unassigned"
-		if accountID != nil {
-			assignee = userArg
+	// Single issue assignment
+	if len(issueKeys) == 1 {
+		err = assignIssue(ctx, client, issueKeys[0], accountID)
+		if err != nil {
+			return err
 		}
-		result := map[string]string{"key": issueKey, "assignee": assignee}
-		output, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(output))
-	} else {
-		fmt.Println(IssueURL(cfg.BaseURL, issueKey))
+
+		assignee := userArg
+		if accountID == nil {
+			assignee = "unassigned"
+		}
+
+		if JSONOutput() {
+			PrintSuccessJSON(map[string]string{"key": issueKeys[0], "assignee": assignee})
+		} else {
+			PrintSuccess(IssueURL(cfg.BaseURL, issueKeys[0]))
+		}
+		return nil
 	}
 
-	return nil
+	// Batch assignment
+	var results []BatchResult
+	for _, key := range issueKeys {
+		err := assignIssue(ctx, client, key, accountID)
+		if err != nil {
+			results = append(results, BatchResult{Key: key, Success: false, Error: err.Error()})
+		} else {
+			results = append(results, BatchResult{Key: key, Success: true})
+		}
+	}
+
+	return PrintBatchResults(results)
 }
 
 // resolveUser resolves a user identifier to an accountId.
@@ -124,7 +176,7 @@ func resolveUser(ctx context.Context, client *api.Client, user string) (string, 
 
 	var users userSearchResponse
 	if err := json.Unmarshal(body, &users); err != nil {
-		return "", fmt.Errorf("Failed to parse response: %w", err)
+		return "", fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	if len(users) == 0 {
@@ -139,7 +191,7 @@ func assignIssue(ctx context.Context, client *api.Client, key string, accountID 
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("Failed to marshal request: %w", err)
+		return fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	path := fmt.Sprintf("/issue/%s/assignee", key)

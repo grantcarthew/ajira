@@ -118,7 +118,7 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 	source, err := getSourceIssue(ctx, client, sourceKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
 		return fmt.Errorf("failed to fetch source issue: %v", err)
 	}
@@ -177,7 +177,7 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 	result, err := createClonedIssue(ctx, client, req)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
 		return fmt.Errorf("failed to create cloned issue: %v", err)
 	}

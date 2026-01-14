@@ -32,7 +32,7 @@ func runIssueStatus(cmd *cobra.Command, args []string) error {
 
 	projectKey := Project()
 	if projectKey == "" {
-		return fmt.Errorf("Project is required (use -p flag or set JIRA_PROJECT)")
+		return fmt.Errorf("project is required (use -p flag or set JIRA_PROJECT)")
 	}
 
 	cfg, err := config.Load()
@@ -45,15 +45,15 @@ func runIssueStatus(cmd *cobra.Command, args []string) error {
 	statuses, err := jira.GetStatuses(ctx, client, projectKey)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to fetch statuses: %v", err)
+		return fmt.Errorf("failed to fetch statuses: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(statuses, "", "  ")
 		if err != nil {
-			return fmt.Errorf("Failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {

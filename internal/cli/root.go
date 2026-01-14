@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/charmbracelet/glamour"
+	"github.com/gcarthew/ajira/internal/api"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -20,6 +21,12 @@ var (
 	jsonOutput bool
 	project    string
 	board      string
+
+	// Automation flags
+	dryRun    bool
+	verbose   bool
+	quiet     bool
+	noColor   bool
 )
 
 var rootCmd = &cobra.Command{
@@ -55,6 +62,10 @@ AI Agents: Run "ajira help agents" for a token-efficient reference.`,
 		if board == "" {
 			board = os.Getenv("JIRA_BOARD")
 		}
+		// Enable verbose HTTP logging if requested
+		if verbose {
+			api.SetVerboseOutput(os.Stderr)
+		}
 	},
 }
 
@@ -62,6 +73,13 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "Output in JSON format")
 	rootCmd.PersistentFlags().StringVarP(&project, "project", "p", "", "Default project key (or set JIRA_PROJECT)")
 	rootCmd.PersistentFlags().StringVar(&board, "board", "", "Default board ID for agile commands (or set JIRA_BOARD)")
+
+	// Automation flags
+	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Show planned actions without executing")
+	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Show HTTP request/response details")
+	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress non-essential output")
+	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable coloured output")
+
 	rootCmd.Version = Version
 	rootCmd.SetVersionTemplate(`ajira version {{.Version}}
 Repository: https://github.com/grantcarthew/ajira
@@ -115,20 +133,40 @@ func Board() string {
 	return board
 }
 
+// DryRun returns true if dry-run mode is enabled.
+func DryRun() bool {
+	return dryRun
+}
+
+// Verbose returns true if verbose mode is enabled.
+func Verbose() bool {
+	return verbose
+}
+
+// Quiet returns true if quiet mode is enabled.
+func Quiet() bool {
+	return quiet
+}
+
+// NoColor returns true if colour output is disabled.
+func NoColor() bool {
+	return noColor
+}
+
 // IssueURL returns the browse URL for an issue key.
 func IssueURL(baseURL, key string) string {
 	return fmt.Sprintf("%s/browse/%s", baseURL, key)
 }
 
 // RenderMarkdown renders markdown with terminal styling.
-// Falls back to plain text if rendering fails or output is not a TTY.
+// Falls back to plain text if rendering fails, output is not a TTY, or --no-color is set.
 func RenderMarkdown(markdown string) string {
 	if markdown == "" {
 		return ""
 	}
 
-	// Check if stdout is a terminal
-	if !term.IsTerminal(int(os.Stdout.Fd())) {
+	// Check if colour is disabled or stdout is not a terminal
+	if noColor || !term.IsTerminal(int(os.Stdout.Fd())) {
 		return markdown
 	}
 

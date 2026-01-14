@@ -67,7 +67,7 @@ func runEpicList(cmd *cobra.Command, args []string) error {
 	issues, err := searchIssues(ctx, client, jql, epicListLimit)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
 		return fmt.Errorf("failed to search epics: %v", err)
 	}

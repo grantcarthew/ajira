@@ -96,6 +96,7 @@ gofmt -l .
 # Run linters
 go vet ./...
 golangci-lint run
+staticcheck ./...
 ineffassign ./...
 govulncheck ./...
 
@@ -120,6 +121,7 @@ git status
 - `gofmt -l .` produces no output (all files formatted)
 - `go vet ./...` reports no issues
 - `golangci-lint run` reports no errors (warnings acceptable)
+- `staticcheck ./...` reports no issues
 - `ineffassign ./...` reports no issues
 - `govulncheck ./...` reports no vulnerabilities
 - `gocyclo -over 15 .` reports no functions (or acceptable exceptions)
@@ -137,6 +139,7 @@ brew install golangci-lint
 # or: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 # Individual linters
+go install honnef.co/go/tools/cmd/staticcheck@latest
 go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 go install github.com/gordonklaus/ineffassign@latest
 go install golang.org/x/vuln/cmd/govulncheck@latest
@@ -457,6 +460,7 @@ rg -i "TODO|FIXME|XXX" --type go  # Should be empty or acceptable
 # 2. Validation
 go test -v ./...
 golangci-lint run
+staticcheck ./...
 govulncheck ./...
 git status  # Should be clean
 

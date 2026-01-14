@@ -70,9 +70,9 @@ func runIssueLinkAdd(cmd *cobra.Command, args []string) error {
 	linkTypes, err := jira.GetLinkTypes(ctx, client)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to fetch link types: %v", err)
+		return fmt.Errorf("failed to fetch link types: %v", err)
 	}
 
 	validType := findLinkType(linkTypes, linkTypeName)
@@ -81,16 +81,16 @@ func runIssueLinkAdd(cmd *cobra.Command, args []string) error {
 		for _, lt := range linkTypes {
 			available = append(available, lt.Name)
 		}
-		return fmt.Errorf("Link type not found: %s (available: %s)", linkTypeName, strings.Join(available, ", "))
+		return fmt.Errorf("link type not found: %s (available: %s)", linkTypeName, strings.Join(available, ", "))
 	}
 
 	// Create the link
 	err = createIssueLink(ctx, client, outwardKey, inwardKey, validType.Name)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to create link: %v", err)
+		return fmt.Errorf("failed to create link: %v", err)
 	}
 
 	if JSONOutput() {
@@ -131,7 +131,7 @@ func createIssueLink(ctx context.Context, client *api.Client, outwardKey, inward
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return fmt.Errorf("Failed to marshal request: %w", err)
+		return fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	_, err = client.Post(ctx, "/issueLink", body)

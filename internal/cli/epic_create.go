@@ -47,12 +47,12 @@ func runEpicCreate(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	if epicCreateSummary == "" {
-		return fmt.Errorf("Summary is required (use -s or --summary)")
+		return fmt.Errorf("summary is required (use -s or --summary)")
 	}
 
 	projectKey := Project()
 	if projectKey == "" {
-		return fmt.Errorf("Project is required (use -p flag or set JIRA_PROJECT)")
+		return fmt.Errorf("project is required (use -p flag or set JIRA_PROJECT)")
 	}
 
 	cfg, err := config.Load()
@@ -73,21 +73,21 @@ func runEpicCreate(cmd *cobra.Command, args []string) error {
 	// Get description from body, file, or stdin
 	description, err := getEpicDescription()
 	if err != nil {
-		return fmt.Errorf("Failed to read description: %v", err)
+		return fmt.Errorf("failed to read description: %v", err)
 	}
 
 	result, err := createIssue(ctx, client, projectKey, epicCreateSummary, description, "Epic", epicCreatePriority, epicCreateLabels, "", nil, nil)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to create epic: %v", err)
+		return fmt.Errorf("failed to create epic: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
-			return fmt.Errorf("Failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {

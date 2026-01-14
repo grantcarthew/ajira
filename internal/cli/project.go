@@ -86,15 +86,15 @@ func runProjectList(cmd *cobra.Command, args []string) error {
 	projects, err := fetchAllProjects(ctx, client, projectQuery, projectLimit)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to fetch projects: %v", err)
+		return fmt.Errorf("failed to fetch projects: %v", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(projects, "", "  ")
 		if err != nil {
-			return fmt.Errorf("Failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %v", err)
 		}
 		fmt.Println(string(output))
 	} else {
@@ -132,7 +132,7 @@ func fetchAllProjects(ctx context.Context, client *api.Client, query string, lim
 
 		var resp projectSearchResponse
 		if err := json.Unmarshal(body, &resp); err != nil {
-			return nil, fmt.Errorf("Failed to parse response: %w", err)
+			return nil, fmt.Errorf("failed to parse response: %w", err)
 		}
 
 		for _, v := range resp.Values {

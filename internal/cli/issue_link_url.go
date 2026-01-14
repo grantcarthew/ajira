@@ -71,9 +71,9 @@ func runIssueLinkURL(cmd *cobra.Command, args []string) error {
 	result, err := createRemoteLink(ctx, client, issueKey, url, title)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
+			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("Failed to create remote link: %v", err)
+		return fmt.Errorf("failed to create remote link: %v", err)
 	}
 
 	result.Issue = issueKey
@@ -100,7 +100,7 @@ func createRemoteLink(ctx context.Context, client *api.Client, issueKey, url, ti
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to marshal request: %w", err)
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	path := fmt.Sprintf("/issue/%s/remotelink", issueKey)
@@ -111,7 +111,7 @@ func createRemoteLink(ctx context.Context, client *api.Client, issueKey, url, ti
 
 	var resp remoteLinkResponse
 	if err := json.Unmarshal(respBody, &resp); err != nil {
-		return nil, fmt.Errorf("Failed to parse response: %w", err)
+		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	return &RemoteLinkResult{

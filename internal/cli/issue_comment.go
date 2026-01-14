@@ -26,8 +26,9 @@ type commentAddRequest struct {
 }
 
 var (
-	commentBody string
-	commentFile string
+	commentBody  string
+	commentFile  string
+	commentStdin bool
 )
 
 var issueCommentCmd = &cobra.Command{
@@ -42,11 +43,31 @@ var issueCommentCmd = &cobra.Command{
 var issueCommentAddCmd = &cobra.Command{
 	Use:   "add <issue-key> [text]",
 	Short: "Add a comment to an issue",
-	Long:  "Add a comment to a Jira issue. Comment text can be provided as an argument, via --body, --file, or stdin.",
+	Long: `Add a comment to a Jira issue. Comment text can be provided as an argument, via --body, --file, or stdin.
+
+With --stdin, reads issue keys from stdin (one per line) and adds the same comment to all.
+Note: --stdin cannot be combined with --file - (mutual exclusion).`,
 	Example: `  ajira issue comment add PROJ-123 "Comment text"   # Inline comment
   ajira issue comment add PROJ-123 -f comment.md    # From file
-  echo "text" | ajira issue comment add PROJ-123 -f - # From stdin`,
-	Args:         cobra.RangeArgs(1, 2),
+  echo "text" | ajira issue comment add PROJ-123 -f - # From stdin
+  echo -e "PROJ-1\nPROJ-2" | ajira issue comment add --stdin "Comment for all"  # Batch`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if commentStdin {
+			// With --stdin, comment text must be provided via arg or --body (not --file -)
+			if commentFile == "-" {
+				return fmt.Errorf("cannot use --stdin with --file - (both read from stdin)")
+			}
+			// Need at least comment text as argument or via --body/--file
+			if len(args) == 0 && commentBody == "" && commentFile == "" {
+				return fmt.Errorf("with --stdin, comment text must be provided via argument, --body, or --file")
+			}
+		} else {
+			if len(args) < 1 || len(args) > 2 {
+				return fmt.Errorf("requires 1 or 2 arguments: <issue-key> [text]")
+			}
+		}
+		return nil
+	},
 	SilenceUsage: true,
 	RunE:         runIssueCommentAdd,
 }
@@ -54,6 +75,7 @@ var issueCommentAddCmd = &cobra.Command{
 func init() {
 	issueCommentAddCmd.Flags().StringVarP(&commentBody, "body", "b", "", "Comment text in Markdown")
 	issueCommentAddCmd.Flags().StringVarP(&commentFile, "file", "f", "", "Read comment from file (use - for stdin)")
+	issueCommentAddCmd.Flags().BoolVar(&commentStdin, "stdin", false, "Read issue keys from stdin (one per line)")
 
 	issueCommentCmd.AddCommand(issueCommentAddCmd)
 	issueCmd.AddCommand(issueCommentCmd)
@@ -61,44 +83,83 @@ func init() {
 
 func runIssueCommentAdd(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	issueKey := args[0]
-
-	// Get comment text from: positional arg > file > body flag
-	commentText, err := getCommentText(args)
-	if err != nil {
-		return fmt.Errorf("Failed to read comment: %v", err)
-	}
-
-	if commentText == "" {
-		return fmt.Errorf("Comment text is required (provide as argument, --body, or --file)")
-	}
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
 
-	result, err := addComment(ctx, client, issueKey, commentText)
-	if err != nil {
-		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
-		}
-		return fmt.Errorf("Failed to add comment: %v", err)
-	}
+	var issueKeys []string
+	var commentText string
 
-	if JSONOutput() {
-		output, err := json.MarshalIndent(result, "", "  ")
+	if commentStdin {
+		// Read keys from stdin, get comment from args/flags
+		issueKeys, err = ReadKeysFromStdin()
 		if err != nil {
-			return fmt.Errorf("Failed to format JSON: %v", err)
+			return err
 		}
-		fmt.Println(string(output))
+		if len(issueKeys) == 0 {
+			return fmt.Errorf("no issue keys provided via stdin")
+		}
+		commentText, err = getCommentTextForBatch(args)
+		if err != nil {
+			return err
+		}
 	} else {
-		fmt.Println(IssueURL(cfg.BaseURL, issueKey))
+		issueKeys = []string{args[0]}
+		commentText, err = getCommentText(args)
+		if err != nil {
+			return fmt.Errorf("failed to read comment: %w", err)
+		}
 	}
 
-	return nil
+	if commentText == "" {
+		return fmt.Errorf("comment text is required (provide as argument, --body, or --file)")
+	}
+
+	// Dry-run mode
+	if DryRun() {
+		preview := commentText
+		if len(preview) > 50 {
+			preview = preview[:50] + "..."
+		}
+		if len(issueKeys) == 1 {
+			PrintDryRun(fmt.Sprintf("add comment to %s: %q", issueKeys[0], preview))
+		} else {
+			PrintDryRunBatch(issueKeys, fmt.Sprintf("add comment: %q", preview))
+		}
+		return nil
+	}
+
+	// Single comment
+	if len(issueKeys) == 1 {
+		result, err := addComment(ctx, client, issueKeys[0], commentText)
+		if err != nil {
+			return err
+		}
+
+		if JSONOutput() {
+			PrintSuccessJSON(result)
+		} else {
+			PrintSuccess(IssueURL(cfg.BaseURL, issueKeys[0]))
+		}
+		return nil
+	}
+
+	// Batch comments
+	var results []BatchResult
+	for _, key := range issueKeys {
+		_, err := addComment(ctx, client, key, commentText)
+		if err != nil {
+			results = append(results, BatchResult{Key: key, Success: false, Error: err.Error()})
+		} else {
+			results = append(results, BatchResult{Key: key, Success: true})
+		}
+	}
+
+	return PrintBatchResults(results)
 }
 
 func getCommentText(args []string) (string, error) {
@@ -129,17 +190,38 @@ func getCommentText(args []string) (string, error) {
 	return "", nil
 }
 
+func getCommentTextForBatch(args []string) (string, error) {
+	// For batch mode, stdin is used for keys, so file must be actual file (not -)
+	if commentFile != "" && commentFile != "-" {
+		data, err := os.ReadFile(commentFile)
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	}
+
+	if commentBody != "" {
+		return commentBody, nil
+	}
+
+	if len(args) > 0 {
+		return args[0], nil
+	}
+
+	return "", nil
+}
+
 func addComment(ctx context.Context, client *api.Client, issueKey, text string) (*CommentResult, error) {
 	adf, err := converter.MarkdownToADF(text)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to convert comment: %w", err)
+		return nil, fmt.Errorf("failed to convert comment: %w", err)
 	}
 
 	req := commentAddRequest{Body: adf}
 
 	body, err := json.Marshal(req)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to marshal request: %w", err)
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
 
 	path := fmt.Sprintf("/issue/%s/comment", issueKey)
@@ -150,7 +232,7 @@ func addComment(ctx context.Context, client *api.Client, issueKey, text string) 
 
 	var result CommentResult
 	if err := json.Unmarshal(respBody, &result); err != nil {
-		return nil, fmt.Errorf("Failed to parse response: %w", err)
+		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	return &result, nil

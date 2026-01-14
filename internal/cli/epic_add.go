@@ -15,18 +15,35 @@ type epicAddRequest struct {
 	Issues []string `json:"issues"`
 }
 
+var epicAddStdin bool
+
 var epicAddCmd = &cobra.Command{
 	Use:   "add <epic-key> <issue-keys...>",
 	Short: "Add issues to an epic",
-	Long:  "Move issues to an epic. Issues can only belong to one epic at a time.",
+	Long: `Move issues to an epic. Issues can only belong to one epic at a time.
+
+With --stdin, reads issue keys from stdin (one per line).`,
 	Example: `  ajira epic add GCP-50 GCP-101 GCP-102 GCP-103
-  ajira epic add GCP-50 GCP-100`,
-	Args:         cobra.MinimumNArgs(2),
+  ajira epic add GCP-50 GCP-100
+  echo -e "GCP-1\nGCP-2" | ajira epic add GCP-50 --stdin`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if epicAddStdin {
+			if len(args) != 1 {
+				return fmt.Errorf("with --stdin, requires exactly 1 argument: <epic-key>")
+			}
+		} else {
+			if len(args) < 2 {
+				return fmt.Errorf("requires at least 2 arguments: <epic-key> <issue-keys...>")
+			}
+		}
+		return nil
+	},
 	SilenceUsage: true,
 	RunE:         runEpicAdd,
 }
 
 func init() {
+	epicAddCmd.Flags().BoolVar(&epicAddStdin, "stdin", false, "Read issue keys from stdin (one per line)")
 	epicCmd.AddCommand(epicAddCmd)
 }
 
@@ -34,39 +51,51 @@ func runEpicAdd(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	epicKey := args[0]
-	issueKeys := args[1:]
+
+	var issueKeys []string
+	var err error
+
+	if epicAddStdin {
+		issueKeys, err = ReadKeysFromStdin()
+		if err != nil {
+			return err
+		}
+		if len(issueKeys) == 0 {
+			return fmt.Errorf("no issue keys provided via stdin")
+		}
+	} else {
+		issueKeys = args[1:]
+	}
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
 
+	// Dry-run mode
+	if DryRun() {
+		PrintDryRunBatch(issueKeys, fmt.Sprintf("add to epic %s", epicKey))
+		return nil
+	}
+
 	err = addIssuesToEpic(ctx, client, epicKey, issueKeys)
 	if err != nil {
-		if apiErr, ok := err.(*api.APIError); ok {
-			return fmt.Errorf("API error: %v", apiErr)
-		}
-		return fmt.Errorf("failed to add issues to epic: %v", err)
+		return err
 	}
 
 	if JSONOutput() {
-		result := map[string]any{
+		PrintSuccessJSON(map[string]any{
 			"epicKey": epicKey,
 			"issues":  issueKeys,
 			"count":   len(issueKeys),
-		}
-		output, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
-		}
-		fmt.Println(string(output))
+		})
 	} else {
 		if len(issueKeys) == 1 {
-			fmt.Printf("Added 1 issue to epic %s\n", epicKey)
+			PrintSuccess(fmt.Sprintf("Added 1 issue to epic %s", epicKey))
 		} else {
-			fmt.Printf("Added %d issues to epic %s\n", len(issueKeys), epicKey)
+			PrintSuccess(fmt.Sprintf("Added %d issues to epic %s", len(issueKeys), epicKey))
 		}
 	}
 

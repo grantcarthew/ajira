@@ -409,12 +409,32 @@ func convertInlineNodeMulti(n ast.Node, source []byte) []ADFNode {
 	case *ast.HTMLBlock:
 		return nil // Handled at block level
 	case *ast.Image:
-		// Images out of scope, return alt text
-		// Use Text() to traverse children for alt text (deprecated but appropriate here)
-		return []ADFNode{{Type: NodeTypeText, Text: string(node.Text(source))}} //nolint:staticcheck
+		// Images not supported in ADF, return alt text as plain text
+		altText := extractNodeText(node, source)
+		if altText == "" {
+			return nil
+		}
+		return []ADFNode{{Type: NodeTypeText, Text: altText}}
 	default:
 		return nil
 	}
+}
+
+// extractNodeText recursively extracts text content from an AST node's children.
+// This is the recommended replacement for the deprecated node.Text(source) method.
+func extractNodeText(n ast.Node, source []byte) string {
+	var buf bytes.Buffer
+	for c := n.FirstChild(); c != nil; c = c.NextSibling() {
+		switch node := c.(type) {
+		case *ast.Text:
+			buf.Write(node.Segment.Value(source))
+		case *ast.String:
+			buf.Write(node.Value)
+		default:
+			buf.WriteString(extractNodeText(c, source))
+		}
+	}
+	return buf.String()
 }
 
 // addMarkToNodes adds a mark to all text nodes in the slice.
