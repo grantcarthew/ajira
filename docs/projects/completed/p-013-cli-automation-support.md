@@ -1,8 +1,8 @@
 # p-013: Automation Support
 
-- Status: In Progress
+- Status: Completed
 - Started: 2026-01-14
-- Completed:
+- Completed: 2026-01-15
 - Design: dr-014-cli-automation-support.md
 
 ## Overview
