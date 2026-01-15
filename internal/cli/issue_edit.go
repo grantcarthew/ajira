@@ -22,20 +22,20 @@ type issueEditRequest struct {
 }
 
 var (
-	editSummary          string
-	editBody             string
-	editFile             string
-	editType             string
-	editPriority         string
-	editLabels           []string
-	editParent           string
-	editAddLabels        []string
-	editRemoveLabels     []string
-	editComponents       []string
-	editAddComponents    []string
-	editRemoveComponents []string
-	editFixVersions      []string
-	editAddFixVersions   []string
+	editSummary           string
+	editBody              string
+	editFile              string
+	editType              string
+	editPriority          string
+	editLabels            []string
+	editParent            string
+	editAddLabels         []string
+	editRemoveLabels      []string
+	editComponents        []string
+	editAddComponents     []string
+	editRemoveComponents  []string
+	editFixVersions       []string
+	editAddFixVersions    []string
 	editRemoveFixVersions []string
 )
 

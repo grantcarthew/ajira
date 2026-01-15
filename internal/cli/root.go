@@ -23,10 +23,10 @@ var (
 	board      string
 
 	// Automation flags
-	dryRun    bool
-	verbose   bool
-	quiet     bool
-	noColor   bool
+	dryRun  bool
+	verbose bool
+	quiet   bool
+	noColor bool
 )
 
 var rootCmd = &cobra.Command{
