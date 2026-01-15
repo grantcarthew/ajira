@@ -25,6 +25,7 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 | p-014 | Auxiliary Commands | Completed | 2026-01-15 | 2026-01-15 |
 | p-015 | CLI Help System | Completed | 2026-01-07 | 2026-01-07 |
 | p-016 | Comment Edit | Completed | 2026-01-15 | 2026-01-15 |
+| p-017 | Agent Help Review | Proposed | | |
 
 Note: Completed projects are in `completed/`, deferred projects are in `deferred/`
 

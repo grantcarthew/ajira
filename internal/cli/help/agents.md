@@ -15,30 +15,16 @@ IMPORTANT: Use Markdown syntax, not Jira wiki markup.
 Jira wiki (||, h2., {{}}) will NOT render correctly.
 Run `ajira help markdown` for syntax reference.
 
-## Find Issues
+## Commands
 
 ```
 ajira issue list
-ajira issue list -l 10
-ajira issue list --status "In Progress"
-ajira issue list -t Bug -a me
-ajira issue list -r me -P High
-ajira issue list -L bug,urgent
-ajira issue list -w
+ajira issue list -l 10 --status "In Progress" -t Bug -a me
+ajira issue list -r me -P High -L bug,urgent -w
 ajira issue list --order-by created --reverse
 ajira issue list -q "status = Done AND updated >= -7d"
-```
-
-## View Issue
-
-```
 ajira issue view PROJ-123
 ajira issue view PROJ-123 -c 5
-```
-
-## Create Issue
-
-```
 ajira issue create -s "Fix login bug"
 ajira issue create -s "Add feature" -t Story -d "Description here"
 ajira issue create -s "From file" -f description.md
@@ -47,11 +33,6 @@ ajira issue create -s "With labels" --labels bug,urgent --priority High
 ajira issue create -s "Subtask" -t Sub-task --parent PROJ-50
 ajira issue create -s "With components" -C Backend,API
 ajira issue create -s "With version" --fix-version 1.0.0
-```
-
-## Modify Issue
-
-```
 ajira issue edit PROJ-123 -s "New summary"
 ajira issue edit PROJ-123 -d "New description"
 ajira issue edit PROJ-123 --parent PROJ-50
@@ -68,36 +49,29 @@ ajira issue move PROJ-123 Done -m "Completed"
 ajira issue move PROJ-123
 ajira issue delete PROJ-123
 ajira issue delete PROJ-123 --cascade
-```
-
-## Comments
-
-```
+ajira issue watch PROJ-123
+ajira issue unwatch PROJ-123
 ajira issue comment add PROJ-123 "Comment text"
 ajira issue comment add PROJ-123 -f comment.md
 echo "Stdin comment" | ajira issue comment add PROJ-123 -f -
 ajira issue comment edit PROJ-123 12345 "Updated text"
-ajira issue comment edit PROJ-123 12345 -f updated.md
-```
-
-Note: Comment IDs are shown in `issue view -c N` output as `[date] [id] Author:`.
-
-## Issue Links
-
-```
 ajira issue link types
 ajira issue link add PROJ-123 Blocks PROJ-456
 ajira issue link remove PROJ-123 PROJ-456
 ajira issue link url PROJ-123 https://example.com "Documentation"
-```
-
-## Available Values
-
-```
+ajira open
+ajira open PROJ-123
+ajira release list
+ajira release list --status released
+ajira user search john
+ajira field list
+ajira field list --custom
 ajira issue type
 ajira issue status
 ajira issue priority
 ```
+
+Note: Comment IDs shown in `issue view -c N` output as `[date] [id] Author:`.
 
 ## Chaining (JSON required)
 

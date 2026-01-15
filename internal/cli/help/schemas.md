@@ -51,3 +51,19 @@ Array: id, name, category
 ## issue priority
 
 Array: id, name, description
+
+## issue watch/unwatch
+
+key, action
+
+## release list
+
+Array: id, name, description, released, archived, releaseDate, startDate
+
+## user search
+
+Array: accountId, displayName, emailAddress, active
+
+## field list
+
+Array: id, name, custom, type
