@@ -8,8 +8,12 @@ See `ajira help schemas` for JSON output field lists.
 
 - JIRA_PROJECT env sets default project (no -p needed)
 - Text output returns issue URLs on success
-- Markdown for descriptions and comments
+- Markdown for descriptions and comments (NOT Jira wiki markup)
 - Use -f - to read from stdin
+
+IMPORTANT: Use Markdown syntax, not Jira wiki markup.
+Jira wiki (||, h2., {{}}) will NOT render correctly.
+Run `ajira help markdown` for syntax reference.
 
 ## Find Issues
 

@@ -20,5 +20,6 @@ Design Records (DRs) document significant technical decisions made during develo
 | dr-012 | [CLI Agile Commands](dr-012-cli-agile-commands.md) | Accepted | 2026-01-12 |
 | dr-013 | [Issue Field Update Patterns](dr-013-cli-issue-field-updates.md) | Accepted | 2026-01-13 |
 | dr-014 | [CLI Automation Support](dr-014-cli-automation-support.md) | Accepted | 2026-01-14 |
+| dr-015 | [Comment Edit Command](dr-015-cli-comment-edit.md) | Proposed | 2026-01-15 |
 
 Note: Superseded design records are in `superseded/`

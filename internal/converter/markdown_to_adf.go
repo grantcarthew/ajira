@@ -376,10 +376,7 @@ func convertInlineNodes(n ast.Node, source []byte) []ADFNode {
 func convertInlineNodeMulti(n ast.Node, source []byte) []ADFNode {
 	switch node := n.(type) {
 	case *ast.Text:
-		if n := convertText(node, source); n != nil {
-			return []ADFNode{*n}
-		}
-		return nil
+		return convertTextMulti(node, source)
 	case *ast.String:
 		return []ADFNode{{Type: NodeTypeText, Text: string(node.Value)}}
 	case *ast.CodeSpan:
@@ -472,24 +469,25 @@ func isCodeCompatibleMark(mark ADFMark) bool {
 	return mark.Type == MarkTypeLink
 }
 
-func convertText(n *ast.Text, source []byte) *ADFNode {
+// convertTextMulti converts a text node to one or more ADF nodes.
+// Soft line breaks are preserved as hard breaks to maintain user-intended
+// formatting, especially for non-Markdown content like Jira wiki markup.
+func convertTextMulti(n *ast.Text, source []byte) []ADFNode {
 	text := string(n.Segment.Value(source))
 
-	// Handle hard breaks (explicit line breaks)
-	if n.HardLineBreak() {
-		return &ADFNode{Type: NodeTypeHardBreak}
+	var nodes []ADFNode
+
+	if text != "" {
+		nodes = append(nodes, ADFNode{Type: NodeTypeText, Text: text})
 	}
 
-	// Handle soft breaks (become spaces per Markdown spec)
-	if n.SoftLineBreak() {
-		text = text + " "
+	// Preserve both hard and soft line breaks as hard breaks
+	// This maintains newlines for Jira wiki markup and plain text
+	if n.HardLineBreak() || n.SoftLineBreak() {
+		nodes = append(nodes, ADFNode{Type: NodeTypeHardBreak})
 	}
 
-	if text == "" {
-		return nil
-	}
-
-	return &ADFNode{Type: NodeTypeText, Text: text}
+	return nodes
 }
 
 func convertCodeSpan(n *ast.CodeSpan, source []byte) *ADFNode {

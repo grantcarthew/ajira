@@ -24,6 +24,7 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 | p-013 | Automation Support | Pending | | |
 | p-014 | Auxiliary Commands | Pending | | |
 | p-015 | CLI Help System | Completed | 2026-01-07 | 2026-01-07 |
+| p-016 | Comment Edit | Pending | | |
 
 Note: Completed projects are in `completed/`, deferred projects are in `deferred/`
 

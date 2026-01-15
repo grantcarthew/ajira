@@ -13,10 +13,13 @@ var agentsHelp string
 //go:embed help/schemas.md
 var schemasHelp string
 
+//go:embed help/markdown.md
+var markdownHelp string
+
 var helpCmd = &cobra.Command{
 	Use:   "help [command]",
 	Short: "Help for commands and topics",
-	Long:  "Help provides help for commands and topics (agents, schemas).",
+	Long:  "Help provides help for commands and topics (agents, markdown, schemas).",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			_ = rootCmd.Help()
@@ -48,8 +51,17 @@ var helpSchemasCmd = &cobra.Command{
 	},
 }
 
+var helpMarkdownCmd = &cobra.Command{
+	Use:   "markdown",
+	Short: "Markdown formatting reference",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Print(RenderMarkdown(markdownHelp))
+	},
+}
+
 func init() {
 	rootCmd.SetHelpCommand(helpCmd)
 	helpCmd.AddCommand(helpAgentsCmd)
 	helpCmd.AddCommand(helpSchemasCmd)
+	helpCmd.AddCommand(helpMarkdownCmd)
 }

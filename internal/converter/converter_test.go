@@ -2831,8 +2831,9 @@ func TestNormalization_HorizontalRuleVariants(t *testing.T) {
 	}
 }
 
-func TestNormalization_SoftLineBreakBecomesSpace(t *testing.T) {
-	// Soft line break (single newline in paragraph) should become space
+func TestNormalization_SoftLineBreakPreserved(t *testing.T) {
+	// Soft line breaks (single newlines) are preserved as hard breaks
+	// to maintain formatting for Jira wiki markup and plain text
 	original := "Line one\nLine two"
 	adf, err := MarkdownToADF(original)
 	if err != nil {
@@ -2844,10 +2845,17 @@ func TestNormalization_SoftLineBreakBecomesSpace(t *testing.T) {
 		t.Errorf("expected 1 paragraph, got %d", len(adf.Content))
 	}
 
-	// Text should be joined with space, not newline
-	md := ADFToMarkdownFromStruct(adf)
-	if strings.Contains(md, "  \n") {
-		t.Error("soft line break should not become hard break")
+	// Should contain text nodes and a hard break
+	para := adf.Content[0]
+	hasHardBreak := false
+	for _, node := range para.Content {
+		if node.Type == NodeTypeHardBreak {
+			hasHardBreak = true
+			break
+		}
+	}
+	if !hasHardBreak {
+		t.Error("soft line break should become hard break to preserve newlines")
 	}
 }
 

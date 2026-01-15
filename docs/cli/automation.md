@@ -154,7 +154,7 @@ Example with verbose:
 ```bash
 ajira issue list -l 1000 --verbose 2>&1 | grep -E "(GET|Rate limited)"
 # GET /rest/api/3/search 429 Too Many Requests (45ms)
-# Rate limited, retrying in 2s (attempt 1/3)
+# Rate limited, retrying in 1s (attempt 1/3)
 # GET /rest/api/3/search 200 OK (234ms)
 ```
 
