@@ -21,10 +21,10 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 | p-009 | Issue Clone | Completed | 2026-01-12 | 2026-01-12 |
 | p-010 | Agile Features | Completed | 2026-01-13 | 2026-01-13 |
 | p-011 | Issue Command Enhancements | Completed | 2026-01-13 | 2026-01-13 |
-| p-013 | Automation Support | Pending | | |
-| p-014 | Auxiliary Commands | Pending | | |
+| p-013 | Automation Support | In Progress | 2026-01-14 | |
+| p-014 | Auxiliary Commands | Proposed | | |
 | p-015 | CLI Help System | Completed | 2026-01-07 | 2026-01-07 |
-| p-016 | Comment Edit | Pending | | |
+| p-016 | Comment Edit | Completed | 2026-01-15 | 2026-01-15 |
 
 Note: Completed projects are in `completed/`, deferred projects are in `deferred/`
 

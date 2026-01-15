@@ -204,6 +204,9 @@ ajira issue comment add PROJ-123 -f comment.md
 
 # Comment from stdin
 echo "Automated comment" | ajira issue comment add PROJ-123 -f -
+
+# Edit existing comment (use issue view -c N to find comment IDs)
+ajira issue comment edit PROJ-123 12345 "Updated text"
 ```
 
 ### Delete Issues
@@ -297,6 +300,7 @@ ajira help schemas
 | `issue assign` | Assign an issue to a user |
 | `issue move` | Transition an issue to a new status |
 | `issue comment add` | Add a comment to an issue |
+| `issue comment edit` | Edit an existing comment |
 | `issue link add` | Create a link between two issues |
 | `issue link remove` | Remove links between two issues |
 | `issue link types` | List available link types |

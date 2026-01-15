@@ -1603,5 +1603,113 @@ func TestSearchIssues_PaginationSafetyGuard(t *testing.T) {
 	}
 }
 
+func TestEditComment_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+		}
+		if !strings.Contains(r.URL.Path, "/issue/TEST-123/comment/12345") {
+			t.Errorf("expected /issue/TEST-123/comment/12345 path, got %s", r.URL.Path)
+		}
+
+		var req commentAddRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if req.Body == nil {
+			t.Error("expected body to be non-nil")
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(CommentResult{
+			ID:      "12345",
+			Self:    "https://example.atlassian.net/rest/api/3/issue/TEST-123/comment/12345",
+			Created: "2024-01-16T16:00:00.000+0000",
+		})
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	result, err := editComment(context.Background(), client, "TEST-123", "12345", "Updated **comment** text")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.ID != "12345" {
+		t.Errorf("expected comment ID '12345', got %s", result.ID)
+	}
+}
+
+func TestEditComment_NotFound(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"errorMessages": []string{"Comment does not exist or you do not have permission to see it."},
+		})
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	_, err := editComment(context.Background(), client, "TEST-123", "99999", "Updated text")
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	apiErr, ok := err.(*api.APIError)
+	if !ok {
+		t.Fatalf("expected *api.APIError, got %T", err)
+	}
+	if apiErr.StatusCode != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", apiErr.StatusCode)
+	}
+}
+
+func TestGetCommentTextForEdit(t *testing.T) {
+	// Reset global state
+	commentBody = ""
+	commentFile = ""
+
+	tests := []struct {
+		name     string
+		args     []string
+		body     string
+		expected string
+	}{
+		{
+			name:     "from positional arg",
+			args:     []string{"PROJ-123", "12345", "comment text"},
+			expected: "comment text",
+		},
+		{
+			name:     "from body flag",
+			args:     []string{"PROJ-123", "12345"},
+			body:     "body text",
+			expected: "body text",
+		},
+		{
+			name:     "empty when no input",
+			args:     []string{"PROJ-123", "12345"},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			commentBody = tt.body
+			commentFile = ""
+			result, err := getCommentTextForEdit(tt.args)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result != tt.expected {
+				t.Errorf("expected %q, got %q", tt.expected, result)
+			}
+		})
+	}
+}
+
 // Ensure we don't have import issues
 var _ = context.Background

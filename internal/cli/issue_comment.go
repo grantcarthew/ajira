@@ -40,6 +40,26 @@ var issueCommentCmd = &cobra.Command{
 	},
 }
 
+var issueCommentEditCmd = &cobra.Command{
+	Use:   "edit <issue-key> <comment-id> [text]",
+	Short: "Edit an existing comment",
+	Long: `Edit an existing comment on a Jira issue. Comment text can be provided as an argument, via --body, or --file.
+
+Use 'ajira issue view <issue-key> -c N' to find comment IDs.`,
+	Example: `  ajira issue comment edit PROJ-123 12345 "Updated text"   # Inline
+  ajira issue comment edit PROJ-123 12345 -b "New text"    # Via --body
+  ajira issue comment edit PROJ-123 12345 -f comment.md    # From file
+  echo "text" | ajira issue comment edit PROJ-123 12345 -f - # From stdin`,
+	Args: func(cmd *cobra.Command, args []string) error {
+		if len(args) < 2 || len(args) > 3 {
+			return fmt.Errorf("requires 2 or 3 arguments: <issue-key> <comment-id> [text]")
+		}
+		return nil
+	},
+	SilenceUsage: true,
+	RunE:         runIssueCommentEdit,
+}
+
 var issueCommentAddCmd = &cobra.Command{
 	Use:   "add <issue-key> [text]",
 	Short: "Add a comment to an issue",
@@ -77,7 +97,11 @@ func init() {
 	issueCommentAddCmd.Flags().StringVarP(&commentFile, "file", "f", "", "Read comment from file (use - for stdin)")
 	issueCommentAddCmd.Flags().BoolVar(&commentStdin, "stdin", false, "Read issue keys from stdin (one per line)")
 
+	issueCommentEditCmd.Flags().StringVarP(&commentBody, "body", "b", "", "Comment text in Markdown")
+	issueCommentEditCmd.Flags().StringVarP(&commentFile, "file", "f", "", "Read comment from file (use - for stdin)")
+
 	issueCommentCmd.AddCommand(issueCommentAddCmd)
+	issueCommentCmd.AddCommand(issueCommentEditCmd)
 	issueCmd.AddCommand(issueCommentCmd)
 }
 
@@ -226,6 +250,104 @@ func addComment(ctx context.Context, client *api.Client, issueKey, text string) 
 
 	path := fmt.Sprintf("/issue/%s/comment", issueKey)
 	respBody, err := client.Post(ctx, path, body)
+	if err != nil {
+		return nil, err
+	}
+
+	var result CommentResult
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return &result, nil
+}
+
+func runIssueCommentEdit(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
+	issueKey := args[0]
+	commentID := args[1]
+
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	client := api.NewClient(cfg)
+
+	commentText, err := getCommentTextForEdit(args)
+	if err != nil {
+		return fmt.Errorf("failed to read comment: %w", err)
+	}
+
+	if commentText == "" {
+		return fmt.Errorf("comment text is required (provide as argument, --body, or --file)")
+	}
+
+	if DryRun() {
+		preview := commentText
+		if len(preview) > 50 {
+			preview = preview[:50] + "..."
+		}
+		PrintDryRun(fmt.Sprintf("edit comment %s on %s: %q", commentID, issueKey, preview))
+		return nil
+	}
+
+	result, err := editComment(ctx, client, issueKey, commentID, commentText)
+	if err != nil {
+		return err
+	}
+
+	if JSONOutput() {
+		PrintSuccessJSON(result)
+	} else {
+		PrintSuccess(IssueURL(cfg.BaseURL, issueKey))
+	}
+	return nil
+}
+
+func getCommentTextForEdit(args []string) (string, error) {
+	// Priority: file > body > positional arg
+	if commentFile != "" {
+		if commentFile == "-" {
+			data, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				return "", err
+			}
+			return string(data), nil
+		}
+		data, err := os.ReadFile(commentFile)
+		if err != nil {
+			return "", err
+		}
+		return string(data), nil
+	}
+
+	if commentBody != "" {
+		return commentBody, nil
+	}
+
+	if len(args) > 2 {
+		return args[2], nil
+	}
+
+	return "", nil
+}
+
+func editComment(ctx context.Context, client *api.Client, issueKey, commentID, text string) (*CommentResult, error) {
+	adf, err := converter.MarkdownToADF(text)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert comment: %w", err)
+	}
+
+	req := commentAddRequest{Body: adf}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	path := fmt.Sprintf("/issue/%s/comment/%s", issueKey, commentID)
+	respBody, err := client.Put(ctx, path, body)
 	if err != nil {
 		return nil, err
 	}

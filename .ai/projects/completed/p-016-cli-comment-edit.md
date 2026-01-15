@@ -1,8 +1,8 @@
 # p-016: Comment Edit Command
 
-- Status: Pending
-- Started:
-- Completed:
+- Status: Complete
+- Started: 2026-01-15
+- Completed: 2026-01-15
 - Design: dr-015-cli-comment-edit.md
 
 ## Overview
@@ -36,14 +36,14 @@ Out of Scope:
 
 ## Success Criteria
 
-- [ ] `issue comment edit PROJ-123 12345 "new text"` updates comment
-- [ ] `issue comment edit PROJ-123 12345 -f comment.md` reads from file
-- [ ] `issue comment edit PROJ-123 12345 -f -` reads from stdin
-- [ ] `issue view PROJ-123 -c 5` shows comment IDs in text output
-- [ ] `--dry-run` shows planned action without executing
-- [ ] Error handling for invalid comment ID
-- [ ] Help text and examples documented
-- [ ] Unit tests for edit functionality
+- [x] `issue comment edit PROJ-123 12345 "new text"` updates comment
+- [x] `issue comment edit PROJ-123 12345 -f comment.md` reads from file
+- [x] `issue comment edit PROJ-123 12345 -f -` reads from stdin
+- [x] `issue view PROJ-123 -c 5` shows comment IDs in text output
+- [x] `--dry-run` shows planned action without executing
+- [x] Error handling for invalid comment ID
+- [x] Help text and examples documented
+- [x] Unit tests for edit functionality
 
 ## Deliverables
 
@@ -88,6 +88,29 @@ ajira issue comment edit <issue-key> <comment-id> [text]
 
 ## Current State
 
+Key files and functions:
+
+`internal/cli/issue_comment.go`:
+- `commentAddRequest` struct (line 24-26): Reusable for edit - contains `Body *converter.ADF`
+- `addComment()` function (line 214-239): Reference pattern for `editComment()`
+- `getCommentText()` helper (line 165-191): Handles file > body > positional arg priority
+- `issueCommentAddCmd` (line 43-73): Template for `issueCommentEditCmd`
+- Flag variables `commentBody`, `commentFile` (line 28-31): Shared with edit command
+
+`internal/cli/issue_view.go`:
+- `CommentInfo` struct (line 42-48): Already includes `ID` field (populated but not displayed)
+- `getComments()` function (line 307-337): Fetches comments with IDs from API
+- `printIssueDetail()` (line 284-293): Comment display logic to modify
+- Current format: `[date] Author:` needs ID inserted
+
+`internal/api/client.go`:
+- `Put()` method (line 96-98): Available for comment edit endpoint
+
+Test patterns in `internal/cli/issue_test.go`:
+- `TestAddComment_Success` (line 1314-1351): Template for edit tests
+- `TestGetComments_Success` (line 1240-1311): Verifies ID field parsing
+- Uses `httptest.NewServer` for mocking API responses
+
 Comment viewing (`issue view -c N`):
 
 - Text output: `[2026-01-15 11:43] Grant Carthew: comment body`
@@ -99,6 +122,10 @@ Comment adding (`issue comment add`):
 - Flags: `--body`, `--file`, `--stdin` (for batch keys)
 - Uses POST to `/issue/{key}/comment`
 - Returns comment ID in response
+
+## Decisions
+
+1. Comment ID format: `[2026-01-15 11:43] [2599838] Grant Carthew:` (ID after date, before author)
 
 ## Dependencies
 

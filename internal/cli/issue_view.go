@@ -287,7 +287,7 @@ func printIssueDetail(issue *IssueDetail) {
 		fmt.Printf("Comments (%d):\n", len(issue.Comments))
 		for _, c := range issue.Comments {
 			fmt.Println()
-			fmt.Printf("[%s] %s:\n", formatDateTime(c.Created), c.Author)
+			fmt.Printf("[%s] [%s] %s:\n", formatDateTime(c.Created), c.ID, c.Author)
 			fmt.Print(RenderMarkdown(c.Body))
 		}
 	}

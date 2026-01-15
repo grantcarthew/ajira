@@ -220,6 +220,23 @@ ajira issue comment add --stdin <text> [flags]
 | `--file` | `-f` | string | | Read comment from file (- for stdin) |
 | `--stdin` | | bool | false | Read issue keys from stdin (cannot use with --file -) |
 
+### issue comment edit
+
+```
+ajira issue comment edit <issue-key> <comment-id> [text] [flags]
+```
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `issue-key` | Yes | Issue key |
+| `comment-id` | Yes | Comment ID (shown in `issue view -c N` output) |
+| `text` | No | Comment text (alternative to flags) |
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--body` | `-b` | string | | Comment text in Markdown |
+| `--file` | `-f` | string | | Read comment from file (- for stdin) |
+
 ### issue link add
 
 ```

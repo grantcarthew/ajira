@@ -76,7 +76,11 @@ ajira issue delete PROJ-123 --cascade
 ajira issue comment add PROJ-123 "Comment text"
 ajira issue comment add PROJ-123 -f comment.md
 echo "Stdin comment" | ajira issue comment add PROJ-123 -f -
+ajira issue comment edit PROJ-123 12345 "Updated text"
+ajira issue comment edit PROJ-123 12345 -f updated.md
 ```
+
+Note: Comment IDs are shown in `issue view -c N` output as `[date] [id] Author:`.
 
 ## Issue Links
 
