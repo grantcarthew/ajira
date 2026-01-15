@@ -10,6 +10,7 @@ Project documentation for ajira development.
 
 | ID | Title | Completed |
 |----|-------|-----------|
+| p-014 | Auxiliary Commands | 2026-01-15 |
 | p-013 | Automation Support | 2026-01-15 |
 
 ## Active Projects
