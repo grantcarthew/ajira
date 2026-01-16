@@ -20,12 +20,9 @@ func TestSchemasHelp_Embedded(t *testing.T) {
 func TestAgentsHelp_ContainsExpectedSections(t *testing.T) {
 	sections := []string{
 		"# ajira Agent Reference",
-		"## Key Behaviours",
-		"## Find Issues",
-		"## View Issue",
-		"## Create Issue",
-		"## Modify Issue",
-		"## Comments",
+		"## Markdown",
+		"## Core Commands",
+		"## Other Commands",
 		"## Chaining",
 	}
 
@@ -39,11 +36,11 @@ func TestAgentsHelp_ContainsExpectedSections(t *testing.T) {
 func TestSchemasHelp_ContainsExpectedSections(t *testing.T) {
 	sections := []string{
 		"# ajira JSON Schemas",
-		"## me",
-		"## project list",
-		"## issue list",
-		"## issue view",
-		"## issue create",
+		"me:",
+		"project list:",
+		"issue list:",
+		"issue view:",
+		"issue create:",
 	}
 
 	for _, section := range sections {

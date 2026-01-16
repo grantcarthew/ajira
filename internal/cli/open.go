@@ -24,9 +24,9 @@ var openCmd = &cobra.Command{
 }
 
 var issueOpenCmd = &cobra.Command{
-	Use:   "open <issue-key>",
-	Short: "Open issue",
-	Long:  "Open an issue in your default browser. Prints URL if not in TTY.",
+	Use:          "open <issue-key>",
+	Short:        "Open issue",
+	Long:         "Open an issue in your default browser. Prints URL if not in TTY.",
 	Example:      `  ajira issue open PROJ-123     # Open issue in browser`,
 	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
