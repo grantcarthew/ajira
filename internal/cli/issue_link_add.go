@@ -36,11 +36,8 @@ type linkTypeRef struct {
 
 var issueLinkAddCmd = &cobra.Command{
 	Use:   "add <outward-key> <link-type> <inward-key>",
-	Short: "Create a link between two issues",
-	Long: `Create a directional link between two issues.
-
-The command reads as a sentence: "KEY1 blocks KEY2" means KEY1 is the
-outward issue that blocks KEY2 (the inward issue).`,
+	Short: "Link issues",
+	Long:  "Create a link between two issues. Reads as: KEY1 TYPE KEY2.",
 	Example: `  ajira issue link add GCP-123 Blocks GCP-456      # GCP-123 blocks GCP-456
   ajira issue link add GCP-100 Duplicate GCP-200   # GCP-100 duplicates GCP-200
   ajira issue link add GCP-50 "Related Issues" GCP-60`,

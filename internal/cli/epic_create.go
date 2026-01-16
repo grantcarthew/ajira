@@ -22,8 +22,8 @@ var (
 
 var epicCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a new epic",
-	Long:  "Create a new Jira epic with the specified summary and optional description.",
+	Short: "Create epic",
+	Long:  "Create an epic. Requires -s for summary.",
 	Example: `  ajira epic create -s "Authentication Epic"
   ajira epic create -s "Dashboard" -d "Dashboard features" -P Major
   ajira epic create -s "API" -f description.md`,

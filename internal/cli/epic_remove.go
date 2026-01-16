@@ -19,10 +19,8 @@ var epicRemoveStdin bool
 
 var epicRemoveCmd = &cobra.Command{
 	Use:   "remove <issue-keys...>",
-	Short: "Remove issues from epic",
-	Long: `Remove issues from their current epic. No epic key is needed as this clears the epic link.
-
-With --stdin, reads issue keys from stdin (one per line).`,
+	Short: "Remove from epic",
+	Long:  "Remove issues from their current epic. Use --stdin for batch.",
 	Example: `  ajira epic remove GCP-101 GCP-102
   ajira epic remove GCP-100
   echo -e "GCP-1\nGCP-2" | ajira epic remove --stdin`,

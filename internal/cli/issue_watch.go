@@ -14,8 +14,8 @@ var watchStdin bool
 
 var issueWatchCmd = &cobra.Command{
 	Use:   "watch <issue-key>",
-	Short: "Start watching an issue",
-	Long:  "Add yourself as a watcher to a Jira issue to receive notifications about changes.",
+	Short: "Watch issue",
+	Long:  "Add yourself as a watcher to receive notifications. Use --stdin for batch.",
 	Example: `  ajira issue watch PROJ-123                      # Watch an issue
   echo -e "PROJ-1\nPROJ-2" | ajira issue watch --stdin  # Batch watch`,
 	Args: func(cmd *cobra.Command, args []string) error {
@@ -36,8 +36,8 @@ var issueWatchCmd = &cobra.Command{
 
 var issueUnwatchCmd = &cobra.Command{
 	Use:   "unwatch <issue-key>",
-	Short: "Stop watching an issue",
-	Long:  "Remove yourself as a watcher from a Jira issue to stop receiving notifications.",
+	Short: "Unwatch issue",
+	Long:  "Remove yourself as a watcher to stop notifications. Use --stdin for batch.",
 	Example: `  ajira issue unwatch PROJ-123                      # Unwatch an issue
   echo -e "PROJ-1\nPROJ-2" | ajira issue unwatch --stdin  # Batch unwatch`,
 	Args: func(cmd *cobra.Command, args []string) error {

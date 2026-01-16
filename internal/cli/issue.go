@@ -16,8 +16,8 @@ func extractProjectKey(issueKey string) string {
 
 var issueCmd = &cobra.Command{
 	Use:   "issue",
-	Short: "Manage Jira issues",
-	Long:  "Commands for managing Jira issues: list, view, create, edit, delete, assign, and move.",
+	Short: "Manage issues",
+	Long:  "Commands for managing Jira issues.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},

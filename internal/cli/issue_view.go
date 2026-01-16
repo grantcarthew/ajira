@@ -115,8 +115,8 @@ var (
 
 var issueViewCmd = &cobra.Command{
 	Use:   "view <issue-key>",
-	Short: "View issue details",
-	Long:  "Display detailed information about a Jira issue.",
+	Short: "View issue",
+	Long:  "Display issue details. Use -c to include comments.",
 	Example: `  ajira issue view PROJ-123           # View issue details
   ajira issue view PROJ-123 -c 5      # Include 5 recent comments
   ajira issue view PROJ-123 --json    # JSON output`,

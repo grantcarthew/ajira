@@ -15,8 +15,8 @@ import (
 var issuePriorityCmd = &cobra.Command{
 	Use:     "priority",
 	Aliases: []string{"priorities"},
-	Short:   "List available priorities",
-	Long:    "List all priorities available in the Jira instance.",
+	Short:   "List priorities",
+	Long:    "List available priorities.",
 	Example: `  ajira issue priority         # List all priorities
   ajira issue priority --json  # JSON output`,
 	SilenceUsage: true,

@@ -47,8 +47,8 @@ var (
 
 var projectCmd = &cobra.Command{
 	Use:   "project",
-	Short: "Manage Jira projects",
-	Long:  "Commands for managing and listing Jira projects.",
+	Short: "Manage projects",
+	Long:  "Commands for managing Jira projects.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
@@ -56,8 +56,8 @@ var projectCmd = &cobra.Command{
 
 var projectListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List accessible projects",
-	Long:  "List all Jira projects accessible to the current user.",
+	Short: "List projects",
+	Long:  "List Jira projects accessible to the current user.",
 	Example: `  ajira project list              # List all projects
   ajira project list -q "web"     # Filter by name/key
   ajira project list -l 10        # Limit results`,

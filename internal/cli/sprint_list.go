@@ -50,7 +50,7 @@ var (
 var sprintListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List sprints",
-	Long:  "List Jira sprints for a board.",
+	Long:  "List sprints for a board. Requires --board or JIRA_BOARD.",
 	Example: `  ajira sprint list --board 1342          # List sprints for board
   ajira sprint list --state active        # List active sprints only
   ajira sprint list --current             # Shorthand for --state active

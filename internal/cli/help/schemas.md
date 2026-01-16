@@ -1,69 +1,35 @@
 # ajira JSON Schemas
 
-Field lists for --json output.
+Field lists for --json output. `[]` denotes array response.
 
-## me
+me: accountId, displayName, emailAddress, timeZone, active
+project list: [id, key, name, lead, style]
+board list: [id, name, type, project]
+release list: [id, name, description, released, archived, releaseDate, startDate]
+user search: [accountId, displayName, emailAddress, active]
+field list: [id, name, custom, type]
 
-accountId, displayName, emailAddress, timeZone, active
+issue list: [key, summary, status, statusCategory, type, priority, assignee]
+issue view: key, summary, status, type, priority, assignee, reporter, created, updated, description, labels, project, comments
+issue view -c: comments contains [id, author, created, body]
+issue create: key, id, self
+issue edit: key, status
+issue clone: originalKey, clonedKey, clonedId, linked, linkType
+issue assign: key, assignee
+issue move: key, status
+issue move (list): [id, name, to.name]
+issue delete: key, status
+issue watch/unwatch: key, action
+issue comment add: id, self, created
+issue comment edit: id, self, created
+issue type: [id, name, description, subtask]
+issue status: [id, name, category]
+issue priority: [id, name, description]
 
-## project list
+epic list: [key, summary, status, statusCategory, type, priority, assignee]
+epic create: key, id, self
+epic add: epicKey, issues, count
+epic remove: issues, count
 
-Array: id, key, name, lead, style
-
-## issue list
-
-Array: key, summary, status, statusCategory, type, priority, assignee
-
-## issue view
-
-key, summary, status, type, priority, assignee, reporter, created, updated, description, labels, project, comments
-
-comments (when -c used): id, author, created, body
-
-## issue create
-
-key, id, self
-
-## issue comment add
-
-id, self, created
-
-## issue assign
-
-key, assignee
-
-## issue move
-
-key, status
-
-## issue move (list mode)
-
-Array: id, name, to.name
-
-## issue type
-
-Array: id, name, description, subtask
-
-## issue status
-
-Array: id, name, category
-
-## issue priority
-
-Array: id, name, description
-
-## issue watch/unwatch
-
-key, action
-
-## release list
-
-Array: id, name, description, released, archived, releaseDate, startDate
-
-## user search
-
-Array: accountId, displayName, emailAddress, active
-
-## field list
-
-Array: id, name, custom, type
+sprint list: [id, name, state, startDate, endDate, goal]
+sprint add: sprintId, issues, count

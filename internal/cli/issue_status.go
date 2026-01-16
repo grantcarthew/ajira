@@ -15,8 +15,8 @@ import (
 var issueStatusCmd = &cobra.Command{
 	Use:     "status",
 	Aliases: []string{"statuses"},
-	Short:   "List available statuses",
-	Long:    "List statuses available for the current project.",
+	Short:   "List statuses",
+	Long:    "List statuses for the project. Requires -p or JIRA_PROJECT.",
 	Example: `  ajira issue status           # List statuses for default project
   ajira issue status -p PROJ   # List statuses for specific project`,
 	SilenceUsage: true,

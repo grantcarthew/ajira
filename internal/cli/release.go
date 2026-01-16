@@ -49,8 +49,8 @@ var (
 
 var releaseCmd = &cobra.Command{
 	Use:   "release",
-	Short: "Manage project releases/versions",
-	Long:  "Commands for listing project releases and versions.",
+	Short: "Manage releases",
+	Long:  "Commands for managing project releases and versions.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
@@ -58,8 +58,8 @@ var releaseCmd = &cobra.Command{
 
 var releaseListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List project releases/versions",
-	Long:  "List all versions/releases for a project. Use -p to specify the project or set JIRA_PROJECT.",
+	Short: "List releases",
+	Long:  "List project versions/releases. Requires -p or JIRA_PROJECT.",
 	Example: `  ajira release list                      # List all releases
   ajira release list -p PROJ              # List releases for project
   ajira release list --status released    # Only released versions

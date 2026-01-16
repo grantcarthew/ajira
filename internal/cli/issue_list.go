@@ -87,8 +87,8 @@ var (
 
 var issueListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List and search issues",
-	Long:  "List Jira issues using JQL or convenience filters.",
+	Short: "List issues",
+	Long:  "List Jira issues. Supports JQL queries and convenience filters.",
 	Example: `  ajira issue list                           # List issues in default project
   ajira issue list --status "In Progress"    # Filter by status
   ajira issue list -a me -t Bug              # My bugs

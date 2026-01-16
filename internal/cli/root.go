@@ -36,11 +36,23 @@ var rootCmd = &cobra.Command{
 Non-interactive, environment-configured, with Markdown input/output and JSON support.
 
 Environment Variables:
-  JIRA_BASE_URL    Jira instance URL (required)
-  JIRA_EMAIL       User email for authentication (required)
-  JIRA_API_TOKEN   API token for authentication (required)
-  JIRA_PROJECT     Default project key (optional)
-  JIRA_BOARD       Default board ID for agile commands (optional)
+  ATLASSIAN_BASE_URL   Atlassian instance URL (shared with acon)
+  ATLASSIAN_EMAIL      User email (shared with acon)
+  ATLASSIAN_API_TOKEN  API token (shared with acon)
+  JIRA_BASE_URL        Jira URL (overrides ATLASSIAN_BASE_URL)
+  JIRA_EMAIL           User email (overrides ATLASSIAN_EMAIL)
+  JIRA_API_TOKEN       API token (overrides ATLASSIAN_API_TOKEN)
+  JIRA_PROJECT         Default project key (optional)
+  JIRA_BOARD           Default board ID (optional)
+
+Global Flags (work with most commands):
+  --json       Output in JSON format for parsing
+  --dry-run    Preview actions without executing
+  --quiet      Suppress non-essential output
+  --no-color   Disable coloured output
+  --verbose    Show HTTP request/response details
+  -p, --project   Override default project
+  --board      Override default board ID
 
 Quick Start:
   ajira me                          Verify authentication
@@ -79,6 +91,9 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Show HTTP request/response details")
 	rootCmd.PersistentFlags().BoolVar(&quiet, "quiet", false, "Suppress non-essential output")
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable coloured output")
+
+	// Disable Cobra's verbose completion command, we'll add our own
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	rootCmd.Version = Version
 	rootCmd.SetVersionTemplate(`ajira version {{.Version}}

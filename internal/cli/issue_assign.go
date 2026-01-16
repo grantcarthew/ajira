@@ -30,10 +30,8 @@ var assignStdin bool
 
 var issueAssignCmd = &cobra.Command{
 	Use:   "assign <issue-key> <user>",
-	Short: "Assign an issue to a user",
-	Long: `Assign a Jira issue to a user. Use 'me' for yourself, or 'unassigned' to remove the assignee.
-
-With --stdin, reads issue keys from stdin (one per line) and assigns them all to the specified user.`,
+	Short: "Assign issue",
+	Long:  "Assign an issue to a user. Use 'me', 'unassigned', or --stdin for batch.",
 	Example: `  ajira issue assign PROJ-123 me                   # Assign to yourself
   ajira issue assign PROJ-123 user@example.com     # Assign by email
   ajira issue assign PROJ-123 unassigned           # Remove assignee

@@ -22,7 +22,7 @@ var (
 var epicListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List epics",
-	Long:  "List Jira epics in the project.",
+	Long:  "List epics in the project. Requires -p or JIRA_PROJECT.",
 	Example: `  ajira epic list                        # List epics in default project
   ajira epic list -p GCP                 # List epics in specific project
   ajira epic list --status "In Progress" # Filter by status

@@ -16,10 +16,8 @@ var (
 
 var issueDeleteCmd = &cobra.Command{
 	Use:   "delete <issue-key>",
-	Short: "Delete an issue",
-	Long: `Permanently delete a Jira issue. This action cannot be undone.
-
-With --stdin, reads issue keys from stdin (one per line) and deletes them all.`,
+	Short: "Delete issue",
+	Long:  "Permanently delete an issue. Use --cascade for subtasks, --stdin for batch.",
 	Example: `  ajira issue delete PROJ-123             # Delete issue permanently
   ajira issue delete PROJ-123 --cascade   # Delete issue and all subtasks
   echo -e "PROJ-1\nPROJ-2" | ajira issue delete --stdin  # Batch delete`,

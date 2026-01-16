@@ -25,7 +25,7 @@ var userSearchLimit int
 
 var userCmd = &cobra.Command{
 	Use:   "user",
-	Short: "Manage Jira users",
+	Short: "Manage users",
 	Long:  "Commands for searching and viewing Jira users.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
@@ -34,11 +34,8 @@ var userCmd = &cobra.Command{
 
 var userSearchCmd = &cobra.Command{
 	Use:   "search <query>",
-	Short: "Search for users",
-	Long: `Search for Jira users by name or email address.
-
-The query matches against display name and email. Useful for finding
-account IDs for assignment or other operations.`,
+	Short: "Search users",
+	Long:  "Search Jira users by name or email. Returns account IDs for use with assign.",
 	Example: `  ajira user search john              # Search by name
   ajira user search john@example.com  # Search by email
   ajira user search john -l 20        # Limit results`,

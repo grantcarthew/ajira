@@ -13,11 +13,8 @@ import (
 
 var openCmd = &cobra.Command{
 	Use:   "open [issue-key]",
-	Short: "Open project or issue in browser",
-	Long: `Open the Jira project or a specific issue in your default web browser.
-
-Without arguments, opens the project board. With an issue key, opens that issue.
-If running in a non-interactive environment (e.g., SSH), prints the URL instead.`,
+	Short: "Open in browser",
+	Long:  "Open the project or an issue in your default browser. Prints URL if not in TTY.",
 	Example: `  ajira open                    # Open project in browser
   ajira open PROJ-123           # Open issue in browser
   ajira open -p PROJ            # Open specific project`,
@@ -28,9 +25,8 @@ If running in a non-interactive environment (e.g., SSH), prints the URL instead.
 
 var issueOpenCmd = &cobra.Command{
 	Use:   "open <issue-key>",
-	Short: "Open issue in browser",
-	Long: `Open a specific Jira issue in your default web browser.
-If running in a non-interactive environment (e.g., SSH), prints the URL instead.`,
+	Short: "Open issue",
+	Long:  "Open an issue in your default browser. Prints URL if not in TTY.",
 	Example:      `  ajira issue open PROJ-123     # Open issue in browser`,
 	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,

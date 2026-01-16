@@ -45,8 +45,8 @@ var boardListLimit int
 
 var boardCmd = &cobra.Command{
 	Use:   "board",
-	Short: "Manage Jira boards",
-	Long:  "Commands for managing Jira boards: list.",
+	Short: "Manage boards",
+	Long:  "Commands for managing Jira boards.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
@@ -55,7 +55,7 @@ var boardCmd = &cobra.Command{
 var boardListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List boards",
-	Long:  "List Jira boards accessible to the user.",
+	Long:  "List Jira boards. Use -p to filter by project.",
 	Example: `  ajira board list                    # List boards in default project
   ajira board list -p GCP             # List boards in specific project
   ajira board list -l 10              # Limit results`,

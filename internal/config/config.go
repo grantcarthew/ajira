@@ -30,7 +30,10 @@ func Load() (*Config, error) {
 
 	cfg.BaseURL = os.Getenv("JIRA_BASE_URL")
 	if cfg.BaseURL == "" {
-		errs = append(errs, errors.New("missing required environment variable: JIRA_BASE_URL"))
+		cfg.BaseURL = os.Getenv("ATLASSIAN_BASE_URL")
+	}
+	if cfg.BaseURL == "" {
+		errs = append(errs, errors.New("missing required environment variable: JIRA_BASE_URL (or ATLASSIAN_BASE_URL)"))
 	} else {
 		if err := validateBaseURL(cfg.BaseURL); err != nil {
 			errs = append(errs, err)
@@ -39,7 +42,10 @@ func Load() (*Config, error) {
 
 	cfg.Email = os.Getenv("JIRA_EMAIL")
 	if cfg.Email == "" {
-		errs = append(errs, errors.New("missing required environment variable: JIRA_EMAIL"))
+		cfg.Email = os.Getenv("ATLASSIAN_EMAIL")
+	}
+	if cfg.Email == "" {
+		errs = append(errs, errors.New("missing required environment variable: JIRA_EMAIL (or ATLASSIAN_EMAIL)"))
 	}
 
 	cfg.APIToken = os.Getenv("JIRA_API_TOKEN")

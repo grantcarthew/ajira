@@ -76,8 +76,8 @@ var (
 
 var issueCreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a new issue",
-	Long:  "Create a new Jira issue with the specified summary and optional description.",
+	Short: "Create issue",
+	Long:  "Create a Jira issue. Requires -s for summary.",
 	Example: `  ajira issue create -s "Fix login bug"                    # Create task
   ajira issue create -s "New feature" -t Story             # Create story
   ajira issue create -s "Bug" -d "Description in Markdown" # With description

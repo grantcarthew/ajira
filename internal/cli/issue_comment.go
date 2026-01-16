@@ -33,8 +33,8 @@ var (
 
 var issueCommentCmd = &cobra.Command{
 	Use:   "comment",
-	Short: "Manage issue comments",
-	Long:  "Commands for managing comments on Jira issues.",
+	Short: "Manage comments",
+	Long:  "Commands for managing issue comments.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
@@ -42,10 +42,8 @@ var issueCommentCmd = &cobra.Command{
 
 var issueCommentEditCmd = &cobra.Command{
 	Use:   "edit <issue-key> <comment-id> [text]",
-	Short: "Edit an existing comment",
-	Long: `Edit an existing comment on a Jira issue. Comment text can be provided as an argument, via --body, or --file.
-
-Use 'ajira issue view <issue-key> -c N' to find comment IDs.`,
+	Short: "Edit comment",
+	Long:  "Edit an existing comment. Use 'issue view -c N' to find comment IDs.",
 	Example: `  ajira issue comment edit PROJ-123 12345 "Updated text"   # Inline
   ajira issue comment edit PROJ-123 12345 -b "New text"    # Via --body
   ajira issue comment edit PROJ-123 12345 -f comment.md    # From file
@@ -62,11 +60,8 @@ Use 'ajira issue view <issue-key> -c N' to find comment IDs.`,
 
 var issueCommentAddCmd = &cobra.Command{
 	Use:   "add <issue-key> [text]",
-	Short: "Add a comment to an issue",
-	Long: `Add a comment to a Jira issue. Comment text can be provided as an argument, via --body, --file, or stdin.
-
-With --stdin, reads issue keys from stdin (one per line) and adds the same comment to all.
-Note: --stdin cannot be combined with --file - (mutual exclusion).`,
+	Short: "Add comment",
+	Long:  "Add a comment to an issue. Text via argument, --body, or --file. Use --stdin for batch (not with -f -).",
 	Example: `  ajira issue comment add PROJ-123 "Comment text"   # Inline comment
   ajira issue comment add PROJ-123 -f comment.md    # From file
   echo "text" | ajira issue comment add PROJ-123 -f - # From stdin

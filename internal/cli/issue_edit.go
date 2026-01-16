@@ -41,8 +41,8 @@ var (
 
 var issueEditCmd = &cobra.Command{
 	Use:   "edit <issue-key>",
-	Short: "Edit an existing issue",
-	Long:  "Update fields of an existing Jira issue.",
+	Short: "Edit issue",
+	Long:  "Update issue fields. Supports summary, description, type, priority, labels, components, and versions.",
 	Example: `  ajira issue edit PROJ-123 -s "New summary"          # Update summary
   ajira issue edit PROJ-123 -d "New description"      # Update description
   ajira issue edit PROJ-123 -t Bug --priority High    # Change type and priority

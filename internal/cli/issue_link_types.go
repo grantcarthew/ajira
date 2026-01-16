@@ -15,8 +15,8 @@ import (
 var issueLinkTypesCmd = &cobra.Command{
 	Use:     "types",
 	Aliases: []string{"type"},
-	Short:   "List available link types",
-	Long:    "List all issue link types available in the Jira instance.",
+	Short:   "List link types",
+	Long:    "List available issue link types.",
 	Example: `  ajira issue link types         # List all link types
   ajira issue link types --json  # JSON output`,
 	SilenceUsage: true,

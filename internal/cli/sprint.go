@@ -6,8 +6,8 @@ import (
 
 var sprintCmd = &cobra.Command{
 	Use:   "sprint",
-	Short: "Manage Jira sprints",
-	Long:  "Commands for managing Jira sprints: list, add.",
+	Short: "Manage sprints",
+	Long:  "Commands for managing Jira sprints.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},

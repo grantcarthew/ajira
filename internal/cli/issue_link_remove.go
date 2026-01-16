@@ -52,8 +52,8 @@ type RemoveResult struct {
 
 var issueLinkRemoveCmd = &cobra.Command{
 	Use:   "remove <key1> <key2>",
-	Short: "Remove all links between two issues",
-	Long:  "Remove all links between two issues regardless of link type.",
+	Short: "Unlink issues",
+	Long:  "Remove all links between two issues.",
 	Example: `  ajira issue link remove GCP-123 GCP-456    # Remove all links between issues
   ajira issue link remove GCP-100 GCP-200`,
 	Args:         cobra.ExactArgs(2),

@@ -73,11 +73,8 @@ const defaultLinkType = "Clones"
 
 var issueCloneCmd = &cobra.Command{
 	Use:   "clone <issue-key>",
-	Short: "Clone an issue",
-	Long: `Clone a Jira issue, creating a new issue with the same fields.
-
-Use override flags to modify specific fields in the cloned issue.
-Use --link to create a "clones" relationship to the original issue.`,
+	Short: "Clone issue",
+	Long:  "Clone an issue with the same fields. Override with -s, -a, -t, -P. Use --link to link to original.",
 	Example: `  ajira issue clone PROJ-123                        # Clone with same fields
   ajira issue clone PROJ-123 -s "New summary"      # Override summary
   ajira issue clone PROJ-123 --link                # Link to original

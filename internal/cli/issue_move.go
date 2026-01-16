@@ -48,10 +48,8 @@ var (
 
 var issueMoveCmd = &cobra.Command{
 	Use:   "move <issue-key> [status]",
-	Short: "Transition an issue to a new status",
-	Long: `Move a Jira issue to a new status via workflow transition.
-
-With --stdin, reads issue keys from stdin (one per line) and transitions them all to the specified status.`,
+	Short: "Move issue",
+	Long:  "Transition an issue to a new status. Supports -m comment, -R resolution, -a assignee, --stdin for batch.",
 	Example: `  ajira issue move PROJ-123                              # List available transitions
   ajira issue move PROJ-123 "In Progress"                # Move to In Progress
   ajira issue move PROJ-123 Done                         # Move to Done

@@ -35,7 +35,7 @@ var fieldCustomOnly bool
 
 var fieldCmd = &cobra.Command{
 	Use:   "field",
-	Short: "Manage Jira fields",
+	Short: "Manage fields",
 	Long:  "Commands for listing and discovering Jira fields.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
@@ -44,10 +44,8 @@ var fieldCmd = &cobra.Command{
 
 var fieldListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List available fields",
-	Long: `List all available Jira fields including system and custom fields.
-
-Field IDs (e.g., customfield_10001) can be used in JQL queries or API calls.`,
+	Short: "List fields",
+	Long:  "List Jira fields. Use --custom to show only custom fields.",
 	Example: `  ajira field list              # List all fields
   ajira field list --custom     # List only custom fields
   ajira field list --json       # Output as JSON`,

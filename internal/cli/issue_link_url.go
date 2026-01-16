@@ -38,8 +38,8 @@ type remoteLinkResponse struct {
 var issueLinkURLCmd = &cobra.Command{
 	Use:     "url <issue-key> <url> [title]",
 	Aliases: []string{"web"},
-	Short:   "Add a web URL to an issue",
-	Long:    "Add an external web URL as a remote link to an issue.",
+	Short:   "Add URL",
+	Long:    "Add a web URL as a remote link to an issue.",
 	Example: `  ajira issue link url GCP-123 https://github.com/org/repo/pull/42
   ajira issue link url GCP-123 https://docs.example.com "API Documentation"
   ajira issue link web GCP-123 https://example.com`,

@@ -19,10 +19,8 @@ var sprintAddStdin bool
 
 var sprintAddCmd = &cobra.Command{
 	Use:   "add <sprint-id> <issue-keys...>",
-	Short: "Add issues to a sprint",
-	Long: `Move issues to a sprint. Issues can only be moved to open or active sprints.
-
-With --stdin, reads issue keys from stdin (one per line).`,
+	Short: "Add to sprint",
+	Long:  "Move issues to a sprint. Sprint must be open or active. Use --stdin for batch.",
 	Example: `  ajira sprint add 42 GCP-123 GCP-124 GCP-125
   ajira sprint add 42 GCP-100
   echo -e "GCP-1\nGCP-2" | ajira sprint add 42 --stdin`,

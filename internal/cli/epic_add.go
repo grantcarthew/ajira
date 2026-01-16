@@ -19,10 +19,8 @@ var epicAddStdin bool
 
 var epicAddCmd = &cobra.Command{
 	Use:   "add <epic-key> <issue-keys...>",
-	Short: "Add issues to an epic",
-	Long: `Move issues to an epic. Issues can only belong to one epic at a time.
-
-With --stdin, reads issue keys from stdin (one per line).`,
+	Short: "Add to epic",
+	Long:  "Move issues to an epic. Issues can only belong to one epic. Use --stdin for batch.",
 	Example: `  ajira epic add GCP-50 GCP-101 GCP-102 GCP-103
   ajira epic add GCP-50 GCP-100
   echo -e "GCP-1\nGCP-2" | ajira epic add GCP-50 --stdin`,

@@ -6,8 +6,8 @@ import (
 
 var epicCmd = &cobra.Command{
 	Use:   "epic",
-	Short: "Manage Jira epics",
-	Long:  "Commands for managing Jira epics: list, create, add, remove.",
+	Short: "Manage epics",
+	Long:  "Commands for managing Jira epics.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},

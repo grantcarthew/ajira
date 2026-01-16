@@ -7,8 +7,8 @@ import (
 var issueLinkCmd = &cobra.Command{
 	Use:     "link",
 	Aliases: []string{"links"},
-	Short:   "Manage issue links",
-	Long:    "Commands for managing links between Jira issues and external URLs.",
+	Short:   "Manage links",
+	Long:    "Commands for managing issue links and remote URLs.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
