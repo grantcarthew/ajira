@@ -73,7 +73,7 @@ func runEpicCreate(cmd *cobra.Command, args []string) error {
 	// Get description from body, file, or stdin
 	description, err := getEpicDescription()
 	if err != nil {
-		return fmt.Errorf("failed to read description: %v", err)
+		return fmt.Errorf("failed to read description: %w", err)
 	}
 
 	result, err := createIssue(ctx, client, projectKey, epicCreateSummary, description, "Epic", epicCreatePriority, epicCreateLabels, "", nil, nil)
@@ -81,13 +81,13 @@ func runEpicCreate(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to create epic: %v", err)
+		return fmt.Errorf("failed to create epic: %w", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %w", err)
 		}
 		fmt.Println(string(output))
 	} else {

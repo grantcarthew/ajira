@@ -109,7 +109,10 @@ func runIssueMove(cmd *cobra.Command, args []string) error {
 	// List mode: show available transitions
 	if moveListTransitions || len(args) == 1 {
 		if JSONOutput() {
-			output, _ := json.MarshalIndent(transitions, "", "  ")
+			output, err := json.MarshalIndent(transitions, "", "  ")
+			if err != nil {
+				return fmt.Errorf("failed to format JSON: %w", err)
+			}
 			fmt.Println(string(output))
 		} else {
 			if len(transitions) == 0 {

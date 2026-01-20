@@ -376,8 +376,8 @@ func TestBuildJQL_WithSprint(t *testing.T) {
 	project = "TEST"
 
 	jql := buildJQL()
-	if !strings.Contains(jql, "sprint = 42") {
-		t.Errorf("expected sprint = 42, got %q", jql)
+	if !strings.Contains(jql, `sprint = "42"`) {
+		t.Errorf("expected sprint = \"42\", got %q", jql)
 	}
 }
 
@@ -387,8 +387,8 @@ func TestBuildJQL_WithEpic(t *testing.T) {
 	project = "TEST"
 
 	jql := buildJQL()
-	if !strings.Contains(jql, "parent = GCP-50") {
-		t.Errorf("expected parent = GCP-50, got %q", jql)
+	if !strings.Contains(jql, `parent = "GCP-50"`) {
+		t.Errorf("expected parent = \"GCP-50\", got %q", jql)
 	}
 }
 
@@ -399,11 +399,11 @@ func TestBuildJQL_WithSprintAndEpic(t *testing.T) {
 	project = "TEST"
 
 	jql := buildJQL()
-	if !strings.Contains(jql, "sprint = 42") {
-		t.Errorf("expected sprint = 42, got %q", jql)
+	if !strings.Contains(jql, `sprint = "42"`) {
+		t.Errorf("expected sprint = \"42\", got %q", jql)
 	}
-	if !strings.Contains(jql, "parent = GCP-50") {
-		t.Errorf("expected parent = GCP-50, got %q", jql)
+	if !strings.Contains(jql, `parent = "GCP-50"`) {
+		t.Errorf("expected parent = \"GCP-50\", got %q", jql)
 	}
 	if !strings.Contains(jql, " AND ") {
 		t.Errorf("expected AND in JQL, got %q", jql)
@@ -418,7 +418,7 @@ func TestBuildJQL_SprintWithOtherFilters(t *testing.T) {
 	project = "TEST"
 
 	jql := buildJQL()
-	if !strings.Contains(jql, "sprint = 42") {
+	if !strings.Contains(jql, `sprint = "42"`) {
 		t.Errorf("expected sprint filter, got %q", jql)
 	}
 	if !strings.Contains(jql, `status = "In Progress"`) {

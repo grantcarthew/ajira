@@ -73,7 +73,7 @@ func runIssueLinkURL(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to create remote link: %v", err)
+		return fmt.Errorf("failed to create remote link: %w", err)
 	}
 
 	result.Issue = issueKey
@@ -81,7 +81,10 @@ func runIssueLinkURL(cmd *cobra.Command, args []string) error {
 	result.Title = title
 
 	if JSONOutput() {
-		output, _ := json.MarshalIndent(result, "", "  ")
+		output, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to format JSON: %w", err)
+		}
 		fmt.Println(string(output))
 	} else {
 		fmt.Println(IssueURL(cfg.BaseURL, issueKey))

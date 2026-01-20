@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/gcarthew/ajira/internal/api"
@@ -147,14 +148,17 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to fetch issue: %v", err)
+		return fmt.Errorf("failed to fetch issue: %w", err)
 	}
 
 	// Fetch comments if requested
 	if viewCommentCount > 0 {
 		comments, err := getComments(ctx, client, issueKey, viewCommentCount)
 		if err != nil {
-			// Non-fatal: just skip comments on error
+			// Non-fatal: skip comments but warn in verbose mode
+			if Verbose() {
+				fmt.Fprintf(os.Stderr, "warning: failed to fetch comments: %v\n", err)
+			}
 			comments = nil
 		}
 		issue.Comments = comments
@@ -163,7 +167,7 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 	if JSONOutput() {
 		output, err := json.MarshalIndent(issue, "", "  ")
 		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %w", err)
 		}
 		fmt.Println(string(output))
 	} else {

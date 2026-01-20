@@ -117,7 +117,7 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to fetch source issue: %v", err)
+		return fmt.Errorf("failed to fetch source issue: %w", err)
 	}
 
 	// Determine target project
@@ -167,7 +167,7 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 	// Build create request
 	req, err := buildCloneRequest(ctx, client, cfg, source, targetProject, issueType)
 	if err != nil {
-		return fmt.Errorf("failed to build clone request: %v", err)
+		return fmt.Errorf("failed to build clone request: %w", err)
 	}
 
 	// Create the cloned issue
@@ -176,7 +176,7 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to create cloned issue: %v", err)
+		return fmt.Errorf("failed to create cloned issue: %w", err)
 	}
 
 	// Create link to original if requested
@@ -203,7 +203,7 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 		}
 		jsonOutput, err := json.MarshalIndent(output, "", "  ")
 		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %w", err)
 		}
 		fmt.Println(string(jsonOutput))
 	} else {

@@ -148,13 +148,13 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		if editFile == "-" {
 			data, err := io.ReadAll(os.Stdin)
 			if err != nil {
-				return fmt.Errorf("failed to read stdin: %v", err)
+				return fmt.Errorf("failed to read stdin: %w", err)
 			}
 			description = string(data)
 		} else {
 			data, err := os.ReadFile(editFile)
 			if err != nil {
-				return fmt.Errorf("failed to read file: %v", err)
+				return fmt.Errorf("failed to read file: %w", err)
 			}
 			description = string(data)
 		}
@@ -163,7 +163,7 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 	if description != "" {
 		adf, err := converter.MarkdownToADF(description)
 		if err != nil {
-			return fmt.Errorf("failed to convert description: %v", err)
+			return fmt.Errorf("failed to convert description: %w", err)
 		}
 		fields["description"] = adf
 	}
@@ -259,12 +259,15 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to update issue: %v", err)
+		return fmt.Errorf("failed to update issue: %w", err)
 	}
 
 	if JSONOutput() {
 		result := map[string]string{"key": issueKey, "status": "updated"}
-		output, _ := json.MarshalIndent(result, "", "  ")
+		output, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to format JSON: %w", err)
+		}
 		fmt.Println(string(output))
 	} else {
 		fmt.Println(IssueURL(cfg.BaseURL, issueKey))

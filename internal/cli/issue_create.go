@@ -135,7 +135,7 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 	// Get description from body, file, or stdin
 	description, err := getDescription()
 	if err != nil {
-		return fmt.Errorf("failed to read description: %v", err)
+		return fmt.Errorf("failed to read description: %w", err)
 	}
 
 	result, err := createIssue(ctx, client, projectKey, createSummary, description, createType, createPriority, createLabels, createParent, createComponents, createFixVersions)
@@ -143,13 +143,13 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to create issue: %v", err)
+		return fmt.Errorf("failed to create issue: %w", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(result, "", "  ")
 		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %w", err)
 		}
 		fmt.Println(string(output))
 	} else {

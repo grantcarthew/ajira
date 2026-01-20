@@ -56,8 +56,12 @@ func PrintBatchResults(results []BatchResult) error {
 	}
 
 	if JSONOutput() {
-		output, _ := json.MarshalIndent(summary, "", "  ")
-		fmt.Println(string(output))
+		output, err := json.MarshalIndent(summary, "", "  ")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to format JSON: %v\n", err)
+		} else {
+			fmt.Println(string(output))
+		}
 	} else {
 		// Print individual results
 		for _, r := range results {
@@ -92,8 +96,12 @@ func PrintDryRunBatch(keys []string, action string) {
 		for i, key := range keys {
 			items[i] = dryRunItem{Key: key, Action: action}
 		}
-		output, _ := json.MarshalIndent(items, "", "  ")
-		fmt.Println(string(output))
+		output, err := json.MarshalIndent(items, "", "  ")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to format JSON: %v\n", err)
+		} else {
+			fmt.Println(string(output))
+		}
 	} else {
 		for _, key := range keys {
 			fmt.Printf("Would %s %s\n", action, key)
@@ -105,8 +113,12 @@ func PrintDryRunBatch(keys []string, action string) {
 func PrintDryRun(action string) {
 	if JSONOutput() {
 		result := map[string]string{"action": action}
-		output, _ := json.MarshalIndent(result, "", "  ")
-		fmt.Println(string(output))
+		output, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to format JSON: %v\n", err)
+		} else {
+			fmt.Println(string(output))
+		}
 	} else {
 		fmt.Printf("Would %s\n", action)
 	}
@@ -122,7 +134,11 @@ func PrintSuccess(message string) {
 // PrintSuccessJSON prints JSON output unless quiet mode is enabled.
 func PrintSuccessJSON(v any) {
 	if !Quiet() {
-		output, _ := json.MarshalIndent(v, "", "  ")
-		fmt.Println(string(output))
+		output, err := json.MarshalIndent(v, "", "  ")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to format JSON: %v\n", err)
+		} else {
+			fmt.Println(string(output))
+		}
 	}
 }

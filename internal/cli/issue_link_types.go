@@ -42,13 +42,13 @@ func runIssueLinkTypes(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to fetch link types: %v", err)
+		return fmt.Errorf("failed to fetch link types: %w", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(linkTypes, "", "  ")
 		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %w", err)
 		}
 		fmt.Println(string(output))
 	} else {

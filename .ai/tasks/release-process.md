@@ -2,7 +2,7 @@
 
 > **Purpose**: Repeatable process for releasing new versions of ajira
 > **Audience**: AI agents and maintainers performing releases
-> **Last Updated**: 2026-01-09
+> **Last Updated**: 2026-01-20
 
 This document provides step-by-step instructions for releasing ajira. Execute each step in order.
 
@@ -170,6 +170,8 @@ echo "Releasing version: v${VERSION}"
 
 ## Step 4: Update CHANGELOG.md
 
+> **Note:** Skip this step for v0.x.x releases. CHANGELOG.md is not maintained during initial development. Start maintaining the changelog from v1.0.0.
+
 Review changes since last release and update CHANGELOG.md:
 
 ```bash
@@ -220,13 +222,21 @@ Example format:
 
 ## Step 5: Commit Changes
 
-Commit the CHANGELOG:
+> **Note:** For v0.x.x releases, skip the CHANGELOG commit but still verify clean state.
+
+Commit the CHANGELOG (if updated):
 
 ```bash
 # Stage and commit changes
 git add CHANGELOG.md
 git commit -m "chore: prepare for v${VERSION} release"
 git push origin main
+```
+
+Verify clean working directory before tagging:
+
+```bash
+git status  # Should show "nothing to commit, working tree clean"
 ```
 
 ---
@@ -464,10 +474,11 @@ staticcheck ./...
 govulncheck ./...
 git status  # Should be clean
 
-# 3. Update CHANGELOG.md manually, then commit
-git add CHANGELOG.md
-git commit -m "chore: prepare for v${VERSION} release"
-git push origin main
+# 3. Update CHANGELOG.md (skip for v0.x.x releases)
+# git add CHANGELOG.md
+# git commit -m "chore: prepare for v${VERSION} release"
+# git push origin main
+git status  # Verify clean working directory
 
 # 4. Create tag with summary
 SUMMARY="Your summary here"

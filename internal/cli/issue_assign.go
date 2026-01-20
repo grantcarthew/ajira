@@ -26,6 +26,11 @@ type userSearchResult struct {
 	EmailAddress string `json:"emailAddress"`
 }
 
+// minAccountIDLength is the minimum length to distinguish a Jira account ID
+// from other user identifiers. Jira Cloud account IDs are typically 24-28
+// character alphanumeric strings (e.g., "5b10ac8d82e05b22cc7d4ef5").
+const minAccountIDLength = 20
+
 var assignStdin bool
 
 var issueAssignCmd = &cobra.Command{
@@ -157,10 +162,9 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 // resolveUser resolves a user identifier to an accountId.
 // Accepts email address or accountId directly.
 func resolveUser(ctx context.Context, client *api.Client, user string) (string, error) {
-	// If it looks like an accountId (no @), try using it directly
-	// Jira accountIds are typically alphanumeric strings
-	if !strings.Contains(user, "@") && len(user) > 20 {
-		// Assume it's an accountId
+	// If it looks like an accountId (no @ and long enough), use it directly.
+	// Jira Cloud account IDs are alphanumeric strings like "5b10ac8d82e05b22cc7d4ef5".
+	if !strings.Contains(user, "@") && len(user) > minAccountIDLength {
 		return user, nil
 	}
 

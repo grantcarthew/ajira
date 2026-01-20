@@ -159,13 +159,13 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to search issues: %v", err)
+		return fmt.Errorf("failed to search issues: %w", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(issues, "", "  ")
 		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %w", err)
 		}
 		fmt.Println(string(output))
 	} else {
@@ -280,10 +280,10 @@ func buildJQL() string {
 		conditions = append(conditions, "watcher = currentUser()")
 	}
 	if issueListSprint != "" {
-		conditions = append(conditions, fmt.Sprintf("sprint = %s", issueListSprint))
+		conditions = append(conditions, fmt.Sprintf("sprint = \"%s\"", issueListSprint))
 	}
 	if issueListEpic != "" {
-		conditions = append(conditions, fmt.Sprintf("parent = %s", issueListEpic))
+		conditions = append(conditions, fmt.Sprintf("parent = \"%s\"", issueListEpic))
 	}
 
 	if len(conditions) == 0 {

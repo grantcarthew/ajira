@@ -83,7 +83,7 @@ func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to fetch issue links: %v", err)
+		return fmt.Errorf("failed to fetch issue links: %w", err)
 	}
 
 	// Find links connecting to key2
@@ -108,7 +108,7 @@ func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
 			if apiErr, ok := err.(*api.APIError); ok {
 				return fmt.Errorf("API error: %w", apiErr)
 			}
-			return fmt.Errorf("failed to delete link %s: %v", linkID, err)
+			return fmt.Errorf("failed to delete link %s: %w", linkID, err)
 		}
 	}
 
@@ -118,7 +118,10 @@ func runIssueLinkRemove(cmd *cobra.Command, args []string) error {
 			Issue2:       key2,
 			LinksRemoved: len(linksToRemove),
 		}
-		output, _ := json.MarshalIndent(result, "", "  ")
+		output, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to format JSON: %w", err)
+		}
 		fmt.Println(string(output))
 	} else {
 		fmt.Println(IssueURL(cfg.BaseURL, key1))

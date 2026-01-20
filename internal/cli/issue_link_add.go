@@ -69,7 +69,7 @@ func runIssueLinkAdd(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to fetch link types: %v", err)
+		return fmt.Errorf("failed to fetch link types: %w", err)
 	}
 
 	validType := findLinkType(linkTypes, linkTypeName)
@@ -87,7 +87,7 @@ func runIssueLinkAdd(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to create link: %v", err)
+		return fmt.Errorf("failed to create link: %w", err)
 	}
 
 	if JSONOutput() {
@@ -96,7 +96,10 @@ func runIssueLinkAdd(cmd *cobra.Command, args []string) error {
 			InwardIssue:  inwardKey,
 			Type:         validType.Name,
 		}
-		output, _ := json.MarshalIndent(result, "", "  ")
+		output, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to format JSON: %w", err)
+		}
 		fmt.Println(string(output))
 	} else {
 		fmt.Println(IssueURL(cfg.BaseURL, outwardKey))

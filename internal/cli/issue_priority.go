@@ -42,13 +42,13 @@ func runIssuePriority(cmd *cobra.Command, args []string) error {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to fetch priorities: %v", err)
+		return fmt.Errorf("failed to fetch priorities: %w", err)
 	}
 
 	if JSONOutput() {
 		output, err := json.MarshalIndent(priorities, "", "  ")
 		if err != nil {
-			return fmt.Errorf("failed to format JSON: %v", err)
+			return fmt.Errorf("failed to format JSON: %w", err)
 		}
 		fmt.Println(string(output))
 	} else {
