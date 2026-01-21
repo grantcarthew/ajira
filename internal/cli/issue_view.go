@@ -138,7 +138,7 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
@@ -219,7 +219,16 @@ func getIssue(ctx context.Context, client *api.Client, key string) (*IssueDetail
 
 	// Convert description from ADF to Markdown
 	if len(resp.Fields.Description) > 0 && string(resp.Fields.Description) != "null" {
-		detail.Description = converter.ADFToMarkdown(resp.Fields.Description)
+		md, err := converter.ADFToMarkdown(resp.Fields.Description)
+		if err != nil {
+			// Non-fatal: use raw JSON as fallback
+			if Verbose() {
+				fmt.Fprintf(os.Stderr, "warning: failed to convert description: %v\n", err)
+			}
+			detail.Description = string(resp.Fields.Description)
+		} else {
+			detail.Description = md
+		}
 	}
 
 	// Parse issue links
@@ -332,7 +341,16 @@ func getComments(ctx context.Context, client *api.Client, key string, limit int)
 		}
 		// Convert comment body from ADF to Markdown
 		if len(c.Body) > 0 && string(c.Body) != "null" {
-			info.Body = converter.ADFToMarkdown(c.Body)
+			md, err := converter.ADFToMarkdown(c.Body)
+			if err != nil {
+				// Non-fatal: use raw JSON as fallback
+				if Verbose() {
+					fmt.Fprintf(os.Stderr, "warning: failed to convert comment body: %v\n", err)
+				}
+				info.Body = string(c.Body)
+			} else {
+				info.Body = md
+			}
 		}
 		comments = append(comments, info)
 	}

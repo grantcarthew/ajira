@@ -106,7 +106,7 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
@@ -141,13 +141,13 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 
 	// Validate issue type in target project (especially important for cross-project clone)
 	if err := jira.ValidateIssueType(ctx, client, targetProject, issueType); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	// Validate priority if overriding
 	if clonePriority != "" {
 		if err := jira.ValidatePriority(ctx, client, clonePriority); err != nil {
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 
@@ -160,7 +160,7 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 			linkType = cloneLink
 		}
 		if err := jira.ValidateLinkType(ctx, client, linkType); err != nil {
-			return fmt.Errorf("%v", err)
+			return err
 		}
 	}
 

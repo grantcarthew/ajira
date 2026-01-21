@@ -122,26 +122,26 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
 
 	// Validate filter values before building JQL
 	if err := jira.ValidatePriority(ctx, client, issueListPriority); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	if issueListStatus != "" && Project() == "" {
 		return fmt.Errorf("--status requires a project; use -p flag or set JIRA_PROJECT")
 	}
 	if err := jira.ValidateStatus(ctx, client, Project(), issueListStatus); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	if issueListType != "" && Project() == "" {
 		return fmt.Errorf("--type requires a project; use -p flag or set JIRA_PROJECT")
 	}
 	if err := jira.ValidateIssueType(ctx, client, Project(), issueListType); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	jql := buildJQL()

@@ -3,18 +3,20 @@ package converter
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 )
 
 // ADFToMarkdown converts Atlassian Document Format to Markdown.
 // It uses best-effort conversion, skipping unsupported node types.
-func ADFToMarkdown(adfJSON []byte) string {
+// Returns an error if the JSON cannot be parsed.
+func ADFToMarkdown(adfJSON []byte) (string, error) {
 	var doc ADF
 	if err := json.Unmarshal(adfJSON, &doc); err != nil {
-		return ""
+		return "", fmt.Errorf("invalid ADF JSON: %w", err)
 	}
 
-	return renderNodes(doc.Content, 0)
+	return renderNodes(doc.Content, 0), nil
 }
 
 // ADFToMarkdownFromStruct converts an ADF struct to Markdown.
@@ -311,17 +313,21 @@ func mergeAdjacentTextNodes(nodes []ADFNode) []ADFNode {
 	return result
 }
 
-// marksEqual returns true if two mark slices are equivalent.
+// marksEqual returns true if two mark slices are equivalent (order-independent).
 func marksEqual(a, b []ADFMark) bool {
 	if len(a) != len(b) {
 		return false
 	}
+	// Sort copies by type to compare regardless of order
+	aSorted := make([]string, len(a))
+	bSorted := make([]string, len(b))
 	for i := range a {
-		if a[i].Type != b[i].Type {
-			return false
-		}
+		aSorted[i] = a[i].Type
+		bSorted[i] = b[i].Type
 	}
-	return true
+	slices.Sort(aSorted)
+	slices.Sort(bSorted)
+	return slices.Equal(aSorted, bSorted)
 }
 
 // renderInlineNode renders a single inline node to Markdown.

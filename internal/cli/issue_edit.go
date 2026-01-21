@@ -119,7 +119,7 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
@@ -129,10 +129,10 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 
 	// Validate issue type and priority before making the update request
 	if err := jira.ValidateIssueType(ctx, client, projectKey, editType); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	if err := jira.ValidatePriority(ctx, client, editPriority); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	// Build fields to update

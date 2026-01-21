@@ -119,17 +119,17 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
 
 	// Validate issue type and priority before making the create request
 	if err := jira.ValidateIssueType(ctx, client, projectKey, createType); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	if err := jira.ValidatePriority(ctx, client, createPriority); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	// Get description from body, file, or stdin

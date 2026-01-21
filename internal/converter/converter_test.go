@@ -766,7 +766,10 @@ func TestADFToMarkdown_FromJSON(t *testing.T) {
 		]
 	}`
 
-	md := ADFToMarkdown([]byte(adfJSON))
+	md, err := ADFToMarkdown([]byte(adfJSON))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if !strings.Contains(md, "Hello from JSON") {
 		t.Errorf("expected markdown to contain 'Hello from JSON', got %q", md)
 	}
@@ -1844,14 +1847,20 @@ func TestADFToMarkdown_NilDocument(t *testing.T) {
 }
 
 func TestADFToMarkdown_EmptyJSON(t *testing.T) {
-	md := ADFToMarkdown([]byte(""))
+	md, err := ADFToMarkdown([]byte(""))
+	if err == nil {
+		t.Error("expected error for empty JSON")
+	}
 	if md != "" {
 		t.Errorf("expected empty string for empty JSON, got %q", md)
 	}
 }
 
 func TestADFToMarkdown_InvalidJSON(t *testing.T) {
-	md := ADFToMarkdown([]byte("not valid json"))
+	md, err := ADFToMarkdown([]byte("not valid json"))
+	if err == nil {
+		t.Error("expected error for invalid JSON")
+	}
 	if md != "" {
 		t.Errorf("expected empty string for invalid JSON, got %q", md)
 	}
@@ -2404,7 +2413,10 @@ func TestADFToMarkdown_RealWorldJiraADF(t *testing.T) {
 		]
 	}`
 
-	md := ADFToMarkdown([]byte(adfJSON))
+	md, err := ADFToMarkdown([]byte(adfJSON))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 	if !strings.Contains(md, "**Jira**") {
 		t.Error("expected bold Jira")
 	}
