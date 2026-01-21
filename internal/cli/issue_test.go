@@ -1,5 +1,9 @@
 package cli
 
+// Tests in this package modify package-level flag variables (Cobra bindings).
+// Each test must reset relevant flags before running to ensure isolation.
+// Use the reset helper functions: resetIssueListFlags(), resetCommentFlags().
+
 import (
 	"context"
 	"encoding/json"
@@ -354,6 +358,7 @@ func TestBuildJQL_AllNewFilters(t *testing.T) {
 }
 
 // resetIssueListFlags resets all issue list flag variables to their zero values.
+// Call this at the start of each test that uses buildJQL or issue list functions.
 func resetIssueListFlags() {
 	issueListQuery = ""
 	issueListStatus = ""
@@ -368,6 +373,13 @@ func resetIssueListFlags() {
 	issueListSprint = ""
 	issueListEpic = ""
 	project = ""
+}
+
+// resetCommentFlags resets all comment-related flag variables to their zero values.
+// Call this at the start of each test that uses getCommentText or comment functions.
+func resetCommentFlags() {
+	commentBody = ""
+	commentFile = ""
 }
 
 func TestBuildJQL_WithSprint(t *testing.T) {
@@ -1424,8 +1436,7 @@ func TestGetIssue_NotFound(t *testing.T) {
 
 // Test getCommentText helper
 func TestGetCommentText_PositionalArg(t *testing.T) {
-	commentBody = ""
-	commentFile = ""
+	resetCommentFlags()
 
 	text, err := getCommentText([]string{"TEST-123", "Comment from arg"})
 	if err != nil {
@@ -1437,8 +1448,8 @@ func TestGetCommentText_PositionalArg(t *testing.T) {
 }
 
 func TestGetCommentText_BodyFlag(t *testing.T) {
+	resetCommentFlags()
 	commentBody = "Comment from body flag"
-	commentFile = ""
 
 	text, err := getCommentText([]string{"TEST-123"})
 	if err != nil {
@@ -1450,8 +1461,7 @@ func TestGetCommentText_BodyFlag(t *testing.T) {
 }
 
 func TestGetCommentText_Empty(t *testing.T) {
-	commentBody = ""
-	commentFile = ""
+	resetCommentFlags()
 
 	text, err := getCommentText([]string{"TEST-123"})
 	if err != nil {
@@ -1476,7 +1486,7 @@ func TestGetCommentText_FromFile(t *testing.T) {
 	}
 	tmpFile.Close()
 
-	commentBody = ""
+	resetCommentFlags()
 	commentFile = tmpFile.Name()
 
 	text, err := getCommentText([]string{"TEST-123"})
@@ -1502,6 +1512,7 @@ func TestGetCommentText_FilePriority(t *testing.T) {
 	}
 	tmpFile.Close()
 
+	resetCommentFlags()
 	commentBody = "Content from body flag"
 	commentFile = tmpFile.Name()
 
@@ -1515,7 +1526,7 @@ func TestGetCommentText_FilePriority(t *testing.T) {
 }
 
 func TestGetCommentText_FileNotFound(t *testing.T) {
-	commentBody = ""
+	resetCommentFlags()
 	commentFile = "/nonexistent/path/to/file.md"
 
 	_, err := getCommentText([]string{"TEST-123"})
@@ -1668,10 +1679,6 @@ func TestEditComment_NotFound(t *testing.T) {
 }
 
 func TestGetCommentTextForEdit(t *testing.T) {
-	// Reset global state
-	commentBody = ""
-	commentFile = ""
-
 	tests := []struct {
 		name     string
 		args     []string
@@ -1698,8 +1705,8 @@ func TestGetCommentTextForEdit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetCommentFlags()
 			commentBody = tt.body
-			commentFile = ""
 			result, err := getCommentTextForEdit(tt.args)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)

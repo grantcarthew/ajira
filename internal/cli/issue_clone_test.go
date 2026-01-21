@@ -1,5 +1,9 @@
 package cli
 
+// Tests in this package modify package-level flag variables (Cobra bindings).
+// Each test must reset relevant flags before running to ensure isolation.
+// Use the reset helper function: resetCloneFlags().
+
 import (
 	"context"
 	"encoding/json"
@@ -11,6 +15,19 @@ import (
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/jira"
 )
+
+// resetCloneFlags resets all issue clone flag variables to their zero values.
+// Call this at the start of each test that uses clone-related functions.
+func resetCloneFlags() {
+	cloneSummary = ""
+	cloneAssignee = ""
+	cloneReporter = ""
+	clonePriority = ""
+	cloneType = ""
+	cloneLabels = nil
+	cloneLink = ""
+	cloneLinkSet = false
+}
 
 // Test getSourceIssue function
 func TestGetSourceIssue_Success(t *testing.T) {
@@ -281,16 +298,7 @@ func TestBuildCloneRequest_WithOverrides(t *testing.T) {
 		},
 	}
 
-	// Set overrides via package variables
-	oldSummary := cloneSummary
-	oldLabels := cloneLabels
-	oldPriority := clonePriority
-	defer func() {
-		cloneSummary = oldSummary
-		cloneLabels = oldLabels
-		clonePriority = oldPriority
-	}()
-
+	resetCloneFlags()
 	cloneSummary = "Overridden summary"
 	cloneLabels = []string{"new-label"}
 	clonePriority = "Minor"
@@ -328,25 +336,7 @@ func TestBuildCloneRequest_NoOverrides(t *testing.T) {
 		},
 	}
 
-	// Clear overrides
-	oldSummary := cloneSummary
-	oldLabels := cloneLabels
-	oldPriority := clonePriority
-	oldAssignee := cloneAssignee
-	oldReporter := cloneReporter
-	defer func() {
-		cloneSummary = oldSummary
-		cloneLabels = oldLabels
-		clonePriority = oldPriority
-		cloneAssignee = oldAssignee
-		cloneReporter = oldReporter
-	}()
-
-	cloneSummary = ""
-	cloneLabels = nil
-	clonePriority = ""
-	cloneAssignee = ""
-	cloneReporter = ""
+	resetCloneFlags()
 
 	req, err := buildCloneRequest(context.Background(), client, cfg, source, "PROJ", "Bug")
 	if err != nil {

@@ -1,5 +1,9 @@
 package cli
 
+// Tests in this package modify package-level flag variables (Cobra bindings).
+// Each test must reset relevant flags before running to ensure isolation.
+// Use the reset helper function: resetEpicListFlags().
+
 import (
 	"context"
 	"encoding/json"
@@ -11,11 +15,17 @@ import (
 	"github.com/gcarthew/ajira/internal/api"
 )
 
-func TestBuildEpicListJQL_Basic(t *testing.T) {
-	// Reset and set required state
+// resetEpicListFlags resets all epic list flag variables to their zero values.
+// Call this at the start of each test that uses buildEpicListJQL or epic list functions.
+func resetEpicListFlags() {
 	epicListStatus = ""
 	epicListAssignee = ""
 	epicListPriority = ""
+	project = ""
+}
+
+func TestBuildEpicListJQL_Basic(t *testing.T) {
+	resetEpicListFlags()
 	project = "GCP"
 
 	jql := buildEpicListJQL()
@@ -32,9 +42,8 @@ func TestBuildEpicListJQL_Basic(t *testing.T) {
 }
 
 func TestBuildEpicListJQL_WithStatus(t *testing.T) {
+	resetEpicListFlags()
 	epicListStatus = "In Progress"
-	epicListAssignee = ""
-	epicListPriority = ""
 	project = "GCP"
 
 	jql := buildEpicListJQL()
@@ -45,9 +54,8 @@ func TestBuildEpicListJQL_WithStatus(t *testing.T) {
 }
 
 func TestBuildEpicListJQL_WithAssigneeMe(t *testing.T) {
-	epicListStatus = ""
+	resetEpicListFlags()
 	epicListAssignee = "me"
-	epicListPriority = ""
 	project = "GCP"
 
 	jql := buildEpicListJQL()
@@ -58,9 +66,8 @@ func TestBuildEpicListJQL_WithAssigneeMe(t *testing.T) {
 }
 
 func TestBuildEpicListJQL_WithAssigneeUnassigned(t *testing.T) {
-	epicListStatus = ""
+	resetEpicListFlags()
 	epicListAssignee = "unassigned"
-	epicListPriority = ""
 	project = "GCP"
 
 	jql := buildEpicListJQL()
@@ -71,8 +78,7 @@ func TestBuildEpicListJQL_WithAssigneeUnassigned(t *testing.T) {
 }
 
 func TestBuildEpicListJQL_WithPriority(t *testing.T) {
-	epicListStatus = ""
-	epicListAssignee = ""
+	resetEpicListFlags()
 	epicListPriority = "Major"
 	project = "GCP"
 
@@ -84,6 +90,7 @@ func TestBuildEpicListJQL_WithPriority(t *testing.T) {
 }
 
 func TestBuildEpicListJQL_AllFilters(t *testing.T) {
+	resetEpicListFlags()
 	epicListStatus = "Done"
 	epicListAssignee = "john@example.com"
 	epicListPriority = "High"
