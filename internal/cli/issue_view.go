@@ -16,20 +16,21 @@ import (
 
 // IssueDetail represents a full Jira issue for output.
 type IssueDetail struct {
-	Key         string        `json:"key"`
-	Summary     string        `json:"summary"`
-	Status      string        `json:"status"`
-	Type        string        `json:"type"`
-	Priority    string        `json:"priority"`
-	Assignee    string        `json:"assignee"`
-	Reporter    string        `json:"reporter"`
-	Created     string        `json:"created"`
-	Updated     string        `json:"updated"`
-	Description string        `json:"description"`
-	Labels      []string      `json:"labels"`
-	Project     string        `json:"project"`
-	Links       []LinkInfo    `json:"links,omitempty"`
-	Comments    []CommentInfo `json:"comments,omitempty"`
+	Key           string        `json:"key"`
+	Summary       string        `json:"summary"`
+	Status        string        `json:"status"`
+	Type          string        `json:"type"`
+	Priority      string        `json:"priority"`
+	Assignee      string        `json:"assignee"`
+	Reporter      string        `json:"reporter"`
+	Created       string        `json:"created"`
+	Updated       string        `json:"updated"`
+	Description   string        `json:"description"`
+	Labels        []string      `json:"labels"`
+	Project       string        `json:"project"`
+	Links         []LinkInfo    `json:"links,omitempty"`
+	Comments      []CommentInfo `json:"comments,omitempty"`
+	TotalComments int           `json:"total_comments,omitempty"`
 }
 
 // LinkInfo represents a linked issue for display.
@@ -117,9 +118,10 @@ var (
 var issueViewCmd = &cobra.Command{
 	Use:   "view <issue-key>",
 	Short: "View issue",
-	Long:  "Display issue details. Use -c to include comments.",
-	Example: `  ajira issue view PROJ-123           # View issue details
-  ajira issue view PROJ-123 -c 5      # Include 5 recent comments
+	Long:  "Display issue details with 5 most recent comments. Use -c to change comment count.",
+	Example: `  ajira issue view PROJ-123           # View with 5 recent comments
+  ajira issue view PROJ-123 -c 10     # Include 10 recent comments
+  ajira issue view PROJ-123 -c 0      # Hide comments
   ajira issue view PROJ-123 --json    # JSON output`,
 	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
@@ -127,7 +129,7 @@ var issueViewCmd = &cobra.Command{
 }
 
 func init() {
-	issueViewCmd.Flags().IntVarP(&viewCommentCount, "comments", "c", 0, "Number of recent comments to show")
+	issueViewCmd.Flags().IntVarP(&viewCommentCount, "comments", "c", 5, "Number of recent comments to show (0 to hide)")
 
 	issueCmd.AddCommand(issueViewCmd)
 }
@@ -153,15 +155,17 @@ func runIssueView(cmd *cobra.Command, args []string) error {
 
 	// Fetch comments if requested
 	if viewCommentCount > 0 {
-		comments, err := getComments(ctx, client, issueKey, viewCommentCount)
+		comments, total, err := getComments(ctx, client, issueKey, viewCommentCount)
 		if err != nil {
 			// Non-fatal: skip comments but warn in verbose mode
 			if Verbose() {
 				fmt.Fprintf(os.Stderr, "warning: failed to fetch comments: %v\n", err)
 			}
 			comments = nil
+			total = 0
 		}
 		issue.Comments = comments
+		issue.TotalComments = total
 	}
 
 	if JSONOutput() {
@@ -297,7 +301,11 @@ func printIssueDetail(issue *IssueDetail) {
 	if len(issue.Comments) > 0 {
 		fmt.Println()
 		fmt.Println(strings.Repeat("-", 60))
-		fmt.Printf("Comments (%d):\n", len(issue.Comments))
+		if issue.TotalComments > 0 {
+			fmt.Printf("Comments (%d of %d):\n", len(issue.Comments), issue.TotalComments)
+		} else {
+			fmt.Printf("Comments (%d):\n", len(issue.Comments))
+		}
 		for _, c := range issue.Comments {
 			fmt.Println()
 			fmt.Printf("[%s] [%s] %s:\n", formatDateTime(c.Created), c.ID, c.Author)
@@ -317,17 +325,18 @@ func formatDateTime(iso string) string {
 }
 
 // getComments fetches recent comments for an issue.
-func getComments(ctx context.Context, client *api.Client, key string, limit int) ([]CommentInfo, error) {
+// Returns the comments slice and the total count of comments on the issue.
+func getComments(ctx context.Context, client *api.Client, key string, limit int) ([]CommentInfo, int, error) {
 	path := fmt.Sprintf("/issue/%s/comment?maxResults=%d&orderBy=-created", key, limit)
 
 	body, err := client.Get(ctx, path)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	var resp commentsResponse
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("failed to parse response: %w", err)
+		return nil, 0, fmt.Errorf("failed to parse response: %w", err)
 	}
 
 	var comments []CommentInfo
@@ -355,5 +364,5 @@ func getComments(ctx context.Context, client *api.Client, key string, limit int)
 		comments = append(comments, info)
 	}
 
-	return comments, nil
+	return comments, resp.Total, nil
 }

@@ -26,7 +26,7 @@ ajira issue list -r me -P High -L bug,urgent -w
 ajira issue list --order-by created --reverse
 ajira issue list -q "status = Done AND updated >= -7d"
 ajira issue view PROJ-123
-ajira issue view PROJ-123 -c 5
+ajira issue view PROJ-123 -c 10
 ajira issue create -s "Fix login bug"
 ajira issue create -s "Add feature" -t Story -d "Description"
 ajira issue create -s "From file" -f description.md
@@ -52,7 +52,7 @@ ajira issue link remove PROJ-123 PROJ-456
 ajira issue link url PROJ-123 https://example.com "Docs"
 ```
 
-Note: Comment IDs shown in `issue view -c N` as `[date] [id] Author:`.
+Note: `issue view` shows 5 comments by default. Comment IDs shown as `[date] [id] Author:`.
 
 ## Other Commands
 

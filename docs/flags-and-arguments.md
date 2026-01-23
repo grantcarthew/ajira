@@ -82,7 +82,7 @@ ajira issue view <issue-key> [flags]
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
-| `--comments` | `-c` | int | 0 | Number of recent comments to show |
+| `--comments` | `-c` | int | 5 | Number of recent comments to show (0 to hide) |
 
 ### issue create
 

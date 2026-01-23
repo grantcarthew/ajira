@@ -1302,13 +1302,17 @@ func TestGetComments_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	comments, err := getComments(context.Background(), client, "TEST-123", 5)
+	comments, total, err := getComments(context.Background(), client, "TEST-123", 5)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	if len(comments) != 2 {
 		t.Fatalf("expected 2 comments, got %d", len(comments))
+	}
+
+	if total != 2 {
+		t.Errorf("expected total 2, got %d", total)
 	}
 
 	if comments[0].ID != "10001" {

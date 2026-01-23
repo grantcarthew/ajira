@@ -122,11 +122,14 @@ ajira issue list -l 10
 ### View Issue Details
 
 ```bash
-# View issue
+# View issue (shows 5 most recent comments by default)
 ajira issue view PROJ-123
 
-# Include recent comments
-ajira issue view PROJ-123 -c 5
+# Show more comments
+ajira issue view PROJ-123 -c 10
+
+# Hide comments
+ajira issue view PROJ-123 -c 0
 
 # JSON output
 ajira issue view PROJ-123 --json

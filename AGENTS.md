@@ -66,7 +66,7 @@ docs/              Human-facing documentation
 
 Projects are stored in `.ai/projects/`. Update this section when starting a new project.
 
-Active Project: None
+Active Project: p-018-cli-attachment-support.md
 
 Completed: p-017 Agent Help Review (2026-01-16), p-014 Auxiliary Commands (2026-01-15), p-013 Automation Support (2026-01-15), p-016 Comment Edit (2026-01-15), p-011 Issue Command Enhancements (2026-01-13), p-010 Agile Features (2026-01-13), p-009 Issue Clone (2026-01-12), p-008 Issue List Enhancements (2026-01-09), p-007 Issue Linking (2026-01-08), p-015 CLI Help System (2026-01-07), p-006 Integration Testing (2026-01-07), p-005 Comment Functionality (2026-01-05)
 
