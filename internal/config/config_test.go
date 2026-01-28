@@ -11,6 +11,8 @@ func clearEnv() {
 	os.Unsetenv("JIRA_BASE_URL")
 	os.Unsetenv("JIRA_EMAIL")
 	os.Unsetenv("JIRA_API_TOKEN")
+	os.Unsetenv("ATLASSIAN_BASE_URL")
+	os.Unsetenv("ATLASSIAN_EMAIL")
 	os.Unsetenv("ATLASSIAN_API_TOKEN")
 	os.Unsetenv("JIRA_PROJECT")
 }

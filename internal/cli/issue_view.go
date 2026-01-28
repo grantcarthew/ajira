@@ -72,19 +72,19 @@ type issueDetailResponse struct {
 }
 
 type issueDetailFields struct {
-	Summary     string              `json:"summary"`
-	Status      *statusField        `json:"status"`
-	IssueType   *issueType          `json:"issuetype"`
-	Priority    *priorityField      `json:"priority"`
-	Assignee    *userField          `json:"assignee"`
-	Reporter    *userField          `json:"reporter"`
-	Created     string              `json:"created"`
-	Updated     string              `json:"updated"`
-	Description json.RawMessage     `json:"description"`
-	Labels      []string            `json:"labels"`
-	Project     *projectField       `json:"project"`
-	IssueLinks  []issueLinkDetail   `json:"issuelinks"`
-	Attachment  []attachmentDetail  `json:"attachment"`
+	Summary     string             `json:"summary"`
+	Status      *statusField       `json:"status"`
+	IssueType   *issueType         `json:"issuetype"`
+	Priority    *priorityField     `json:"priority"`
+	Assignee    *userField         `json:"assignee"`
+	Reporter    *userField         `json:"reporter"`
+	Created     string             `json:"created"`
+	Updated     string             `json:"updated"`
+	Description json.RawMessage    `json:"description"`
+	Labels      []string           `json:"labels"`
+	Project     *projectField      `json:"project"`
+	IssueLinks  []issueLinkDetail  `json:"issuelinks"`
+	Attachment  []attachmentDetail `json:"attachment"`
 }
 
 type attachmentDetail struct {
