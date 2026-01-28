@@ -1,8 +1,8 @@
 # p-018: Issue Attachment Support
 
-- Status: Pending
-- Started:
-- Completed:
+- Status: Complete
+- Started: 2026-01-28
+- Completed: 2026-01-28
 
 ## Overview
 
@@ -13,7 +13,7 @@ Add comprehensive file attachment management to ajira, enabling users to upload,
 1. Implement attachment upload with multipart form-data support
 2. Add attachment listing and viewing capabilities
 3. Enable attachment downloads with streaming for large files
-4. Support attachment deletion with confirmation
+4. Support attachment deletion
 5. Integrate attachment display into issue view output
 6. Handle Jira-specific requirements (CSRF headers, size limits)
 
@@ -24,7 +24,7 @@ In Scope:
 - `ajira issue attachment list` - List attachments for an issue
 - `ajira issue attachment add` - Upload one or more files
 - `ajira issue attachment download` - Download attachment to local file
-- `ajira issue attachment remove` - Delete attachments with confirmation
+- `ajira issue attachment remove` - Delete attachments
 - Display attachments in `ajira issue view` output
 - Multipart form-data support in API client
 - Human-readable file size formatting
@@ -42,17 +42,17 @@ Out of Scope:
 
 ## Success Criteria
 
-- [ ] Can upload single and multiple files to an issue
-- [ ] Can list all attachments with metadata (ID, filename, size, author, date)
-- [ ] Can download attachments to current directory
-- [ ] Can delete attachments with confirmation prompt
-- [ ] Attachments appear in `ajira issue view` output after links
-- [ ] File sizes display in human-readable format (KB, MB, GB)
-- [ ] Large files stream efficiently without loading into memory
-- [ ] 413 errors map to user-friendly "file too large" messages
-- [ ] All commands support --json output mode
-- [ ] Created dr-016 documenting command structure and decisions
-- [ ] Test suite covers upload, list, download, delete operations
+- [x] Can upload single and multiple files to an issue
+- [x] Can list all attachments with metadata (ID, filename, size, author, date)
+- [x] Can download attachments to current directory
+- [x] Can delete attachments (use --dry-run for preview)
+- [x] Attachments appear in `ajira issue view` output after links
+- [x] File sizes display in human-readable format (KB, MB, GB)
+- [x] Large files stream efficiently without loading into memory
+- [x] 413 errors map to user-friendly "file too large" messages
+- [x] All commands support --json output mode
+- [x] Created dr-016 documenting command structure and decisions
+- [x] Test suite covers upload, list, download, delete operations
 
 ## Deliverables
 
@@ -80,6 +80,30 @@ Relevant codebase context:
 - File input pattern exists in comment command: -f flag, stdin support
 - Batch operations use --stdin flag (comment add)
 - Global flags: --json, --dry-run, --verbose, --quiet
+
+Codebase patterns requiring attention:
+
+- No confirmation prompt pattern exists anywhere in codebase
+- `issue delete` has no confirmation (uses --dry-run for preview)
+- `issue link remove` has no confirmation
+- AGENTS.md states: "Non-interactive: all input via flags, arguments, or stdin"
+- No file size formatting utility exists (needs to be created)
+- IssueDetail struct needs Attachments field added
+- issueDetailFields struct needs attachment array parsing
+
+API validation (confirmed against Jira Cloud REST API v3 docs):
+
+- Upload: `POST /rest/api/3/issue/{key}/attachments` (multipart/form-data)
+- Download: `GET /rest/api/3/attachment/content/{id}` (binary stream)
+- Delete: `DELETE /rest/api/3/attachment/{id}`
+- Metadata: `GET /rest/api/3/attachment/{id}`
+- Settings: `GET /rest/api/3/attachment/meta` (returns uploadLimit)
+
+## Decisions
+
+1. Remove command: No confirmation prompt. Use `--dry-run` for preview, matching existing command patterns (issue delete, link remove). No `--force` flag needed.
+
+2. File size units: Use 1024-based with SI prefixes (KB, MB, GB). Common CLI convention.
 
 ## Technical Approach
 
@@ -130,7 +154,7 @@ Integration Tests:
 - Upload multiple files in single command
 - List attachments and verify metadata
 - Download attachment and verify content
-- Delete attachment with and without --force
+- Delete attachment (single and multiple IDs)
 - Verify attachments appear in issue view
 
 Manual Testing:
@@ -158,10 +182,9 @@ Implementation considerations:
 - Use multipart.NewWriter for form construction
 - Call writer.Close() before making HTTP request
 - Stream large files with io.Copy to limit memory usage
-- Format sizes with 1024-based units (KiB, MiB) or 1000-based (KB, MB)
+- Format sizes with 1024-based units and SI prefixes (KB, MB, GB)
 - Include attachment IDs in all output for easy copy-paste to remove/download
-- Confirmation prompt prevents accidental deletions
-- --force flag enables scripting and automation
+- Use --dry-run for previewing destructive operations (consistent with other commands)
 
 Future enhancements tracked in list.md:
 

@@ -25,8 +25,9 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 | p-014 | Auxiliary Commands | Completed | 2026-01-15 | 2026-01-15 |
 | p-015 | CLI Help System | Completed | 2026-01-07 | 2026-01-07 |
 | p-016 | Comment Edit | Completed | 2026-01-15 | 2026-01-15 |
-| p-017 | Agent Help Review | Proposed | | |
-| p-018 | Issue Attachment Support | Pending | | |
+| p-017 | Agent Help Review | Completed | 2026-01-16 | 2026-01-16 |
+| p-018 | Issue Attachment Support | Completed | 2026-01-28 | 2026-01-28 |
+| p-019 | CLI Attachment Fixes | Pending | | |
 
 Note: Completed projects are in `completed/`, deferred projects are in `deferred/`
 

@@ -50,9 +50,15 @@ ajira issue link types
 ajira issue link add PROJ-123 Blocks PROJ-456
 ajira issue link remove PROJ-123 PROJ-456
 ajira issue link url PROJ-123 https://example.com "Docs"
+ajira issue attachment list PROJ-123
+ajira issue attachment add PROJ-123 file.pdf
+ajira issue attachment add PROJ-123 *.log
+ajira issue attachment download PROJ-123 10001
+ajira issue attachment download PROJ-123 10001 -o custom.pdf
+ajira issue attachment remove PROJ-123 10001
 ```
 
-Note: `issue view` shows 5 comments by default. Comment IDs shown as `[date] [id] Author:`.
+Note: `issue view` shows 5 comments by default. Comment IDs shown as `[date] [id] Author:`. Attachment IDs shown as `[id]`.
 
 ## Other Commands
 

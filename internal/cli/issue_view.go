@@ -16,21 +16,22 @@ import (
 
 // IssueDetail represents a full Jira issue for output.
 type IssueDetail struct {
-	Key           string        `json:"key"`
-	Summary       string        `json:"summary"`
-	Status        string        `json:"status"`
-	Type          string        `json:"type"`
-	Priority      string        `json:"priority"`
-	Assignee      string        `json:"assignee"`
-	Reporter      string        `json:"reporter"`
-	Created       string        `json:"created"`
-	Updated       string        `json:"updated"`
-	Description   string        `json:"description"`
-	Labels        []string      `json:"labels"`
-	Project       string        `json:"project"`
-	Links         []LinkInfo    `json:"links,omitempty"`
-	Comments      []CommentInfo `json:"comments,omitempty"`
-	TotalComments int           `json:"total_comments,omitempty"`
+	Key           string           `json:"key"`
+	Summary       string           `json:"summary"`
+	Status        string           `json:"status"`
+	Type          string           `json:"type"`
+	Priority      string           `json:"priority"`
+	Assignee      string           `json:"assignee"`
+	Reporter      string           `json:"reporter"`
+	Created       string           `json:"created"`
+	Updated       string           `json:"updated"`
+	Description   string           `json:"description"`
+	Labels        []string         `json:"labels"`
+	Project       string           `json:"project"`
+	Links         []LinkInfo       `json:"links,omitempty"`
+	Attachments   []AttachmentInfo `json:"attachments,omitempty"`
+	Comments      []CommentInfo    `json:"comments,omitempty"`
+	TotalComments int              `json:"total_comments,omitempty"`
 }
 
 // LinkInfo represents a linked issue for display.
@@ -71,18 +72,29 @@ type issueDetailResponse struct {
 }
 
 type issueDetailFields struct {
-	Summary     string            `json:"summary"`
-	Status      *statusField      `json:"status"`
-	IssueType   *issueType        `json:"issuetype"`
-	Priority    *priorityField    `json:"priority"`
-	Assignee    *userField        `json:"assignee"`
-	Reporter    *userField        `json:"reporter"`
-	Created     string            `json:"created"`
-	Updated     string            `json:"updated"`
-	Description json.RawMessage   `json:"description"`
-	Labels      []string          `json:"labels"`
-	Project     *projectField     `json:"project"`
-	IssueLinks  []issueLinkDetail `json:"issuelinks"`
+	Summary     string              `json:"summary"`
+	Status      *statusField        `json:"status"`
+	IssueType   *issueType          `json:"issuetype"`
+	Priority    *priorityField      `json:"priority"`
+	Assignee    *userField          `json:"assignee"`
+	Reporter    *userField          `json:"reporter"`
+	Created     string              `json:"created"`
+	Updated     string              `json:"updated"`
+	Description json.RawMessage     `json:"description"`
+	Labels      []string            `json:"labels"`
+	Project     *projectField       `json:"project"`
+	IssueLinks  []issueLinkDetail   `json:"issuelinks"`
+	Attachment  []attachmentDetail  `json:"attachment"`
+}
+
+type attachmentDetail struct {
+	ID       string     `json:"id"`
+	Filename string     `json:"filename"`
+	Size     int64      `json:"size"`
+	MimeType string     `json:"mimeType"`
+	Author   *userField `json:"author"`
+	Created  string     `json:"created"`
+	Content  string     `json:"content"`
 }
 
 type issueLinkDetail struct {
@@ -258,6 +270,22 @@ func getIssue(ctx context.Context, client *api.Client, key string) (*IssueDetail
 		detail.Links = append(detail.Links, info)
 	}
 
+	// Parse attachments
+	for _, a := range resp.Fields.Attachment {
+		info := AttachmentInfo{
+			ID:       a.ID,
+			Filename: a.Filename,
+			Size:     a.Size,
+			MimeType: a.MimeType,
+			Created:  a.Created,
+			Content:  a.Content,
+		}
+		if a.Author != nil {
+			info.Author = a.Author.DisplayName
+		}
+		detail.Attachments = append(detail.Attachments, info)
+	}
+
 	return detail, nil
 }
 
@@ -295,6 +323,14 @@ func printIssueDetail(issue *IssueDetail) {
 		for _, link := range issue.Links {
 			summary := width.Truncate(link.Summary, 50, "...")
 			fmt.Printf("  %s %s (%s) - %s\n", link.Direction, link.Key, link.Status, summary)
+		}
+	}
+
+	if len(issue.Attachments) > 0 {
+		fmt.Println()
+		fmt.Printf("Attachments (%d):\n", len(issue.Attachments))
+		for _, a := range issue.Attachments {
+			fmt.Printf("  [%s] %s (%s) - %s, %s\n", a.ID, a.Filename, FormatFileSize(a.Size), a.Author, formatDateTime(a.Created))
 		}
 	}
 

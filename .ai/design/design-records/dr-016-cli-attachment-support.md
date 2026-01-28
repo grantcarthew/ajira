@@ -24,7 +24,7 @@ Add an `attachment` subcommand under `ajira issue` with four operations:
 ajira issue attachment list KEY                         # List attachments for issue
 ajira issue attachment add KEY FILE [FILE...]           # Upload one or more files
 ajira issue attachment download KEY ID [-o OUTPUT]      # Download attachment
-ajira issue attachment remove KEY ID [ID...] [--force]  # Delete attachments
+ajira issue attachment remove KEY ID [ID...]            # Delete attachments
 ```
 
 Additionally:
@@ -100,7 +100,7 @@ ajira issue attachment download PROJ-123 10001                  # Downloads to .
 ajira issue attachment download PROJ-123 10001 -o custom.pdf    # Downloads to ./custom.pdf
 ```
 
-### ajira issue attachment remove KEY ID [ID...] [--force]
+### ajira issue attachment remove KEY ID [ID...]
 
 Deletes one or more attachments from an issue.
 
@@ -109,8 +109,8 @@ API: `DELETE /rest/api/3/attachment/{id}`
 Behavior:
 
 - Accepts multiple attachment IDs
-- Prompts for confirmation by default
-- `--force` flag skips confirmation prompt
+- No confirmation prompt (consistent with issue delete, link remove)
+- Use `--dry-run` flag to preview what would be deleted
 - Requires both issue key and attachment ID for safety
 
 Examples:
@@ -118,7 +118,7 @@ Examples:
 ```bash
 ajira issue attachment remove PROJ-123 10001
 ajira issue attachment remove PROJ-123 10001 10002 10003
-ajira issue attachment remove PROJ-123 10001 --force
+ajira issue attachment remove PROJ-123 10001 --dry-run  # Preview deletion
 ```
 
 ### Updated issue view
@@ -240,8 +240,9 @@ Separate `get` command instead of `download`:
 - Con: `list` already provides metadata
 - Rejected: `download` is explicit and unambiguous
 
-No confirmation prompt for remove:
+Confirmation prompt for remove:
 
-- Pro: Faster workflow
-- Con: Easy to accidentally delete attachments
-- Rejected: Confirmation improves safety, `--force` available for scripts
+- Pro: Prevents accidental deletions
+- Con: Introduces interactivity, breaks "Non-interactive" design principle
+- Con: Inconsistent with issue delete and link remove commands
+- Rejected: Use `--dry-run` for preview instead, maintaining non-interactive design

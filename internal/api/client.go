@@ -106,6 +106,131 @@ func (c *Client) request(ctx context.Context, method, path string, body []byte) 
 	return c.doRequest(ctx, method, basePathV3+path, body)
 }
 
+// PostMultipart performs a multipart/form-data POST request for file uploads.
+// Returns the response body and any error.
+func (c *Client) PostMultipart(ctx context.Context, path string, contentType string, body []byte) ([]byte, error) {
+	return c.doMultipartRequest(ctx, http.MethodPost, basePathV3+path, contentType, body)
+}
+
+// GetRaw performs a GET request and returns the raw response body and content type.
+// Used for downloading binary content like attachments.
+func (c *Client) GetRaw(ctx context.Context, path string) ([]byte, string, error) {
+	url := c.baseURL + basePathV3 + path
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("creating request: %w", err)
+	}
+
+	req.SetBasicAuth(c.email, c.token)
+
+	start := time.Now()
+	resp, err := c.httpClient.Do(req)
+	duration := time.Since(start)
+
+	if err != nil {
+		if verboseWriter != nil {
+			fmt.Fprintf(verboseWriter, "GET %s error (%s)\n", path, duration.Round(time.Millisecond))
+		}
+		return nil, "", fmt.Errorf("executing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if verboseWriter != nil {
+		fmt.Fprintf(verboseWriter, "GET %s %s (%s)\n", path, resp.Status, duration.Round(time.Millisecond))
+	}
+
+	if resp.StatusCode >= 400 {
+		respBody, _ := io.ReadAll(resp.Body)
+		apiErr := &APIError{
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+			Method:     http.MethodGet,
+			Path:       path,
+		}
+
+		var jiraErr jiraErrorResponse
+		if json.Unmarshal(respBody, &jiraErr) == nil {
+			apiErr.Messages = jiraErr.ErrorMessages
+			apiErr.Errors = jiraErr.Errors
+		} else if len(respBody) > 0 {
+			apiErr.RawBody = string(respBody)
+		}
+
+		return nil, "", apiErr
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", fmt.Errorf("reading response: %w", err)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	return body, contentType, nil
+}
+
+func (c *Client) doMultipartRequest(ctx context.Context, method, path, contentType string, body []byte) ([]byte, error) {
+	url := c.baseURL + path
+
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+
+	req.SetBasicAuth(c.email, c.token)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("X-Atlassian-Token", "no-check") // CSRF protection
+
+	start := time.Now()
+	resp, err := c.httpClient.Do(req)
+	duration := time.Since(start)
+
+	if err != nil {
+		if verboseWriter != nil {
+			fmt.Fprintf(verboseWriter, "%s %s error (%s)\n", method, path, duration.Round(time.Millisecond))
+		}
+		return nil, fmt.Errorf("executing request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if verboseWriter != nil {
+		fmt.Fprintf(verboseWriter, "%s %s %s (%s)\n", method, path, resp.Status, duration.Round(time.Millisecond))
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		apiErr := &APIError{
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+			Method:     method,
+			Path:       path,
+		}
+
+		// Map specific HTTP status codes to user-friendly messages
+		if resp.StatusCode == 413 {
+			apiErr.Messages = []string{"file exceeds size limit"}
+			return nil, apiErr
+		}
+
+		var jiraErr jiraErrorResponse
+		if json.Unmarshal(respBody, &jiraErr) == nil {
+			apiErr.Messages = jiraErr.ErrorMessages
+			apiErr.Errors = jiraErr.Errors
+		} else if len(respBody) > 0 {
+			apiErr.RawBody = string(respBody)
+		}
+
+		return nil, apiErr
+	}
+
+	return respBody, nil
+}
+
 func (c *Client) doRequest(ctx context.Context, method, path string, body []byte) ([]byte, error) {
 	return c.doRequestWithRetry(ctx, method, path, body, 0)
 }

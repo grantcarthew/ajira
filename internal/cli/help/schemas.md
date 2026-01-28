@@ -10,7 +10,8 @@ user search: [accountId, displayName, emailAddress, active]
 field list: [id, name, custom, type]
 
 issue list: [key, summary, status, statusCategory, type, priority, assignee]
-issue view: key, summary, status, type, priority, assignee, reporter, created, updated, description, labels, project, comments
+issue view: key, summary, status, type, priority, assignee, reporter, created, updated, description, labels, project, attachments, comments
+issue view attachments: [id, filename, size, mimeType, author, created, content]
 issue view -c: comments contains [id, author, created, body]
 issue create: key, id, self
 issue edit: key, status
@@ -22,6 +23,10 @@ issue delete: key, status
 issue watch/unwatch: key, action
 issue comment add: id, self, created
 issue comment edit: id, self, created
+issue attachment list: [id, filename, size, mimeType, author, created, content]
+issue attachment add: issueKey, attachments[id, filename, size, mimeType, author, created, content]
+issue attachment download: id, filename, size, output
+issue attachment remove: issueKey, removed, count
 issue type: [id, name, description, subtask]
 issue status: [id, name, category]
 issue priority: [id, name, description]
