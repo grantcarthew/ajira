@@ -38,7 +38,8 @@ Have an interactive discussion about:
 - Implementation approaches
 - Trade-offs between options
 - Questions that need answers
-- Decisions that need to be made
+
+If decisions cannot be made now, add them to the project's Decision Points section for later resolution.
 
 Do not proceed until the user is satisfied with the direction.
 
