@@ -42,6 +42,33 @@ type LinkInfo struct {
 	Summary   string `json:"summary"`
 }
 
+// linksToLinkInfos converts raw issueLink API types to LinkInfo display types.
+func linksToLinkInfos(links []issueLink) []LinkInfo {
+	infos := make([]LinkInfo, 0, len(links))
+	for _, link := range links {
+		var info LinkInfo
+		if link.OutwardIssue != nil {
+			info.Direction = link.Type.Outward
+			info.Key = link.OutwardIssue.Key
+			info.Summary = link.OutwardIssue.Fields.Summary
+			if link.OutwardIssue.Fields.Status != nil {
+				info.Status = link.OutwardIssue.Fields.Status.Name
+			}
+		} else if link.InwardIssue != nil {
+			info.Direction = link.Type.Inward
+			info.Key = link.InwardIssue.Key
+			info.Summary = link.InwardIssue.Fields.Summary
+			if link.InwardIssue.Fields.Status != nil {
+				info.Status = link.InwardIssue.Fields.Status.Name
+			}
+		} else {
+			continue
+		}
+		infos = append(infos, info)
+	}
+	return infos
+}
+
 // CommentInfo represents a comment on an issue.
 type CommentInfo struct {
 	ID      string `json:"id"`
@@ -83,7 +110,7 @@ type issueDetailFields struct {
 	Description json.RawMessage    `json:"description"`
 	Labels      []string           `json:"labels"`
 	Project     *projectField      `json:"project"`
-	IssueLinks  []issueLinkDetail  `json:"issuelinks"`
+	IssueLinks  []issueLink        `json:"issuelinks"`
 	Attachment  []attachmentDetail `json:"attachment"`
 }
 
@@ -95,27 +122,6 @@ type attachmentDetail struct {
 	Author   *userField `json:"author"`
 	Created  string     `json:"created"`
 	Content  string     `json:"content"`
-}
-
-type issueLinkDetail struct {
-	ID           string              `json:"id"`
-	Type         issueLinkTypeDetail `json:"type"`
-	InwardIssue  *linkedIssueDetail  `json:"inwardIssue,omitempty"`
-	OutwardIssue *linkedIssueDetail  `json:"outwardIssue,omitempty"`
-}
-
-type issueLinkTypeDetail struct {
-	Name    string `json:"name"`
-	Inward  string `json:"inward"`
-	Outward string `json:"outward"`
-}
-
-type linkedIssueDetail struct {
-	Key    string `json:"key"`
-	Fields struct {
-		Summary string       `json:"summary"`
-		Status  *statusField `json:"status"`
-	} `json:"fields"`
 }
 
 type projectField struct {
@@ -248,27 +254,7 @@ func getIssue(ctx context.Context, client *api.Client, key string) (*IssueDetail
 	}
 
 	// Parse issue links
-	for _, link := range resp.Fields.IssueLinks {
-		var info LinkInfo
-		if link.OutwardIssue != nil {
-			info.Direction = link.Type.Outward
-			info.Key = link.OutwardIssue.Key
-			info.Summary = link.OutwardIssue.Fields.Summary
-			if link.OutwardIssue.Fields.Status != nil {
-				info.Status = link.OutwardIssue.Fields.Status.Name
-			}
-		} else if link.InwardIssue != nil {
-			info.Direction = link.Type.Inward
-			info.Key = link.InwardIssue.Key
-			info.Summary = link.InwardIssue.Fields.Summary
-			if link.InwardIssue.Fields.Status != nil {
-				info.Status = link.InwardIssue.Fields.Status.Name
-			}
-		} else {
-			continue
-		}
-		detail.Links = append(detail.Links, info)
-	}
+	detail.Links = linksToLinkInfos(resp.Fields.IssueLinks)
 
 	// Parse attachments
 	for _, a := range resp.Fields.Attachment {
@@ -375,7 +361,7 @@ func getComments(ctx context.Context, client *api.Client, key string, limit int)
 		return nil, 0, fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	var comments []CommentInfo
+	comments := make([]CommentInfo, 0, len(resp.Comments))
 	for _, c := range resp.Comments {
 		info := CommentInfo{
 			ID:      c.ID,

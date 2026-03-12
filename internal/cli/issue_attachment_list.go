@@ -90,7 +90,7 @@ func getAttachments(ctx context.Context, client *api.Client, key string) ([]Atta
 		return nil, fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	var attachments []AttachmentInfo
+	attachments := make([]AttachmentInfo, 0, len(resp.Fields.Attachment))
 	for _, a := range resp.Fields.Attachment {
 		info := AttachmentInfo{
 			ID:       a.ID,

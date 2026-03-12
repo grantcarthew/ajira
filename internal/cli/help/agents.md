@@ -46,6 +46,11 @@ ajira issue move PROJ-123
 ajira issue comment add PROJ-123 "Comment text"
 ajira issue comment add PROJ-123 -f comment.md
 ajira issue comment edit PROJ-123 12345 "Updated text"
+ajira issue comment list PROJ-123
+ajira issue comment list PROJ-123 -l 20
+ajira issue comment list PROJ-123 --json
+ajira issue link list PROJ-123
+ajira issue link list PROJ-123 --json
 ajira issue link types
 ajira issue link add PROJ-123 Blocks PROJ-456
 ajira issue link remove PROJ-123 PROJ-456

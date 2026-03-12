@@ -28,6 +28,7 @@ See [p-writing-guide.md](./p-writing-guide.md) for guidelines on creating and ma
 | p-017 | Agent Help Review | Completed | 2026-01-16 | 2026-01-16 |
 | p-018 | Issue Attachment Support | Completed | 2026-01-28 | 2026-01-28 |
 | p-019 | CLI Attachment Fixes | Pending | | |
+| p-020 | List Subcommands for Comments and Links | Completed | 2026-02-19 | 2026-02-19 |
 
 Note: Completed projects are in `completed/`, deferred projects are in `deferred/`
 

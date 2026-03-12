@@ -349,6 +349,112 @@ func TestGetIssue_WithLinks(t *testing.T) {
 	}
 }
 
+// Test linksToLinkInfos conversion
+func TestLinksToLinkInfos_OutwardAndInward(t *testing.T) {
+	links := []issueLink{
+		{
+			ID:   "12345",
+			Type: issueLinkType{Name: "Blocks", Inward: "is blocked by", Outward: "blocks"},
+			OutwardIssue: &linkedIssue{
+				Key: "GCP-456",
+				Fields: linkedIssueFields{
+					Summary: "Blocked issue",
+					Status:  &statusField{Name: "Open"},
+				},
+			},
+		},
+		{
+			ID:   "12346",
+			Type: issueLinkType{Name: "Duplicate", Inward: "is duplicated by", Outward: "duplicates"},
+			InwardIssue: &linkedIssue{
+				Key: "GCP-789",
+				Fields: linkedIssueFields{
+					Summary: "Duplicate issue",
+					Status:  &statusField{Name: "Done"},
+				},
+			},
+		},
+	}
+
+	infos := linksToLinkInfos(links)
+
+	if len(infos) != 2 {
+		t.Fatalf("expected 2 link infos, got %d", len(infos))
+	}
+
+	if infos[0].Direction != "blocks" {
+		t.Errorf("expected direction 'blocks', got %s", infos[0].Direction)
+	}
+	if infos[0].Key != "GCP-456" {
+		t.Errorf("expected key 'GCP-456', got %s", infos[0].Key)
+	}
+	if infos[0].Status != "Open" {
+		t.Errorf("expected status 'Open', got %s", infos[0].Status)
+	}
+	if infos[0].Summary != "Blocked issue" {
+		t.Errorf("expected summary 'Blocked issue', got %s", infos[0].Summary)
+	}
+
+	if infos[1].Direction != "is duplicated by" {
+		t.Errorf("expected direction 'is duplicated by', got %s", infos[1].Direction)
+	}
+	if infos[1].Key != "GCP-789" {
+		t.Errorf("expected key 'GCP-789', got %s", infos[1].Key)
+	}
+	if infos[1].Status != "Done" {
+		t.Errorf("expected status 'Done', got %s", infos[1].Status)
+	}
+	if infos[1].Summary != "Duplicate issue" {
+		t.Errorf("expected summary 'Duplicate issue', got %s", infos[1].Summary)
+	}
+}
+
+func TestLinksToLinkInfos_Empty(t *testing.T) {
+	infos := linksToLinkInfos([]issueLink{})
+	if len(infos) != 0 {
+		t.Errorf("expected 0 link infos, got %d", len(infos))
+	}
+}
+
+func TestLinksToLinkInfos_SkipsNilIssues(t *testing.T) {
+	links := []issueLink{
+		{
+			ID:   "12345",
+			Type: issueLinkType{Name: "Blocks", Inward: "is blocked by", Outward: "blocks"},
+			// Both InwardIssue and OutwardIssue nil
+		},
+	}
+
+	infos := linksToLinkInfos(links)
+	if len(infos) != 0 {
+		t.Errorf("expected 0 link infos for nil issues, got %d", len(infos))
+	}
+}
+
+func TestLinksToLinkInfos_NilStatus(t *testing.T) {
+	links := []issueLink{
+		{
+			ID:   "12345",
+			Type: issueLinkType{Name: "Relates", Inward: "relates to", Outward: "relates to"},
+			OutwardIssue: &linkedIssue{
+				Key: "GCP-456",
+				Fields: linkedIssueFields{
+					Summary: "Related issue",
+					Status:  nil,
+				},
+			},
+		},
+	}
+
+	infos := linksToLinkInfos(links)
+	if len(infos) != 1 {
+		t.Fatalf("expected 1 link info, got %d", len(infos))
+	}
+	if infos[0].Status != "" {
+		t.Errorf("expected empty status, got %s", infos[0].Status)
+	}
+}
+
 // Test error handling
 func TestCreateIssueLink_APIError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
