@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -90,38 +89,88 @@ func runIssueAttachmentAdd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// countingWriter counts bytes written to it without storing them.
+type countingWriter struct{ n int64 }
+
+func (w *countingWriter) Write(p []byte) (int, error) {
+	w.n += int64(len(p))
+	return len(p), nil
+}
+
+// calcMultipartSize does a dry run through the multipart writer to compute the
+// exact Content-Length without reading file content. File sizes are added
+// directly from the provided FileInfo slice. Returns total byte count and the
+// boundary string to reuse on the real writer.
+func calcMultipartSize(filePaths []string, infos []os.FileInfo) (int64, string, error) {
+	cw := &countingWriter{}
+	mw := multipart.NewWriter(cw)
+	for i, fp := range filePaths {
+		if _, err := mw.CreateFormFile("file", filepath.Base(fp)); err != nil {
+			return 0, "", err
+		}
+		cw.n += infos[i].Size()
+	}
+	if err := mw.Close(); err != nil {
+		return 0, "", err
+	}
+	return cw.n, mw.Boundary(), nil
+}
+
 func uploadAttachments(ctx context.Context, client *api.Client, issueKey string, filePaths []string) ([]AttachmentInfo, error) {
-	// Build multipart form
-	var body bytes.Buffer
-	writer := multipart.NewWriter(&body)
-
-	for _, filePath := range filePaths {
-		file, err := os.Open(filePath)
+	// Stat all files upfront so we can compute Content-Length before streaming.
+	infos := make([]os.FileInfo, len(filePaths))
+	for i, fp := range filePaths {
+		fi, err := os.Stat(fp)
 		if err != nil {
-			return nil, fmt.Errorf("failed to open %s: %w", filePath, err)
+			return nil, fmt.Errorf("cannot stat %s: %w", fp, err)
 		}
-
-		filename := filepath.Base(filePath)
-		part, err := writer.CreateFormFile("file", filename)
-		if err != nil {
-			file.Close()
-			return nil, fmt.Errorf("failed to create form field: %w", err)
-		}
-
-		_, err = io.Copy(part, file)
-		file.Close()
-		if err != nil {
-			return nil, fmt.Errorf("failed to copy file content: %w", err)
-		}
+		infos[i] = fi
 	}
 
-	if err := writer.Close(); err != nil {
-		return nil, fmt.Errorf("failed to finalize multipart form: %w", err)
-	}
-
-	path := fmt.Sprintf("/issue/%s/attachments", issueKey)
-	respBody, err := client.PostMultipart(ctx, path, writer.FormDataContentType(), body.Bytes())
+	// Dry-run: measure exact multipart body size and capture the boundary.
+	totalSize, boundary, err := calcMultipartSize(filePaths, infos)
 	if err != nil {
+		return nil, fmt.Errorf("failed to calculate upload size: %w", err)
+	}
+
+	// Stream the multipart body through a pipe so nothing is buffered in memory.
+	pr, pw := io.Pipe()
+	go func() {
+		mw := multipart.NewWriter(pw)
+		if err := mw.SetBoundary(boundary); err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+		for _, fp := range filePaths {
+			part, err := mw.CreateFormFile("file", filepath.Base(fp))
+			if err != nil {
+				pw.CloseWithError(err)
+				return
+			}
+			f, err := os.Open(fp)
+			if err != nil {
+				pw.CloseWithError(fmt.Errorf("failed to open %s: %w", fp, err))
+				return
+			}
+			_, err = io.Copy(part, f)
+			f.Close()
+			if err != nil {
+				pw.CloseWithError(err)
+				return
+			}
+		}
+		if err := mw.Close(); err != nil {
+			pw.CloseWithError(err)
+			return
+		}
+		pw.Close()
+	}()
+
+	contentType := "multipart/form-data; boundary=" + boundary
+	path := fmt.Sprintf("/issue/%s/attachments", issueKey)
+	respBody, err := client.PostMultipart(ctx, path, contentType, pr, totalSize)
+	if err != nil {
+		pr.CloseWithError(err) // unblock goroutine if still writing
 		return nil, err
 	}
 

@@ -1,6 +1,11 @@
 package cli
 
 import (
+	"context"
+	"fmt"
+	"strconv"
+
+	"github.com/gcarthew/ajira/internal/api"
 	"github.com/spf13/cobra"
 )
 
@@ -61,48 +66,53 @@ func formatSize(value float64, unit string) string {
 }
 
 func formatSizeInt(value int64, unit string) string {
-	return intToStr(value) + " " + unit
+	return strconv.FormatInt(value, 10) + " " + unit
 }
 
 func formatFloat1(f float64) string {
-	// Format with 1 decimal place, trimming trailing zero
+	// Truncate to 1 decimal place, trimming trailing zero.
 	i := int64(f * 10)
-	whole := i / 10
-	frac := i % 10
+	whole, frac := i/10, i%10
 	if frac == 0 {
-		return intToStr(whole)
+		return strconv.FormatInt(whole, 10)
 	}
-	return intToStr(whole) + "." + intToStr(frac)
+	return strconv.FormatInt(whole, 10) + "." + strconv.FormatInt(frac, 10)
 }
 
 func formatFloat2(f float64) string {
-	// Format with up to 2 decimal places, trimming trailing zeros
+	// Truncate to 2 decimal places, trimming trailing zeros.
 	i := int64(f * 100)
-	whole := i / 100
-	frac := i % 100
-	if frac == 0 {
-		return intToStr(whole)
+	whole, frac := i/100, i%100
+	switch {
+	case frac == 0:
+		return strconv.FormatInt(whole, 10)
+	case frac%10 == 0:
+		return strconv.FormatInt(whole, 10) + "." + strconv.FormatInt(frac/10, 10)
+	case frac < 10:
+		return strconv.FormatInt(whole, 10) + ".0" + strconv.FormatInt(frac, 10)
+	default:
+		return strconv.FormatInt(whole, 10) + "." + strconv.FormatInt(frac, 10)
 	}
-	if frac%10 == 0 {
-		return intToStr(whole) + "." + intToStr(frac/10)
-	}
-	if frac < 10 {
-		return intToStr(whole) + ".0" + intToStr(frac)
-	}
-	return intToStr(whole) + "." + intToStr(frac)
 }
 
-func intToStr(i int64) string {
-	if i == 0 {
-		return "0"
+// validateAttachmentOwnership checks that every requested attachment ID belongs
+// to the given issue. All IDs are validated before any action is taken, so a
+// bad ID in a multi-ID operation will not result in partial changes.
+func validateAttachmentOwnership(ctx context.Context, client *api.Client, issueKey string, ids ...string) error {
+	attachments, err := getAttachments(ctx, client, issueKey)
+	if err != nil {
+		return fmt.Errorf("failed to fetch attachments for %s: %w", issueKey, err)
 	}
-	if i < 0 {
-		return "-" + intToStr(-i)
+
+	owned := make(map[string]bool, len(attachments))
+	for _, a := range attachments {
+		owned[a.ID] = true
 	}
-	var digits []byte
-	for i > 0 {
-		digits = append([]byte{byte('0' + i%10)}, digits...)
-		i /= 10
+
+	for _, id := range ids {
+		if !owned[id] {
+			return fmt.Errorf("attachment %s does not belong to issue %s", id, issueKey)
+		}
 	}
-	return string(digits)
+	return nil
 }

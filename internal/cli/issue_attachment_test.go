@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -391,7 +392,7 @@ func TestUploadAttachments_MultipleFiles(t *testing.T) {
 		var resp []map[string]interface{}
 		for i, fh := range files {
 			resp = append(resp, map[string]interface{}{
-				"id":       "1000" + string(rune('3'+i)),
+				"id":       fmt.Sprintf("1000%d", 3+i),
 				"filename": fh.Filename,
 				"size":     9,
 				"mimeType": "text/plain",
@@ -422,8 +423,8 @@ func TestUploadAttachments_FileNotFound(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for nonexistent file, got nil")
 	}
-	if !strings.Contains(err.Error(), "failed to open") {
-		t.Errorf("expected 'failed to open' error, got %v", err)
+	if !strings.Contains(err.Error(), "cannot stat") {
+		t.Errorf("expected 'cannot stat' error, got %v", err)
 	}
 }
 
@@ -457,6 +458,75 @@ func TestUploadAttachments_APIError413(t *testing.T) {
 	// Check for user-friendly message
 	if len(apiErr.Messages) == 0 || !strings.Contains(apiErr.Messages[0], "size limit") {
 		t.Errorf("expected 'size limit' in error message, got %v", apiErr.Messages)
+	}
+}
+
+func attachmentOwnershipServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]interface{}{
+			"fields": map[string]interface{}{
+				"attachment": []map[string]interface{}{
+					{"id": "10001", "filename": "a.txt", "size": 10, "mimeType": "text/plain"},
+					{"id": "10002", "filename": "b.txt", "size": 10, "mimeType": "text/plain"},
+				},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+}
+
+func TestValidateAttachmentOwnership_Valid(t *testing.T) {
+	server := attachmentOwnershipServer(t)
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := validateAttachmentOwnership(context.Background(), client, "TEST-123", "10001")
+	if err != nil {
+		t.Fatalf("expected no error for valid attachment, got: %v", err)
+	}
+}
+
+func TestValidateAttachmentOwnership_MultipleValid(t *testing.T) {
+	server := attachmentOwnershipServer(t)
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := validateAttachmentOwnership(context.Background(), client, "TEST-123", "10001", "10002")
+	if err != nil {
+		t.Fatalf("expected no error for valid attachments, got: %v", err)
+	}
+}
+
+func TestValidateAttachmentOwnership_Invalid(t *testing.T) {
+	server := attachmentOwnershipServer(t)
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := validateAttachmentOwnership(context.Background(), client, "TEST-123", "99999")
+	if err == nil {
+		t.Fatal("expected error for attachment not belonging to issue, got nil")
+	}
+	if !strings.Contains(err.Error(), "99999") {
+		t.Errorf("expected attachment ID in error message, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "TEST-123") {
+		t.Errorf("expected issue key in error message, got: %v", err)
+	}
+}
+
+func TestValidateAttachmentOwnership_MixedValidInvalid(t *testing.T) {
+	server := attachmentOwnershipServer(t)
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := validateAttachmentOwnership(context.Background(), client, "TEST-123", "10001", "99999")
+	if err == nil {
+		t.Fatal("expected error when any attachment is invalid, got nil")
+	}
+	if !strings.Contains(err.Error(), "99999") {
+		t.Errorf("expected invalid ID in error message, got: %v", err)
 	}
 }
 

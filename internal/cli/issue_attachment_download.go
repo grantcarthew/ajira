@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
@@ -54,7 +55,7 @@ func init() {
 
 func runIssueAttachmentDownload(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
-	_ = args[0] // issueKey - used for context but not required by API
+	issueKey := args[0]
 	attachmentID := args[1]
 
 	cfg, err := config.Load()
@@ -62,7 +63,21 @@ func runIssueAttachmentDownload(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// Dry-run mode
+	if DryRun() {
+		output := downloadOutput
+		if output == "" {
+			output = "<original filename>"
+		}
+		PrintDryRun(fmt.Sprintf("download attachment %s to %s", attachmentID, output))
+		return nil
+	}
+
 	client := api.NewClient(cfg)
+
+	if err := validateAttachmentOwnership(ctx, client, issueKey, attachmentID); err != nil {
+		return err
+	}
 
 	// Get attachment metadata to determine filename
 	meta, err := getAttachmentMeta(ctx, client, attachmentID)
@@ -76,27 +91,33 @@ func runIssueAttachmentDownload(cmd *cobra.Command, args []string) error {
 	// Determine output filename
 	outputFile := downloadOutput
 	if outputFile == "" {
-		outputFile = meta.Filename
+		outputFile = filepath.Base(meta.Filename)
 	}
 
-	// Dry-run mode
-	if DryRun() {
-		PrintDryRun(fmt.Sprintf("download attachment %s to %s", attachmentID, outputFile))
-		return nil
-	}
-
-	// Download attachment content
-	content, _, err := client.GetRaw(ctx, fmt.Sprintf("/attachment/content/%s", attachmentID))
+	// Stream attachment to a temp file in the same directory, then rename on success.
+	dir := filepath.Dir(outputFile)
+	tmp, err := os.CreateTemp(dir, ".ajira-download-*")
 	if err != nil {
-		if apiErr, ok := err.(*api.APIError); ok {
+		return fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tmpName := tmp.Name()
+
+	downloadErr := func() error {
+		defer tmp.Close()
+		return client.DownloadToWriter(ctx, fmt.Sprintf("/attachment/content/%s", attachmentID), tmp)
+	}()
+
+	if downloadErr != nil {
+		os.Remove(tmpName)
+		if apiErr, ok := downloadErr.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
-		return fmt.Errorf("failed to download attachment: %w", err)
+		return fmt.Errorf("failed to download attachment: %w", downloadErr)
 	}
 
-	// Write to file
-	if err := os.WriteFile(outputFile, content, 0644); err != nil {
-		return fmt.Errorf("failed to write file: %w", err)
+	if err := os.Rename(tmpName, outputFile); err != nil {
+		os.Remove(tmpName)
+		return fmt.Errorf("failed to save file: %w", err)
 	}
 
 	if JSONOutput() {

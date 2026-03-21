@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/gcarthew/ajira/internal/api"
@@ -55,6 +54,10 @@ func runIssueAttachmentRemove(cmd *cobra.Command, args []string) error {
 
 	client := api.NewClient(cfg)
 
+	if err := validateAttachmentOwnership(ctx, client, issueKey, attachmentIDs...); err != nil {
+		return err
+	}
+
 	// Delete each attachment
 	var removed []string
 	for _, id := range attachmentIDs {
@@ -68,16 +71,11 @@ func runIssueAttachmentRemove(cmd *cobra.Command, args []string) error {
 	}
 
 	if JSONOutput() {
-		result := AttachmentRemoveResult{
+		PrintSuccessJSON(AttachmentRemoveResult{
 			IssueKey: issueKey,
 			Removed:  removed,
 			Count:    len(removed),
-		}
-		output, err := json.MarshalIndent(result, "", "  ")
-		if err != nil {
-			return fmt.Errorf("failed to format JSON: %w", err)
-		}
-		fmt.Println(string(output))
+		})
 	} else {
 		PrintSuccess(IssueURL(cfg.BaseURL, issueKey))
 	}

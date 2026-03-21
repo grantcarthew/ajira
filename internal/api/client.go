@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -32,10 +33,21 @@ func SetVerboseOutput(w io.Writer) {
 
 // Client is a Jira REST API client.
 type Client struct {
-	baseURL    string
-	email      string
-	token      string
-	httpClient *http.Client
+	baseURL        string
+	email          string
+	token          string
+	httpClient     *http.Client
+	downloadClient *http.Client
+	uploadClient   *http.Client
+}
+
+// largeFileTransport is shared by download and upload clients: no overall
+// timeout so large transfers are not cut off mid-stream. Connection and TLS
+// setup remain bounded.
+var largeFileTransport = &http.Transport{
+	DialContext:           (&net.Dialer{Timeout: 30 * time.Second}).DialContext,
+	TLSHandshakeTimeout:   10 * time.Second,
+	ResponseHeaderTimeout: 30 * time.Second,
 }
 
 // NewClient creates a new Jira API client from config.
@@ -47,6 +59,8 @@ func NewClient(cfg *config.Config) *Client {
 		httpClient: &http.Client{
 			Timeout: cfg.HTTPTimeout,
 		},
+		downloadClient: &http.Client{Transport: largeFileTransport},
+		uploadClient:   &http.Client{Transport: largeFileTransport},
 	}
 }
 
@@ -106,33 +120,35 @@ func (c *Client) request(ctx context.Context, method, path string, body []byte) 
 	return c.doRequest(ctx, method, basePathV3+path, body)
 }
 
-// PostMultipart performs a multipart/form-data POST request for file uploads.
-// Returns the response body and any error.
-func (c *Client) PostMultipart(ctx context.Context, path string, contentType string, body []byte) ([]byte, error) {
-	return c.doMultipartRequest(ctx, http.MethodPost, basePathV3+path, contentType, body)
+// PostMultipart performs a streaming multipart/form-data POST request for file
+// uploads. contentLength must be the exact byte count of body; it is set as
+// the request Content-Length header so servers do not receive chunked encoding.
+func (c *Client) PostMultipart(ctx context.Context, path string, contentType string, body io.Reader, contentLength int64) ([]byte, error) {
+	return c.doMultipartRequest(ctx, http.MethodPost, basePathV3+path, contentType, body, contentLength)
 }
 
-// GetRaw performs a GET request and returns the raw response body and content type.
-// Used for downloading binary content like attachments.
-func (c *Client) GetRaw(ctx context.Context, path string) ([]byte, string, error) {
+// DownloadToWriter streams an attachment directly to dest without buffering the
+// body in memory. Uses a separate HTTP client with no overall timeout so large
+// files are not aborted mid-transfer.
+func (c *Client) DownloadToWriter(ctx context.Context, path string, dest io.Writer) error {
 	url := c.baseURL + basePathV3 + path
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, "", fmt.Errorf("creating request: %w", err)
+		return fmt.Errorf("creating request: %w", err)
 	}
 
 	req.SetBasicAuth(c.email, c.token)
 
 	start := time.Now()
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.downloadClient.Do(req)
 	duration := time.Since(start)
 
 	if err != nil {
 		if verboseWriter != nil {
 			fmt.Fprintf(verboseWriter, "GET %s error (%s)\n", path, duration.Round(time.Millisecond))
 		}
-		return nil, "", fmt.Errorf("executing request: %w", err)
+		return fmt.Errorf("executing request: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -157,33 +173,32 @@ func (c *Client) GetRaw(ctx context.Context, path string) ([]byte, string, error
 			apiErr.RawBody = string(respBody)
 		}
 
-		return nil, "", apiErr
+		return apiErr
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, "", fmt.Errorf("reading response: %w", err)
+	if _, err := io.Copy(dest, resp.Body); err != nil {
+		return fmt.Errorf("streaming response: %w", err)
 	}
 
-	contentType := resp.Header.Get("Content-Type")
-	return body, contentType, nil
+	return nil
 }
 
-func (c *Client) doMultipartRequest(ctx context.Context, method, path, contentType string, body []byte) ([]byte, error) {
+func (c *Client) doMultipartRequest(ctx context.Context, method, path, contentType string, body io.Reader, contentLength int64) ([]byte, error) {
 	url := c.baseURL + path
 
-	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("creating request: %w", err)
 	}
 
+	req.ContentLength = contentLength
 	req.SetBasicAuth(c.email, c.token)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", contentType)
 	req.Header.Set("X-Atlassian-Token", "no-check") // CSRF protection
 
 	start := time.Now()
-	resp, err := c.httpClient.Do(req)
+	resp, err := c.uploadClient.Do(req)
 	duration := time.Since(start)
 
 	if err != nil {
