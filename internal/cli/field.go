@@ -34,17 +34,19 @@ type fieldResponse struct {
 var fieldCustomOnly bool
 
 var fieldCmd = &cobra.Command{
-	Use:   "field",
-	Short: "Manage fields",
-	Long:  "Commands for listing and discovering Jira fields.",
+	Use:     "field",
+	Aliases: []string{"fields"},
+	Short:   "Manage fields",
+	Long:    "Commands for listing and discovering Jira fields.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
 }
 
 var fieldListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List fields",
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List fields",
 	Long:  "List Jira fields. Use --custom to show only custom fields.",
 	Example: `  ajira field list              # List all fields
   ajira field list --custom     # List only custom fields

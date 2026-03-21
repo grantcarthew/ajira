@@ -44,17 +44,19 @@ type boardLocation struct {
 var boardListLimit int
 
 var boardCmd = &cobra.Command{
-	Use:   "board",
-	Short: "Manage boards",
-	Long:  "Commands for managing Jira boards.",
+	Use:     "board",
+	Aliases: []string{"boards"},
+	Short:   "Manage boards",
+	Long:    "Commands for managing Jira boards.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
 }
 
 var boardListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List boards",
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List boards",
 	Long:  "List Jira boards. Use -p to filter by project.",
 	Example: `  ajira board list                    # List boards in default project
   ajira board list -p GCP             # List boards in specific project

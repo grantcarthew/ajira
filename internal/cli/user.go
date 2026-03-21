@@ -24,9 +24,10 @@ type UserInfo struct {
 var userSearchLimit int
 
 var userCmd = &cobra.Command{
-	Use:   "user",
-	Short: "Manage users",
-	Long:  "Commands for searching and viewing Jira users.",
+	Use:     "user",
+	Aliases: []string{"users"},
+	Short:   "Manage users",
+	Long:    "Commands for searching and viewing Jira users.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},

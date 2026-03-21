@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/spf13/cobra"
@@ -60,39 +61,21 @@ func formatSize(value float64, unit string) string {
 		return formatSizeInt(int64(value), unit)
 	}
 	if value >= 10 {
-		return formatFloat1(value) + " " + unit
+		return trimFloat(strconv.FormatFloat(value, 'f', 1, 64)) + " " + unit
 	}
-	return formatFloat2(value) + " " + unit
+	return trimFloat(strconv.FormatFloat(value, 'f', 2, 64)) + " " + unit
 }
 
 func formatSizeInt(value int64, unit string) string {
 	return strconv.FormatInt(value, 10) + " " + unit
 }
 
-func formatFloat1(f float64) string {
-	// Truncate to 1 decimal place, trimming trailing zero.
-	i := int64(f * 10)
-	whole, frac := i/10, i%10
-	if frac == 0 {
-		return strconv.FormatInt(whole, 10)
+func trimFloat(s string) string {
+	if !strings.Contains(s, ".") {
+		return s
 	}
-	return strconv.FormatInt(whole, 10) + "." + strconv.FormatInt(frac, 10)
-}
-
-func formatFloat2(f float64) string {
-	// Truncate to 2 decimal places, trimming trailing zeros.
-	i := int64(f * 100)
-	whole, frac := i/100, i%100
-	switch {
-	case frac == 0:
-		return strconv.FormatInt(whole, 10)
-	case frac%10 == 0:
-		return strconv.FormatInt(whole, 10) + "." + strconv.FormatInt(frac/10, 10)
-	case frac < 10:
-		return strconv.FormatInt(whole, 10) + ".0" + strconv.FormatInt(frac, 10)
-	default:
-		return strconv.FormatInt(whole, 10) + "." + strconv.FormatInt(frac, 10)
-	}
+	s = strings.TrimRight(s, "0")
+	return strings.TrimRight(s, ".")
 }
 
 // validateAttachmentOwnership checks that every requested attachment ID belongs

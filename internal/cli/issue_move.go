@@ -47,8 +47,9 @@ var (
 )
 
 var issueMoveCmd = &cobra.Command{
-	Use:   "move <issue-key> [status]",
-	Short: "Move issue",
+	Use:     "move <issue-key> [status]",
+	Aliases: []string{"mv", "transition"},
+	Short:   "Move issue",
 	Long:  "Transition an issue to a new status. Supports -m comment, -R resolution, -a assignee, --stdin for batch.",
 	Example: `  ajira issue move PROJ-123                              # List available transitions
   ajira issue move PROJ-123 "In Progress"                # Move to In Progress
