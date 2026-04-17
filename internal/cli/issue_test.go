@@ -693,7 +693,7 @@ func TestCreateIssue_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(context.Background(), client, "TEST", "New issue", "Description here", "Task", "", nil, "", nil, nil)
+	result, err := createIssue(context.Background(), client, "TEST", "New issue", "Description here", "Task", "", nil, "", nil, nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -727,7 +727,7 @@ func TestCreateIssue_WithPriorityAndLabels(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(context.Background(), client, "TEST", "Issue with extras", "", "Bug", "High", []string{"urgent", "frontend"}, "", nil, nil)
+	result, err := createIssue(context.Background(), client, "TEST", "Issue with extras", "", "Bug", "High", []string{"urgent", "frontend"}, "", nil, nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -757,13 +757,72 @@ func TestCreateIssue_WithParent(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(context.Background(), client, "TEST", "Subtask", "", "Sub-task", "", nil, "TEST-50", nil, nil)
+	result, err := createIssue(context.Background(), client, "TEST", "Subtask", "", "Sub-task", "", nil, "TEST-50", nil, nil, nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	if result.Key != "TEST-1001" {
 		t.Errorf("expected key TEST-1001, got %s", result.Key)
+	}
+}
+
+func TestCreateIssue_WithAssignee(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req issueCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if req.Fields.Assignee == nil {
+			t.Error("expected assignee to be set")
+		} else if req.Fields.Assignee.AccountID != "abc123accountid" {
+			t.Errorf("expected assignee accountId 'abc123accountid', got %s", req.Fields.Assignee.AccountID)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(CreateResult{Key: "TEST-1002"})
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	accountID := "abc123accountid"
+	result, err := createIssue(context.Background(), client, "TEST", "Assigned issue", "", "Task", "", nil, "", nil, nil, &accountID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Key != "TEST-1002" {
+		t.Errorf("expected key TEST-1002, got %s", result.Key)
+	}
+}
+
+func TestCreateIssue_NoAssignee(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req issueCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if req.Fields.Assignee != nil {
+			t.Errorf("expected assignee to be nil, got %+v", req.Fields.Assignee)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(CreateResult{Key: "TEST-1003"})
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	result, err := createIssue(context.Background(), client, "TEST", "Unassigned issue", "", "Task", "", nil, "", nil, nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Key != "TEST-1003" {
+		t.Errorf("expected key TEST-1003, got %s", result.Key)
 	}
 }
 
@@ -966,6 +1025,97 @@ func TestDeleteIssue_Cascade(t *testing.T) {
 	err := deleteIssue(context.Background(), client, "TEST-123", true)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// Test resolveAssigneeInput function
+func TestResolveAssigneeInput_Empty(t *testing.T) {
+	result, err := resolveAssigneeInput(context.Background(), nil, "me@example.com", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result != nil {
+		t.Errorf("expected nil for empty input, got %v", result)
+	}
+}
+
+func TestResolveAssigneeInput_Unassigned(t *testing.T) {
+	for _, input := range []string{"unassigned", "UNASSIGNED", "Unassigned"} {
+		result, err := resolveAssigneeInput(context.Background(), nil, "me@example.com", input)
+		if err != nil {
+			t.Fatalf("unexpected error for input %q: %v", input, err)
+		}
+		if result != nil {
+			t.Errorf("expected nil for input %q, got %v", input, result)
+		}
+	}
+}
+
+func TestResolveAssigneeInput_Me(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.URL.RawQuery, "me%40example.com") {
+			t.Errorf("expected query to contain configured email, got %s", r.URL.RawQuery)
+		}
+		resp := userSearchResponse{{AccountID: "myaccountid123456789", DisplayName: "Me", EmailAddress: "me@example.com"}}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	result, err := resolveAssigneeInput(context.Background(), client, "me@example.com", "me")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result for 'me'")
+	}
+	if *result != "myaccountid123456789" {
+		t.Errorf("expected 'myaccountid123456789', got %s", *result)
+	}
+}
+
+func TestResolveAssigneeInput_MeEmptyEmail(t *testing.T) {
+	result, err := resolveAssigneeInput(context.Background(), nil, "", "me")
+	if err == nil {
+		t.Fatal("expected error when 'me' is used with empty email")
+	}
+	if !strings.Contains(err.Error(), "JIRA_EMAIL") {
+		t.Errorf("expected error to mention JIRA_EMAIL, got: %v", err)
+	}
+	if result != nil {
+		t.Errorf("expected nil result on error, got %v", result)
+	}
+}
+
+func TestResolveAssigneeInput_NotFound(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(userSearchResponse{})
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	result, err := resolveAssigneeInput(context.Background(), client, "me@example.com", "nobody@example.com")
+	if err == nil {
+		t.Fatal("expected error for user not found")
+	}
+	if result != nil {
+		t.Errorf("expected nil result on error, got %v", result)
+	}
+}
+
+func TestResolveAssigneeInput_DirectAccountID(t *testing.T) {
+	accountID := "5f4dcc3b5aa765d61d8327deb882cf99"
+	result, err := resolveAssigneeInput(context.Background(), nil, "me@example.com", accountID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result for direct account ID")
+	}
+	if *result != accountID {
+		t.Errorf("expected %s, got %s", accountID, *result)
 	}
 }
 

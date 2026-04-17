@@ -32,7 +32,7 @@ func runIssuePriority(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
@@ -72,7 +72,7 @@ func printPriorities(priorities []jira.Priority) {
 
 	// Print header
 	fmt.Printf("%s  %s\n",
-		header(padRight("NAME", nameWidth)),
+		header(width.PadRight("NAME", nameWidth)),
 		header("DESCRIPTION"))
 
 	// Print rows
@@ -81,6 +81,6 @@ func printPriorities(priorities []jira.Priority) {
 		if len(desc) > 60 {
 			desc = desc[:57] + "..."
 		}
-		fmt.Printf("%s  %s\n", bold(padRight(p.Name, nameWidth)), desc)
+		fmt.Printf("%s  %s\n", bold(width.PadRight(p.Name, nameWidth)), desc)
 	}
 }

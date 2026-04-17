@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
@@ -36,6 +34,11 @@ type issueCreateFields struct {
 	Parent      *parentKey      `json:"parent,omitempty"`
 	Components  []componentName `json:"components,omitempty"`
 	FixVersions []versionName   `json:"fixVersions,omitempty"`
+	Assignee    *assigneeField  `json:"assignee,omitempty"`
+}
+
+type assigneeField struct {
+	AccountID string `json:"accountId"`
 }
 
 type parentKey struct {
@@ -72,6 +75,7 @@ var (
 	createParent      string
 	createComponents  []string
 	createFixVersions []string
+	createAssignee    string
 )
 
 var issueCreateCmd = &cobra.Command{
@@ -84,7 +88,10 @@ var issueCreateCmd = &cobra.Command{
   ajira issue create -s "From file" -f description.md      # Description from file
   ajira issue create -s "Subtask" --parent PROJ-50         # Create under parent/epic
   ajira issue create -s "Task" -C Backend,API              # With components
-  ajira issue create -s "Task" --fix-version 1.0.0         # With fix version`,
+  ajira issue create -s "Task" --fix-version 1.0.0         # With fix version
+  ajira issue create -s "Task" -a me                       # Assign to yourself
+  ajira issue create -s "Task" -a user@example.com         # Assign by email
+  ajira issue create -s "Task" -a unassigned               # Explicitly unassigned`,
 	SilenceUsage: true,
 	RunE:         runIssueCreate,
 }
@@ -99,6 +106,7 @@ func init() {
 	issueCreateCmd.Flags().StringVar(&createParent, "parent", "", "Parent issue or epic key")
 	issueCreateCmd.Flags().StringSliceVarP(&createComponents, "component", "C", nil, "Component(s) (comma-separated)")
 	issueCreateCmd.Flags().StringSliceVar(&createFixVersions, "fix-version", nil, "Fix version(s) (comma-separated)")
+	issueCreateCmd.Flags().StringVarP(&createAssignee, "assignee", "a", "", "Assignee (me, email, account ID, or unassigned)")
 
 	_ = issueCreateCmd.MarkFlagRequired("summary")
 
@@ -138,7 +146,13 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to read description: %w", err)
 	}
 
-	result, err := createIssue(ctx, client, projectKey, createSummary, description, createType, createPriority, createLabels, createParent, createComponents, createFixVersions)
+	// Resolve assignee to accountId
+	assigneeAccountID, err := resolveAssigneeInput(ctx, client, cfg.Email, createAssignee)
+	if err != nil {
+		return fmt.Errorf("failed to resolve assignee: %w", err)
+	}
+
+	result, err := createIssue(ctx, client, projectKey, createSummary, description, createType, createPriority, createLabels, createParent, createComponents, createFixVersions, assigneeAccountID)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
@@ -160,28 +174,10 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 }
 
 func getDescription() (string, error) {
-	// Priority: file > description flag
-	if createFile != "" {
-		if createFile == "-" {
-			// Read from stdin
-			data, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return "", err
-			}
-			return string(data), nil
-		}
-		// Read from file
-		data, err := os.ReadFile(createFile)
-		if err != nil {
-			return "", err
-		}
-		return string(data), nil
-	}
-
-	return createBody, nil
+	return readText(createFile, createBody)
 }
 
-func createIssue(ctx context.Context, client *api.Client, project, summary, description, issueType, priority string, labels []string, parent string, components, fixVersions []string) (*CreateResult, error) {
+func createIssue(ctx context.Context, client *api.Client, project, summary, description, issueType, priority string, labels []string, parent string, components, fixVersions []string, assignee *string) (*CreateResult, error) {
 	req := issueCreateRequest{
 		Fields: issueCreateFields{
 			Project:   projectKey{Key: project},
@@ -221,6 +217,10 @@ func createIssue(ctx context.Context, client *api.Client, project, summary, desc
 		for _, v := range fixVersions {
 			req.Fields.FixVersions = append(req.Fields.FixVersions, versionName{Name: v})
 		}
+	}
+
+	if assignee != nil {
+		req.Fields.Assignee = &assigneeField{AccountID: *assignee}
 	}
 
 	body, err := json.Marshal(req)

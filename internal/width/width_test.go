@@ -744,3 +744,52 @@ func TestTruncate_RealWorld(t *testing.T) {
 		})
 	}
 }
+
+func TestPadRight(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		width int
+		want  string
+	}{
+		{"ascii_shorter", "abc", 6, "abc   "},
+		{"ascii_equal", "abcdef", 6, "abcdef"},
+		{"ascii_longer", "abcdefgh", 6, "abcdefgh"},
+		{"empty_padded", "", 4, "    "},
+		{"empty_zero_width", "", 0, ""},
+		{"zero_width_target", "abc", 0, "abc"},
+		{"negative_width", "abc", -1, "abc"},
+		{"cjk_shorter", "日本", 6, "日本  "},
+		{"cjk_equal", "日本語", 6, "日本語"},
+		{"cjk_longer", "日本語字", 6, "日本語字"},
+		{"mixed_shorter", "a日b", 6, "a日b  "},
+		{"emoji", "🎉", 4, "🎉  "},
+		{"single_space", "a", 1, "a"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := PadRight(tt.input, tt.width)
+			if got != tt.want {
+				t.Errorf("PadRight(%q, %d) = %q, want %q", tt.input, tt.width, got, tt.want)
+			}
+			// Result width must be at least the target (unless input already exceeds it).
+			gotWidth := StringWidth(got)
+			inputWidth := StringWidth(tt.input)
+			if inputWidth < tt.width && gotWidth != tt.width {
+				t.Errorf("PadRight(%q, %d) result width = %d, want %d",
+					tt.input, tt.width, gotWidth, tt.width)
+			}
+		})
+	}
+}
+
+func TestPadRight_PreservesPrefix(t *testing.T) {
+	got := PadRight("hello", 10)
+	if !strings.HasPrefix(got, "hello") {
+		t.Errorf("PadRight result %q does not start with input", got)
+	}
+	if len(got) != 10 {
+		t.Errorf("PadRight ASCII result length = %d, want 10", len(got))
+	}
+}

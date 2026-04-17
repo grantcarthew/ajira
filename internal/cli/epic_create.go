@@ -3,8 +3,6 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
@@ -18,6 +16,7 @@ var (
 	epicCreateFile     string
 	epicCreatePriority string
 	epicCreateLabels   []string
+	epicCreateAssignee string
 )
 
 var epicCreateCmd = &cobra.Command{
@@ -26,7 +25,10 @@ var epicCreateCmd = &cobra.Command{
 	Long:  "Create an epic. Requires -s for summary.",
 	Example: `  ajira epic create -s "Authentication Epic"
   ajira epic create -s "Dashboard" -d "Dashboard features" -P Major
-  ajira epic create -s "API" -f description.md`,
+  ajira epic create -s "API" -f description.md
+  ajira epic create -s "Auth" -a me                        # Assign to yourself
+  ajira epic create -s "Auth" -a user@example.com          # Assign by email
+  ajira epic create -s "Auth" -a unassigned                # Explicitly unassigned`,
 	SilenceUsage: true,
 	RunE:         runEpicCreate,
 }
@@ -37,6 +39,7 @@ func init() {
 	epicCreateCmd.Flags().StringVarP(&epicCreateFile, "file", "f", "", "Read description from file (use - for stdin)")
 	epicCreateCmd.Flags().StringVarP(&epicCreatePriority, "priority", "P", "", "Epic priority")
 	epicCreateCmd.Flags().StringSliceVar(&epicCreateLabels, "labels", nil, "Epic labels (comma-separated)")
+	epicCreateCmd.Flags().StringVarP(&epicCreateAssignee, "assignee", "a", "", "Assignee (me, email, account ID, or unassigned)")
 
 	_ = epicCreateCmd.MarkFlagRequired("summary")
 
@@ -57,17 +60,17 @@ func runEpicCreate(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
 
 	// Validate epic issue type exists and priority
 	if err := jira.ValidateIssueType(ctx, client, projectKey, "Epic"); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	if err := jira.ValidatePriority(ctx, client, epicCreatePriority); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	// Get description from body, file, or stdin
@@ -76,7 +79,13 @@ func runEpicCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to read description: %w", err)
 	}
 
-	result, err := createIssue(ctx, client, projectKey, epicCreateSummary, description, "Epic", epicCreatePriority, epicCreateLabels, "", nil, nil)
+	// Resolve assignee to accountId
+	assigneeAccountID, err := resolveAssigneeInput(ctx, client, cfg.Email, epicCreateAssignee)
+	if err != nil {
+		return fmt.Errorf("failed to resolve assignee: %w", err)
+	}
+
+	result, err := createIssue(ctx, client, projectKey, epicCreateSummary, description, "Epic", epicCreatePriority, epicCreateLabels, "", nil, nil, assigneeAccountID)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
@@ -98,23 +107,5 @@ func runEpicCreate(cmd *cobra.Command, args []string) error {
 }
 
 func getEpicDescription() (string, error) {
-	// Priority: file > description flag
-	if epicCreateFile != "" {
-		if epicCreateFile == "-" {
-			// Read from stdin
-			data, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return "", err
-			}
-			return string(data), nil
-		}
-		// Read from file
-		data, err := os.ReadFile(epicCreateFile)
-		if err != nil {
-			return "", err
-		}
-		return string(data), nil
-	}
-
-	return epicCreateBody, nil
+	return readText(epicCreateFile, epicCreateBody)
 }

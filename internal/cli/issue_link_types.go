@@ -32,7 +32,7 @@ func runIssueLinkTypes(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
@@ -76,15 +76,15 @@ func printLinkTypes(linkTypes []jira.LinkType) {
 
 	// Print header
 	fmt.Printf("%s  %s  %s\n",
-		header(padRight("NAME", nameWidth)),
-		header(padRight("OUTWARD", outwardWidth)),
+		header(width.PadRight("NAME", nameWidth)),
+		header(width.PadRight("OUTWARD", outwardWidth)),
 		header("INWARD"))
 
 	// Print rows
 	for _, lt := range linkTypes {
 		fmt.Printf("%s  %s  %s\n",
-			bold(padRight(lt.Name, nameWidth)),
-			padRight(lt.Outward, outwardWidth),
+			bold(width.PadRight(lt.Name, nameWidth)),
+			width.PadRight(lt.Outward, outwardWidth),
 			lt.Inward)
 	}
 }

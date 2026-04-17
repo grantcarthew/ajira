@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"strings"
 
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
@@ -16,20 +14,6 @@ import (
 type assigneeRequest struct {
 	AccountID *string `json:"accountId"`
 }
-
-// userSearchResponse matches the Jira user search API response.
-type userSearchResponse []userSearchResult
-
-type userSearchResult struct {
-	AccountID    string `json:"accountId"`
-	DisplayName  string `json:"displayName"`
-	EmailAddress string `json:"emailAddress"`
-}
-
-// minAccountIDLength is the minimum length to distinguish a Jira account ID
-// from other user identifiers. Jira Cloud account IDs are typically 24-28
-// character alphanumeric strings (e.g., "5b10ac8d82e05b22cc7d4ef5").
-const minAccountIDLength = 20
 
 var assignStdin bool
 
@@ -91,24 +75,9 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 	}
 
 	// Resolve user to accountId
-	var accountID *string
-	if strings.EqualFold(userArg, "unassigned") {
-		accountID = nil
-	} else if strings.EqualFold(userArg, "me") {
-		resolved, err := resolveUser(ctx, client, cfg.Email)
-		if err != nil {
-			return fmt.Errorf("failed to resolve current user: %w", err)
-		}
-		accountID = &resolved
-	} else {
-		resolved, err := resolveUser(ctx, client, userArg)
-		if err != nil {
-			return err
-		}
-		if resolved == "" {
-			return fmt.Errorf("user not found: %s", userArg)
-		}
-		accountID = &resolved
+	accountID, err := resolveAssigneeInput(ctx, client, cfg.Email, userArg)
+	if err != nil {
+		return fmt.Errorf("failed to resolve assignee: %w", err)
 	}
 
 	// Dry-run mode
@@ -157,35 +126,6 @@ func runIssueAssign(cmd *cobra.Command, args []string) error {
 	}
 
 	return PrintBatchResults(results)
-}
-
-// resolveUser resolves a user identifier to an accountId.
-// Accepts email address or accountId directly.
-func resolveUser(ctx context.Context, client *api.Client, user string) (string, error) {
-	// If it looks like an accountId (no @ and long enough), use it directly.
-	// Jira Cloud account IDs are alphanumeric strings like "5b10ac8d82e05b22cc7d4ef5".
-	if !strings.Contains(user, "@") && len(user) > minAccountIDLength {
-		return user, nil
-	}
-
-	// Search by email or display name
-	path := fmt.Sprintf("/user/search?query=%s&maxResults=1", url.QueryEscape(user))
-
-	body, err := client.Get(ctx, path)
-	if err != nil {
-		return "", err
-	}
-
-	var users userSearchResponse
-	if err := json.Unmarshal(body, &users); err != nil {
-		return "", fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	if len(users) == 0 {
-		return "", nil
-	}
-
-	return users[0].AccountID, nil
 }
 
 func assignIssue(ctx context.Context, client *api.Client, key string, accountID *string) error {

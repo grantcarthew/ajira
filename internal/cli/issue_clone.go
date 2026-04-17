@@ -179,12 +179,11 @@ func runIssueClone(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create cloned issue: %w", err)
 	}
 
-	// Create link to original if requested
+	// Create link to original if requested.
+	// Non-fatal: issue was created, just couldn't link.
 	linked := false
 	if linkType != "" {
-		err = createCloneLink(ctx, client, result.Key, sourceKey, linkType)
-		if err != nil {
-			// Non-fatal: issue was created, just couldn't link
+		if err := createCloneLink(ctx, client, result.Key, sourceKey, linkType); err != nil {
 			fmt.Fprintf(cmd.ErrOrStderr(), "Warning: failed to link to original: %v\n", err)
 		} else {
 			linked = true
@@ -296,6 +295,9 @@ func resolveCloneUser(ctx context.Context, client *api.Client, cfg *config.Confi
 			return "", nil
 		}
 		if strings.EqualFold(override, "me") {
+			if cfg.Email == "" {
+				return "", fmt.Errorf("JIRA_EMAIL is required to resolve 'me'")
+			}
 			return resolveUser(ctx, client, cfg.Email)
 		}
 		return resolveUser(ctx, client, override)

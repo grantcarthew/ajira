@@ -102,6 +102,34 @@ func TestSearchUsers_WithLimit(t *testing.T) {
 	}
 }
 
+func TestSearchUsers_InactiveUser(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := []userSearchResult{
+			{AccountID: "active1", DisplayName: "Active User", EmailAddress: "active@example.com", Active: true},
+			{AccountID: "inactive1", DisplayName: "Inactive User", EmailAddress: "inactive@example.com", Active: false},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	users, err := searchUsers(context.Background(), client, "user", 10)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(users) != 2 {
+		t.Fatalf("expected 2 users, got %d", len(users))
+	}
+	if !users[0].Active {
+		t.Errorf("expected users[0] Active=true, got false")
+	}
+	if users[1].Active {
+		t.Errorf("expected users[1] Active=false, got true")
+	}
+}
+
 func TestSearchUsers_APIError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

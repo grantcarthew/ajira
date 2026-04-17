@@ -78,7 +78,7 @@ func runSprintList(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
@@ -134,11 +134,11 @@ func runSprintList(cmd *cobra.Command, args []string) error {
 
 		// Print header
 		fmt.Printf("%s  %s  %s  %s  %s  %s\n",
-			header(padRight("ID", idWidth)),
-			header(padRight("NAME", nameWidth)),
-			header(padRight("STATE", stateWidth)),
-			header(padRight("START", startWidth)),
-			header(padRight("END", endWidth)),
+			header(width.PadRight("ID", idWidth)),
+			header(width.PadRight("NAME", nameWidth)),
+			header(width.PadRight("STATE", stateWidth)),
+			header(width.PadRight("START", startWidth)),
+			header(width.PadRight("END", endWidth)),
 			header("GOAL"))
 
 		// Print rows
@@ -149,14 +149,14 @@ func runSprintList(cmd *cobra.Command, args []string) error {
 			end := formatSprintDate(s.EndDate)
 			goal := width.Truncate(s.Goal, 40, "...")
 
-			stateColored := colorSprintState(padRight(s.State, stateWidth), s.State)
+			stateColored := colorSprintState(width.PadRight(s.State, stateWidth), s.State)
 
 			fmt.Printf("%s  %s  %s  %s  %s  %s\n",
-				bold(padRight(idStr, idWidth)),
-				padRight(name, nameWidth),
+				bold(width.PadRight(idStr, idWidth)),
+				width.PadRight(name, nameWidth),
 				stateColored,
-				padRight(start, startWidth),
-				padRight(end, endWidth),
+				width.PadRight(start, startWidth),
+				width.PadRight(end, endWidth),
 				goal)
 		}
 	}

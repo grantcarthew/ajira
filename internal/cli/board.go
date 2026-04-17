@@ -77,7 +77,7 @@ func runBoardList(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
@@ -130,10 +130,10 @@ func runBoardList(cmd *cobra.Command, args []string) error {
 
 		// Print header
 		fmt.Printf("%s  %s  %s  %s\n",
-			header(padRight("ID", idWidth)),
-			header(padRight("NAME", nameWidth)),
-			header(padRight("TYPE", typeWidth)),
-			header(padRight("PROJECT", projectWidth)))
+			header(width.PadRight("ID", idWidth)),
+			header(width.PadRight("NAME", nameWidth)),
+			header(width.PadRight("TYPE", typeWidth)),
+			header(width.PadRight("PROJECT", projectWidth)))
 
 		// Print rows
 		for _, b := range boards {
@@ -141,10 +141,10 @@ func runBoardList(cmd *cobra.Command, args []string) error {
 			name := width.Truncate(b.Name, nameWidth, "...")
 
 			fmt.Printf("%s  %s  %s  %s\n",
-				bold(padRight(idStr, idWidth)),
-				padRight(name, nameWidth),
-				padRight(b.Type, typeWidth),
-				padRight(b.Project, projectWidth))
+				bold(width.PadRight(idStr, idWidth)),
+				width.PadRight(name, nameWidth),
+				width.PadRight(b.Type, typeWidth),
+				width.PadRight(b.Project, projectWidth))
 		}
 	}
 

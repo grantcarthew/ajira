@@ -49,6 +49,21 @@ func StringWidth(s string) int {
 	return w
 }
 
+// PadRight pads s with spaces on the right to reach w display columns.
+// Uses display width so Unicode wide characters are accounted for correctly.
+func PadRight(s string, w int) string {
+	sw := StringWidth(s)
+	if sw >= w {
+		return s
+	}
+	result := make([]byte, len(s)+w-sw)
+	copy(result, s)
+	for i := len(s); i < len(result); i++ {
+		result[i] = ' '
+	}
+	return string(result)
+}
+
 // Truncate truncates s to fit within maxWidth display columns.
 // If the string exceeds maxWidth, it is truncated and suffix is appended.
 // The result (including suffix) will not exceed maxWidth columns.

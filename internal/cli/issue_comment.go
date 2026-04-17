@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
@@ -183,50 +181,27 @@ func runIssueCommentAdd(cmd *cobra.Command, args []string) error {
 
 func getCommentText(args []string) (string, error) {
 	// Priority: file > body > positional arg
-	if commentFile != "" {
-		if commentFile == "-" {
-			data, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return "", err
-			}
-			return string(data), nil
-		}
-		data, err := os.ReadFile(commentFile)
-		if err != nil {
-			return "", err
-		}
-		return string(data), nil
+	if commentFile != "" || commentBody != "" {
+		return readText(commentFile, commentBody)
 	}
-
-	if commentBody != "" {
-		return commentBody, nil
-	}
-
 	if len(args) > 1 {
 		return args[1], nil
 	}
-
 	return "", nil
 }
 
 func getCommentTextForBatch(args []string) (string, error) {
-	// For batch mode, stdin is used for keys, so file must be actual file (not -)
-	if commentFile != "" && commentFile != "-" {
-		data, err := os.ReadFile(commentFile)
-		if err != nil {
-			return "", err
-		}
-		return string(data), nil
+	// For batch mode, stdin is used for keys, so "-" is not allowed as file
+	file := commentFile
+	if file == "-" {
+		file = ""
 	}
-
-	if commentBody != "" {
-		return commentBody, nil
+	if file != "" || commentBody != "" {
+		return readText(file, commentBody)
 	}
-
 	if len(args) > 0 {
 		return args[0], nil
 	}
-
 	return "", nil
 }
 
@@ -302,29 +277,12 @@ func runIssueCommentEdit(cmd *cobra.Command, args []string) error {
 
 func getCommentTextForEdit(args []string) (string, error) {
 	// Priority: file > body > positional arg
-	if commentFile != "" {
-		if commentFile == "-" {
-			data, err := io.ReadAll(os.Stdin)
-			if err != nil {
-				return "", err
-			}
-			return string(data), nil
-		}
-		data, err := os.ReadFile(commentFile)
-		if err != nil {
-			return "", err
-		}
-		return string(data), nil
+	if commentFile != "" || commentBody != "" {
+		return readText(commentFile, commentBody)
 	}
-
-	if commentBody != "" {
-		return commentBody, nil
-	}
-
 	if len(args) > 2 {
 		return args[2], nil
 	}
-
 	return "", nil
 }
 

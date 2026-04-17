@@ -121,32 +121,6 @@ func TestGetIssueTypes_ObjectFormat(t *testing.T) {
 	}
 }
 
-func TestGetIssueTypes_ArrayFormat(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Direct array format (different API versions)
-		resp := []issueTypeResponse{
-			{ID: "1", Name: "Story", Description: "A story", Subtask: false},
-			{ID: "2", Name: "Epic", Description: "An epic", Subtask: false},
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(resp)
-	}))
-	defer server.Close()
-
-	client := api.NewClient(testConfig(server.URL))
-	types, err := GetIssueTypes(context.Background(), client, "TEST")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if len(types) != 2 {
-		t.Fatalf("expected 2 issue types, got %d", len(types))
-	}
-	if types[0].Name != "Story" {
-		t.Errorf("expected first type 'Story', got %s", types[0].Name)
-	}
-}
-
 func TestGetIssueTypes_APIError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

@@ -6,12 +6,85 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/gcarthew/ajira/internal/api"
 	"github.com/gcarthew/ajira/internal/config"
 	"github.com/spf13/cobra"
 )
+
+// userSearchResponse matches the Jira user search API response.
+type userSearchResponse []userSearchResult
+
+type userSearchResult struct {
+	AccountID    string `json:"accountId"`
+	DisplayName  string `json:"displayName"`
+	EmailAddress string `json:"emailAddress"`
+	Active       bool   `json:"active"`
+}
+
+// minAccountIDLength is the minimum length to distinguish a Jira account ID
+// from other user identifiers. Jira Cloud account IDs are typically 24-28
+// character alphanumeric strings (e.g., "5b10ac8d82e05b22cc7d4ef5").
+const minAccountIDLength = 20
+
+// resolveAssigneeInput resolves a user input string to a Jira accountId pointer.
+// Accepts "me" (resolved via email), an email address, or a raw accountId.
+// Returns nil for "unassigned" or empty input.
+// Returns an error if the user cannot be found.
+func resolveAssigneeInput(ctx context.Context, client *api.Client, email, input string) (*string, error) {
+	if input == "" || strings.EqualFold(input, "unassigned") {
+		return nil, nil
+	}
+	userArg := input
+	if strings.EqualFold(input, "me") {
+		if email == "" {
+			return nil, fmt.Errorf("JIRA_EMAIL is required to resolve 'me'")
+		}
+		userArg = email
+	}
+	accountID, err := resolveUser(ctx, client, userArg)
+	if err != nil {
+		return nil, err
+	}
+	if accountID == "" {
+		if userArg != input {
+			return nil, fmt.Errorf("user not found: %s (resolved to %s)", input, userArg)
+		}
+		return nil, fmt.Errorf("user not found: %s", input)
+	}
+	return &accountID, nil
+}
+
+// resolveUser resolves a user identifier to an accountId.
+// Accepts email address or accountId directly.
+func resolveUser(ctx context.Context, client *api.Client, user string) (string, error) {
+	// If it looks like an accountId (no @ and long enough), use it directly.
+	// Jira Cloud account IDs are alphanumeric strings like "5b10ac8d82e05b22cc7d4ef5".
+	if !strings.Contains(user, "@") && len(user) > minAccountIDLength {
+		return user, nil
+	}
+
+	// Search by email or display name
+	path := fmt.Sprintf("/user/search?query=%s&maxResults=1", url.QueryEscape(user))
+
+	body, err := client.Get(ctx, path)
+	if err != nil {
+		return "", err
+	}
+
+	var users userSearchResponse
+	if err := json.Unmarshal(body, &users); err != nil {
+		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if len(users) == 0 {
+		return "", nil
+	}
+
+	return users[0].AccountID, nil
+}
 
 // UserInfo represents a Jira user.
 type UserInfo struct {
@@ -118,7 +191,7 @@ func searchUsers(ctx context.Context, client *api.Client, query string, limit in
 			AccountID:    u.AccountID,
 			DisplayName:  u.DisplayName,
 			EmailAddress: u.EmailAddress,
-			Active:       true, // Default to true if not in response
+			Active:       u.Active,
 		}
 	}
 

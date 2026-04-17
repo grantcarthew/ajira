@@ -149,6 +149,24 @@ func TestResolveCloneUser_NoOverrideNoSource(t *testing.T) {
 	}
 }
 
+func TestResolveCloneUser_MeWithEmptyEmail(t *testing.T) {
+	client := api.NewClient(testConfig("http://unused"))
+	cfg := testConfig("http://unused")
+	cfg.Email = ""
+
+	sourceUser := &userField{AccountID: "original123", DisplayName: "Original User"}
+	result, err := resolveCloneUser(context.Background(), client, cfg, "me", sourceUser)
+	if err == nil {
+		t.Fatal("expected error when resolving 'me' with empty email")
+	}
+	if !strings.Contains(err.Error(), "JIRA_EMAIL") {
+		t.Errorf("expected error to mention JIRA_EMAIL, got: %v", err)
+	}
+	if result != "" {
+		t.Errorf("expected empty result on error, got %q", result)
+	}
+}
+
 // Test ValidateLinkType function
 func TestValidateLinkType_Valid(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

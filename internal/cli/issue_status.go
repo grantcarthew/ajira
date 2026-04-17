@@ -37,7 +37,7 @@ func runIssueStatus(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
@@ -77,11 +77,11 @@ func printStatuses(statuses []jira.Status) {
 
 	// Print header
 	fmt.Printf("%s  %s\n",
-		header(padRight("NAME", nameWidth)),
+		header(width.PadRight("NAME", nameWidth)),
 		header("CATEGORY"))
 
 	// Print rows
 	for _, s := range statuses {
-		fmt.Printf("%s  %s\n", bold(padRight(s.Name, nameWidth)), s.Category)
+		fmt.Printf("%s  %s\n", bold(width.PadRight(s.Name, nameWidth)), s.Category)
 	}
 }

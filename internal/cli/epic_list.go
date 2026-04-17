@@ -50,17 +50,17 @@ func runEpicList(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
 
 	// Validate filter values
 	if err := jira.ValidatePriority(ctx, client, epicListPriority); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 	if err := jira.ValidateStatus(ctx, client, Project(), epicListStatus); err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	jql := buildEpicListJQL()
@@ -112,23 +112,23 @@ func runEpicList(cmd *cobra.Command, args []string) error {
 
 		// Print header
 		fmt.Printf("%s  %s  %s  %s  %s\n",
-			header(padRight("KEY", keyWidth)),
-			header(padRight("STATUS", statusWidth)),
-			header(padRight("PRIORITY", priorityWidth)),
-			header(padRight("ASSIGNEE", assigneeWidth)),
+			header(width.PadRight("KEY", keyWidth)),
+			header(width.PadRight("STATUS", statusWidth)),
+			header(width.PadRight("PRIORITY", priorityWidth)),
+			header(width.PadRight("ASSIGNEE", assigneeWidth)),
 			header("SUMMARY"))
 
 		// Print rows
 		for _, issue := range issues {
-			key := bold(padRight(issue.Key, keyWidth))
-			status := colorStatus(padRight(issue.Status, statusWidth), issue.StatusCategory)
-			priority := padRight(issue.Priority, priorityWidth)
+			key := bold(width.PadRight(issue.Key, keyWidth))
+			status := colorStatus(width.PadRight(issue.Status, statusWidth), issue.StatusCategory)
+			priority := width.PadRight(issue.Priority, priorityWidth)
 
 			assignee := issue.Assignee
 			if assignee == "" {
-				assignee = faint(padRight("-", assigneeWidth))
+				assignee = faint(width.PadRight("-", assigneeWidth))
 			} else {
-				assignee = padRight(assignee, assigneeWidth)
+				assignee = width.PadRight(assignee, assigneeWidth)
 			}
 
 			summary := width.Truncate(issue.Summary, 60, "...")

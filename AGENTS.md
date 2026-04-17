@@ -1,6 +1,6 @@
 # ajira
 
-Atlassian Jira CLI designed for AI agents and automation. Non-interactive, environment-configured, with Markdown input/output and JSON support.
+Atlassian Jira Cloud CLI designed for AI agents and automation. Non-interactive, environment-configured, with Markdown input/output and JSON support. Targets Jira Cloud only — Jira Server and Data Center are not supported.
 
 ## Setup
 

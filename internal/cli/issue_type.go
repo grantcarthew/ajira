@@ -37,7 +37,7 @@ func runIssueType(cmd *cobra.Command, args []string) error {
 
 	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("%v", err)
+		return err
 	}
 
 	client := api.NewClient(cfg)
@@ -77,7 +77,7 @@ func printIssueTypes(types []jira.IssueType) {
 
 	// Print header
 	fmt.Printf("%s  %s\n",
-		header(padRight("NAME", nameWidth)),
+		header(width.PadRight("NAME", nameWidth)),
 		header("DESCRIPTION"))
 
 	// Print rows
@@ -86,6 +86,6 @@ func printIssueTypes(types []jira.IssueType) {
 		if len(desc) > 60 {
 			desc = desc[:57] + "..."
 		}
-		fmt.Printf("%s  %s\n", bold(padRight(t.Name, nameWidth)), desc)
+		fmt.Printf("%s  %s\n", bold(width.PadRight(t.Name, nameWidth)), desc)
 	}
 }

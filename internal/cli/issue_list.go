@@ -202,28 +202,28 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 
 		// Print header
 		fmt.Printf("%s  %s  %s  %s  %s\n",
-			header(padRight("KEY", keyWidth)),
-			header(padRight("STATUS", statusWidth)),
-			header(padRight("TYPE", typeWidth)),
-			header(padRight("ASSIGNEE", assigneeWidth)),
+			header(width.PadRight("KEY", keyWidth)),
+			header(width.PadRight("STATUS", statusWidth)),
+			header(width.PadRight("TYPE", typeWidth)),
+			header(width.PadRight("ASSIGNEE", assigneeWidth)),
 			header("SUMMARY"))
 
 		// Print rows
 		for _, issue := range issues {
-			key := bold(padRight(issue.Key, keyWidth))
-			status := colorStatus(padRight(issue.Status, statusWidth), issue.StatusCategory)
+			key := bold(width.PadRight(issue.Key, keyWidth))
+			status := colorStatus(width.PadRight(issue.Status, statusWidth), issue.StatusCategory)
 
 			assignee := issue.Assignee
 			if assignee == "" {
-				assignee = faint(padRight("-", assigneeWidth))
+				assignee = faint(width.PadRight("-", assigneeWidth))
 			} else {
-				assignee = padRight(assignee, assigneeWidth)
+				assignee = width.PadRight(assignee, assigneeWidth)
 			}
 
 			// Truncate summary for display using display width
 			summary := width.Truncate(issue.Summary, 60, "...")
 
-			fmt.Printf("%s  %s  %s  %s  %s\n", key, status, padRight(issue.Type, typeWidth), assignee, summary)
+			fmt.Printf("%s  %s  %s  %s  %s\n", key, status, width.PadRight(issue.Type, typeWidth), assignee, summary)
 		}
 	}
 
@@ -402,12 +402,3 @@ func colorStatus(status, category string) string {
 	}
 }
 
-// padRight pads a string to the specified display width with spaces.
-// Uses display width calculation to handle Unicode characters correctly.
-func padRight(s string, w int) string {
-	sw := width.StringWidth(s)
-	if sw >= w {
-		return s
-	}
-	return s + strings.Repeat(" ", w-sw)
-}
