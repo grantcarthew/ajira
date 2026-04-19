@@ -16,7 +16,7 @@ func extractProjectKey(issueKey string) string {
 
 var issueCmd = &cobra.Command{
 	Use:     "issue",
-	Aliases: []string{"issues", "ticket", "tickets"},
+	Aliases: []string{"issues", "ticket", "tickets", "item", "items", "wi"},
 	Short:   "Manage issues",
 	Long:    "Commands for managing Jira issues.",
 	RunE: func(cmd *cobra.Command, args []string) error {
