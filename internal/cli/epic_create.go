@@ -85,7 +85,19 @@ func runEpicCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to resolve assignee: %w", err)
 	}
 
-	result, err := createIssue(ctx, client, projectKey, epicCreateSummary, description, "Epic", epicCreatePriority, epicCreateLabels, "", nil, nil, assigneeAccountID)
+	opts := createIssueOptions{
+		Project:     projectKey,
+		Summary:     epicCreateSummary,
+		Description: description,
+		IssueType:   "Epic",
+		Priority:    epicCreatePriority,
+		Labels:      epicCreateLabels,
+	}
+	if assigneeAccountID != nil {
+		opts.Assignee = *assigneeAccountID
+	}
+
+	result, err := createIssue(ctx, client, opts)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)

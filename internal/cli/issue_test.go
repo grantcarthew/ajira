@@ -693,7 +693,12 @@ func TestCreateIssue_Success(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(context.Background(), client, "TEST", "New issue", "Description here", "Task", "", nil, "", nil, nil, nil)
+	result, err := createIssue(context.Background(), client, createIssueOptions{
+		Project:     "TEST",
+		Summary:     "New issue",
+		Description: "Description here",
+		IssueType:   "Task",
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -727,7 +732,13 @@ func TestCreateIssue_WithPriorityAndLabels(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(context.Background(), client, "TEST", "Issue with extras", "", "Bug", "High", []string{"urgent", "frontend"}, "", nil, nil, nil)
+	result, err := createIssue(context.Background(), client, createIssueOptions{
+		Project:   "TEST",
+		Summary:   "Issue with extras",
+		IssueType: "Bug",
+		Priority:  "High",
+		Labels:    []string{"urgent", "frontend"},
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -757,7 +768,12 @@ func TestCreateIssue_WithParent(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(context.Background(), client, "TEST", "Subtask", "", "Sub-task", "", nil, "TEST-50", nil, nil, nil)
+	result, err := createIssue(context.Background(), client, createIssueOptions{
+		Project:   "TEST",
+		Summary:   "Subtask",
+		IssueType: "Sub-task",
+		Parent:    "TEST-50",
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -787,8 +803,12 @@ func TestCreateIssue_WithAssignee(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	accountID := "abc123accountid"
-	result, err := createIssue(context.Background(), client, "TEST", "Assigned issue", "", "Task", "", nil, "", nil, nil, &accountID)
+	result, err := createIssue(context.Background(), client, createIssueOptions{
+		Project:   "TEST",
+		Summary:   "Assigned issue",
+		IssueType: "Task",
+		Assignee:  "abc123accountid",
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -816,7 +836,11 @@ func TestCreateIssue_NoAssignee(t *testing.T) {
 	defer server.Close()
 
 	client := api.NewClient(testConfig(server.URL))
-	result, err := createIssue(context.Background(), client, "TEST", "Unassigned issue", "", "Task", "", nil, "", nil, nil, nil)
+	result, err := createIssue(context.Background(), client, createIssueOptions{
+		Project:   "TEST",
+		Summary:   "Unassigned issue",
+		IssueType: "Task",
+	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

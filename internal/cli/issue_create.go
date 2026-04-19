@@ -65,6 +65,19 @@ type priorityName struct {
 	Name string `json:"name"`
 }
 
+type createIssueOptions struct {
+	Project     string
+	Summary     string
+	Description string
+	IssueType   string
+	Priority    string
+	Labels      []string
+	Parent      string
+	Components  []string
+	FixVersions []string
+	Assignee    string // resolved accountId; empty omits the assignee field from the request
+}
+
 var (
 	createSummary     string
 	createBody        string
@@ -152,7 +165,22 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to resolve assignee: %w", err)
 	}
 
-	result, err := createIssue(ctx, client, projectKey, createSummary, description, createType, createPriority, createLabels, createParent, createComponents, createFixVersions, assigneeAccountID)
+	opts := createIssueOptions{
+		Project:     projectKey,
+		Summary:     createSummary,
+		Description: description,
+		IssueType:   createType,
+		Priority:    createPriority,
+		Labels:      createLabels,
+		Parent:      createParent,
+		Components:  createComponents,
+		FixVersions: createFixVersions,
+	}
+	if assigneeAccountID != nil {
+		opts.Assignee = *assigneeAccountID
+	}
+
+	result, err := createIssue(ctx, client, opts)
 	if err != nil {
 		if apiErr, ok := err.(*api.APIError); ok {
 			return fmt.Errorf("API error: %w", apiErr)
@@ -177,50 +205,50 @@ func getDescription() (string, error) {
 	return readText(createFile, createBody)
 }
 
-func createIssue(ctx context.Context, client *api.Client, project, summary, description, issueType, priority string, labels []string, parent string, components, fixVersions []string, assignee *string) (*CreateResult, error) {
+func createIssue(ctx context.Context, client *api.Client, opts createIssueOptions) (*CreateResult, error) {
 	req := issueCreateRequest{
 		Fields: issueCreateFields{
-			Project:   projectKey{Key: project},
-			Summary:   summary,
-			IssueType: issueTypeName{Name: issueType},
+			Project:   projectKey{Key: opts.Project},
+			Summary:   opts.Summary,
+			IssueType: issueTypeName{Name: opts.IssueType},
 		},
 	}
 
 	// Convert Markdown description to ADF
-	if description != "" {
-		adf, err := converter.MarkdownToADF(description)
+	if opts.Description != "" {
+		adf, err := converter.MarkdownToADF(opts.Description)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert description: %w", err)
 		}
 		req.Fields.Description = adf
 	}
 
-	if priority != "" {
-		req.Fields.Priority = &priorityName{Name: priority}
+	if opts.Priority != "" {
+		req.Fields.Priority = &priorityName{Name: opts.Priority}
 	}
 
-	if len(labels) > 0 {
-		req.Fields.Labels = labels
+	if len(opts.Labels) > 0 {
+		req.Fields.Labels = opts.Labels
 	}
 
-	if parent != "" {
-		req.Fields.Parent = &parentKey{Key: parent}
+	if opts.Parent != "" {
+		req.Fields.Parent = &parentKey{Key: opts.Parent}
 	}
 
-	if len(components) > 0 {
-		for _, c := range components {
+	if len(opts.Components) > 0 {
+		for _, c := range opts.Components {
 			req.Fields.Components = append(req.Fields.Components, componentName{Name: c})
 		}
 	}
 
-	if len(fixVersions) > 0 {
-		for _, v := range fixVersions {
+	if len(opts.FixVersions) > 0 {
+		for _, v := range opts.FixVersions {
 			req.Fields.FixVersions = append(req.Fields.FixVersions, versionName{Name: v})
 		}
 	}
 
-	if assignee != nil {
-		req.Fields.Assignee = &assigneeField{AccountID: *assignee}
+	if opts.Assignee != "" {
+		req.Fields.Assignee = &assigneeField{AccountID: opts.Assignee}
 	}
 
 	body, err := json.Marshal(req)
