@@ -27,6 +27,9 @@ ajira issue create -s "Fix login bug"
 ajira issue create -s "From file" -f description.md
 echo "Description" | ajira issue create -s "From stdin" -f -
 ajira issue create -s "Subtask" -t Sub-task --parent PROJ-50
+ajira issue create -s "Task" -a me
+ajira issue create -s "Task" -a user@example.com
+ajira issue create -s "Task" -a unassigned
 ajira issue create -s "Full" --labels bug --priority High -C Backend --fix-version 1.0
 ajira issue edit PROJ-123 -s "New summary" -d "New description"
 ajira issue edit PROJ-123 --parent PROJ-50
