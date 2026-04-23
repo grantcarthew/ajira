@@ -1,15 +1,11 @@
-# ajira Agent Reference
+# ajira Jira CLI
 
-Non-interactive Jira CLI. Text output is token-efficient; use --json only when parsing.
-
-- JIRA_PROJECT env sets default project
-- Text output returns issue URLs on success
-- Use -f - to read description/comment content from stdin
-- See `ajira help schemas` for JSON fields
+- Defaults: `JIRA_PROJECT` `JIRA_BOARD`
+- `-f -` reads description/comment body from stdin
+- See `ajira help {schemas,markdown,agile}`
+- Use `--json` only when parsing
 
 ## Markdown (not Jira wiki)
-
-Wiki markup won't render. Use Markdown:
 
 - `*bold*` → `**bold**`
 - `h2. Title` → `## Title`
@@ -28,7 +24,6 @@ ajira issue list -q "status = Done AND updated >= -7d"
 ajira issue view PROJ-123
 ajira issue view PROJ-123 -c 10
 ajira issue create -s "Fix login bug"
-ajira issue create -s "Add feature" -t Story -d "Description"
 ajira issue create -s "From file" -f description.md
 echo "Description" | ajira issue create -s "From stdin" -f -
 ajira issue create -s "Subtask" -t Sub-task --parent PROJ-50
@@ -48,9 +43,7 @@ ajira issue comment add PROJ-123 -f comment.md
 ajira issue comment edit PROJ-123 12345 "Updated text"
 ajira issue comment list PROJ-123
 ajira issue comment list PROJ-123 -l 20
-ajira issue comment list PROJ-123 --json
 ajira issue link list PROJ-123
-ajira issue link list PROJ-123 --json
 ajira issue link types
 ajira issue link add PROJ-123 Blocks PROJ-456
 ajira issue link remove PROJ-123 PROJ-456
@@ -63,21 +56,16 @@ ajira issue attachment download PROJ-123 10001 -o custom.pdf
 ajira issue attachment remove PROJ-123 10001
 ```
 
-Note: `issue view` shows 5 comments by default. Comment IDs shown as `[date] [id] Author:`. Attachment IDs shown as `[id]`.
+- `issue view` shows 5 comments by default
+- `issue move` without target lists transitions
+- Comment IDs shown as `[date] [id] Author:`
+- Attachment IDs shown as `[id]`
 
 ## Other Commands
 
-See --help: `me`, `open`, `project list`, `board list`, `release list`, `user search`, `field list`, `issue clone`, `issue delete`, `issue watch`, `issue type`, `issue status`, `issue priority`, `epic create`, `epic list`, `epic add`, `epic remove`, `sprint list`, `sprint add`
+Run `<cmd> --help` for usage.
 
-## Chaining (JSON)
+- Auth/lookup: `me`, `project list`, `release list`, `user search`, `field list`
+- Issue meta: `issue clone`, `issue delete`, `issue watch`, `issue type`, `issue status`, `issue priority`
+- Browser: `open`
 
-```
-KEY=$(ajira issue create -s "New task" --json | jq -r .key)
-ajira issue assign $KEY me
-```
-
-```
-ajira issue list --status "To Do" --json | jq -r '.[].key' | while read key; do
-  ajira issue move "$key" "In Progress"
-done
-```

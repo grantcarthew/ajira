@@ -16,22 +16,23 @@ var schemasHelp string
 //go:embed help/markdown.md
 var markdownHelp string
 
+//go:embed help/agile.md
+var agileHelp string
+
 var helpCmd = &cobra.Command{
-	Use:   "help [command]",
-	Short: "Help for commands and topics",
-	Long:  "Help provides help for commands and topics (agents, markdown, schemas).",
-	Run: func(cmd *cobra.Command, args []string) {
+	Use:          "help [command]",
+	Short:        "Help for commands and topics",
+	Long:         "Help provides help for commands and topics (agents, agile, markdown, schemas).",
+	SilenceUsage: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			_ = rootCmd.Help()
-			return
+			return rootCmd.Help()
 		}
-		// Find the command and show its help
 		target, _, err := rootCmd.Find(args)
 		if err != nil || target == nil {
-			fmt.Printf("Unknown help topic: %s\n", args[0])
-			return
+			return NewExitError(ExitUserError, fmt.Errorf("unknown help topic: %s", args[0]))
 		}
-		_ = target.Help()
+		return target.Help()
 	},
 }
 
@@ -59,9 +60,18 @@ var helpMarkdownCmd = &cobra.Command{
 	},
 }
 
+var helpAgileCmd = &cobra.Command{
+	Use:   "agile",
+	Short: "Agile commands reference (epics, sprints, boards)",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Print(RenderMarkdown(agileHelp))
+	},
+}
+
 func init() {
 	rootCmd.SetHelpCommand(helpCmd)
 	helpCmd.AddCommand(helpAgentsCmd)
 	helpCmd.AddCommand(helpSchemasCmd)
 	helpCmd.AddCommand(helpMarkdownCmd)
+	helpCmd.AddCommand(helpAgileCmd)
 }
