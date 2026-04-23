@@ -187,12 +187,7 @@ func searchUsers(ctx context.Context, client *api.Client, query string, limit in
 
 	result := make([]UserInfo, len(users))
 	for i, u := range users {
-		result[i] = UserInfo{
-			AccountID:    u.AccountID,
-			DisplayName:  u.DisplayName,
-			EmailAddress: u.EmailAddress,
-			Active:       u.Active,
-		}
+		result[i] = UserInfo(u)
 	}
 
 	return result, nil

@@ -15,11 +15,6 @@ import (
 	"github.com/grantcarthew/ajira/internal/api"
 )
 
-// resetAttachmentFlags resets all attachment-related flag variables to their zero values.
-func resetAttachmentFlags() {
-	downloadOutput = ""
-}
-
 func TestFormatFileSize(t *testing.T) {
 	tests := []struct {
 		bytes    int64
@@ -367,7 +362,9 @@ func TestUploadAttachments_MultipleFiles(t *testing.T) {
 		t.Fatalf("failed to create temp file 1: %v", err)
 	}
 	defer os.Remove(tmpFile1.Name())
-	tmpFile1.WriteString("Content 1")
+	if _, err := tmpFile1.WriteString("Content 1"); err != nil {
+		t.Fatalf("failed to write temp file 1: %v", err)
+	}
 	tmpFile1.Close()
 
 	tmpFile2, err := os.CreateTemp("", "test-upload2-*.txt")
@@ -375,7 +372,9 @@ func TestUploadAttachments_MultipleFiles(t *testing.T) {
 		t.Fatalf("failed to create temp file 2: %v", err)
 	}
 	defer os.Remove(tmpFile2.Name())
-	tmpFile2.WriteString("Content 2")
+	if _, err := tmpFile2.WriteString("Content 2"); err != nil {
+		t.Fatalf("failed to write temp file 2: %v", err)
+	}
 	tmpFile2.Close()
 
 	fileCount := 0
@@ -434,7 +433,9 @@ func TestUploadAttachments_APIError413(t *testing.T) {
 		t.Fatalf("failed to create temp file: %v", err)
 	}
 	defer os.Remove(tmpFile.Name())
-	tmpFile.WriteString("test content")
+	if _, err := tmpFile.WriteString("test content"); err != nil {
+		t.Fatalf("failed to write temp file: %v", err)
+	}
 	tmpFile.Close()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
