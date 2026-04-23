@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/api"
 )
 
 // resetAttachmentFlags resets all attachment-related flag variables to their zero values.

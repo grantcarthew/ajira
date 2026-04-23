@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/api"
 )
 
 func TestListBoards_Success(t *testing.T) {

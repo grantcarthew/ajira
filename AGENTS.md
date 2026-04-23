@@ -2,7 +2,7 @@
 
 Atlassian Jira Cloud CLI designed for AI agents and automation. Non-interactive, environment-configured, with Markdown input/output and JSON support. Targets Jira Cloud only — Jira Server and Data Center are not supported.
 
-Module path: `github.com/gcarthew/ajira`. Repository: `grantcarthew/ajira`.
+Module path: `github.com/grantcarthew/ajira`.
 
 ## Setup
 

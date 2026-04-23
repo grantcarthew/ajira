@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/gcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/api"
 )
 
 // Priority represents a Jira priority.

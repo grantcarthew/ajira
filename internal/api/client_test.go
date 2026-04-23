@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/config"
 )
 
 func testConfig(serverURL string) *config.Config {

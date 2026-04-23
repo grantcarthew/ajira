@@ -7,8 +7,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -61,7 +61,7 @@ var releaseListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List releases",
-	Long:  "List project versions/releases. Requires -p or JIRA_PROJECT.",
+	Long:    "List project versions/releases. Requires -p or JIRA_PROJECT.",
 	Example: `  ajira release list                      # List all releases
   ajira release list -p PROJ              # List releases for project
   ajira release list --status released    # Only released versions

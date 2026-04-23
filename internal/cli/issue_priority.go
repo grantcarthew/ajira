@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
-	"github.com/gcarthew/ajira/internal/jira"
-	"github.com/gcarthew/ajira/internal/width"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/jira"
+	"github.com/grantcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 

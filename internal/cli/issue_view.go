@@ -7,10 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
-	"github.com/gcarthew/ajira/internal/converter"
-	"github.com/gcarthew/ajira/internal/width"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/converter"
+	"github.com/grantcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 

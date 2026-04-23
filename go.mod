@@ -1,4 +1,4 @@
-module github.com/gcarthew/ajira
+module github.com/grantcarthew/ajira
 
 go 1.25.5
 

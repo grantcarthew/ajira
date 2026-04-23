@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
-	"github.com/gcarthew/ajira/internal/width"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -51,7 +51,7 @@ var sprintListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List sprints",
-	Long:  "List sprints for a board. Requires --board or JIRA_BOARD.",
+	Long:    "List sprints for a board. Requires --board or JIRA_BOARD.",
 	Example: `  ajira sprint list --board 1342          # List sprints for board
   ajira sprint list --state active        # List active sprints only
   ajira sprint list --current             # Shorthand for --state active

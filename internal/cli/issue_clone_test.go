@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/jira"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/jira"
 )
 
 // resetCloneFlags resets all issue clone flag variables to their zero values.

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
-	"github.com/gcarthew/ajira/internal/converter"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/converter"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +50,7 @@ var issueMoveCmd = &cobra.Command{
 	Use:     "move <issue-key> [status]",
 	Aliases: []string{"mv", "transition"},
 	Short:   "Move issue",
-	Long:  "Transition an issue to a new status. Supports -m comment, -R resolution, -a assignee, --stdin for batch.",
+	Long:    "Transition an issue to a new status. Supports -m comment, -R resolution, -a assignee, --stdin for batch.",
 	Example: `  ajira issue move PROJ-123                              # List available transitions
   ajira issue move PROJ-123 "In Progress"                # Move to In Progress
   ajira issue move PROJ-123 Done                         # Move to Done

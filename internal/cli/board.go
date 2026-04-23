@@ -7,9 +7,9 @@ import (
 	"net/url"
 
 	"github.com/fatih/color"
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
-	"github.com/gcarthew/ajira/internal/width"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +57,7 @@ var boardListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List boards",
-	Long:  "List Jira boards. Use -p to filter by project.",
+	Long:    "List Jira boards. Use -p to filter by project.",
 	Example: `  ajira board list                    # List boards in default project
   ajira board list -p GCP             # List boards in specific project
   ajira board list -l 10              # Limit results`,

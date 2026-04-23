@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/api"
 )
 
 // resetCommentListFlags resets all comment-list-related flag variables to their zero values.

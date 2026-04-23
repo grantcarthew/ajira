@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
-	"github.com/gcarthew/ajira/internal/jira"
-	"github.com/gcarthew/ajira/internal/width"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/jira"
+	"github.com/grantcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ var epicListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List epics",
-	Long:  "List epics in the project. Requires -p or JIRA_PROJECT.",
+	Long:    "List epics in the project. Requires -p or JIRA_PROJECT.",
 	Example: `  ajira epic list                        # List epics in default project
   ajira epic list -p GCP                 # List epics in specific project
   ajira epic list --status "In Progress" # Filter by status

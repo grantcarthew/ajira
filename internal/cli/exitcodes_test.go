@@ -5,7 +5,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/gcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/api"
 )
 
 func TestExitCodeFromError(t *testing.T) {

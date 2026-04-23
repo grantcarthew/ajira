@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/gcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/config"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )

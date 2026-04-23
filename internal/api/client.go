@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/config"
 )
 
 const basePathV3 = "/rest/api/3"

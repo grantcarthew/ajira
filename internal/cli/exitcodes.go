@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/gcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/api"
 )
 
 // Exit codes for the CLI.

@@ -7,8 +7,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -59,7 +59,7 @@ var projectListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List projects",
-	Long:  "List Jira projects accessible to the current user.",
+	Long:    "List Jira projects accessible to the current user.",
 	Example: `  ajira project list              # List all projects
   ajira project list -q "web"     # Filter by name/key
   ajira project list -l 10        # Limit results`,

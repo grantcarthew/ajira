@@ -6,9 +6,9 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
-	"github.com/gcarthew/ajira/internal/width"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -60,7 +60,6 @@ func runIssueLinkList(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
-
 
 func printLinkList(issueKey string, links []LinkInfo) {
 	if len(links) == 0 {

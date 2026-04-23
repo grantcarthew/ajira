@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/gcarthew/ajira/internal/cli"
+	"github.com/grantcarthew/ajira/internal/cli"
 )
 
 func main() {

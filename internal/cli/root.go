@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	"github.com/charmbracelet/glamour"
-	"github.com/gcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/api"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )

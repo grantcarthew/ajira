@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
-	"github.com/gcarthew/ajira/internal/jira"
-	"github.com/gcarthew/ajira/internal/width"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/jira"
+	"github.com/grantcarthew/ajira/internal/width"
 	"github.com/spf13/cobra"
 )
 
@@ -89,7 +89,7 @@ var issueListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List issues",
-	Long:  "List Jira issues. Supports JQL queries and convenience filters.",
+	Long:    "List Jira issues. Supports JQL queries and convenience filters.",
 	Example: `  ajira issue list                           # List issues in default project
   ajira issue list --status "In Progress"    # Filter by status
   ajira issue list -a me -t Bug              # My bugs
@@ -401,4 +401,3 @@ func colorStatus(status, category string) string {
 		return status
 	}
 }
-

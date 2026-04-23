@@ -8,8 +8,8 @@ import (
 	"sort"
 	"text/tabwriter"
 
-	"github.com/gcarthew/ajira/internal/api"
-	"github.com/gcarthew/ajira/internal/config"
+	"github.com/grantcarthew/ajira/internal/api"
+	"github.com/grantcarthew/ajira/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -47,7 +47,7 @@ var fieldListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List fields",
-	Long:  "List Jira fields. Use --custom to show only custom fields.",
+	Long:    "List Jira fields. Use --custom to show only custom fields.",
 	Example: `  ajira field list              # List all fields
   ajira field list --custom     # List only custom fields
   ajira field list --json       # Output as JSON`,
