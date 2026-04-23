@@ -1,11 +1,11 @@
 # ajira
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+[![License: MPL 2.0](https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg)](https://www.mozilla.org/en-US/MPL/2.0/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/grantcarthew/ajira)](https://goreportcard.com/report/github.com/grantcarthew/ajira)
 [![Go Reference](https://pkg.go.dev/badge/github.com/grantcarthew/ajira.svg)](https://pkg.go.dev/github.com/grantcarthew/ajira)
 [![GitHub Release](https://img.shields.io/github/v/release/grantcarthew/ajira)](https://github.com/grantcarthew/ajira/releases)
 
-Atlassian Jira CLI designed for AI agents and automation.
+Atlassian Jira Cloud CLI designed for AI agents and automation. Jira Server and Data Center are not supported.
 
 ## Why ajira?
 
@@ -37,7 +37,8 @@ brew install grantcarthew/tap/ajira
 export JIRA_BASE_URL="https://your-instance.atlassian.net"
 export JIRA_EMAIL="your-email@example.com"
 export JIRA_API_TOKEN="your-api-token"
-export JIRA_PROJECT="PROJ"  # Optional default project
+export JIRA_PROJECT="PROJ"    # Optional default project
+export JIRA_BOARD="42"        # Optional default board for agile commands
 
 # Verify authentication
 ajira me
@@ -55,20 +56,20 @@ ajira requires a Jira Cloud instance and an API token. Generate a token at:
 
 ### Install ajira
 
-**Homebrew (Linux/macOS):**
+Homebrew (Linux/macOS):
 
 ```bash
 brew tap grantcarthew/tap
 brew install grantcarthew/tap/ajira
 ```
 
-**Go Install:**
+Go Install:
 
 ```bash
 go install github.com/grantcarthew/ajira/cmd/ajira@latest
 ```
 
-**Build from Source:**
+Build from Source:
 
 ```bash
 git clone https://github.com/grantcarthew/ajira.git
@@ -79,14 +80,18 @@ go build -o ajira ./cmd/ajira
 
 ## Configuration
 
-Environment variables only. No config files, no interactive setup.
+Environment variables only. No config files, no interactive setup. `ATLASSIAN_*` variables are shared with the sibling `acon` (Confluence) tool; `JIRA_*` variables override them when set.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `JIRA_BASE_URL` | Yes | Atlassian instance URL (e.g., `https://example.atlassian.net`) |
-| `JIRA_EMAIL` | Yes | Your Atlassian account email |
-| `JIRA_API_TOKEN` | Yes | API token (fallback: `ATLASSIAN_API_TOKEN`) |
+| `ATLASSIAN_BASE_URL` | Yes | Atlassian instance URL (e.g., `https://example.atlassian.net`) |
+| `ATLASSIAN_EMAIL` | Yes | Atlassian account email |
+| `ATLASSIAN_API_TOKEN` | Yes | API token |
+| `JIRA_BASE_URL` | No | Overrides `ATLASSIAN_BASE_URL` |
+| `JIRA_EMAIL` | No | Overrides `ATLASSIAN_EMAIL` |
+| `JIRA_API_TOKEN` | No | Overrides `ATLASSIAN_API_TOKEN` |
 | `JIRA_PROJECT` | No | Default project key (e.g., `PROJ`) |
+| `JIRA_BOARD` | No | Default board ID for agile commands |
 
 ## Usage
 
@@ -170,6 +175,19 @@ ajira issue edit PROJ-123 -d "New description in Markdown"
 ajira issue edit PROJ-123 -t Bug --priority High
 ```
 
+### Clone Issues
+
+```bash
+# Clone with same fields
+ajira issue clone PROJ-123
+
+# Override summary and link to original
+ajira issue clone PROJ-123 -s "New summary" --link
+
+# Clone to a different project
+ajira issue clone PROJ-123 -p OTHER
+```
+
 ### Assign Issues
 
 ```bash
@@ -208,8 +226,60 @@ ajira issue comment add PROJ-123 -f comment.md
 # Comment from stdin
 echo "Automated comment" | ajira issue comment add PROJ-123 -f -
 
+# List comments
+ajira issue comment list PROJ-123
+
 # Edit existing comment (use issue view -c N to find comment IDs)
 ajira issue comment edit PROJ-123 12345 "Updated text"
+```
+
+### Attachments
+
+```bash
+# Upload one or more files
+ajira issue attachment add PROJ-123 screenshot.png
+ajira issue attachment add PROJ-123 *.log
+
+# List attachments
+ajira issue attachment list PROJ-123
+
+# Download an attachment
+ajira issue attachment download PROJ-123 <attachment-id>
+
+# Remove an attachment
+ajira issue attachment remove PROJ-123 <attachment-id>
+```
+
+### Links
+
+```bash
+# Link two issues
+ajira issue link add PROJ-123 PROJ-456 "Blocks"
+
+# List links on an issue
+ajira issue link list PROJ-123
+
+# List available link types
+ajira issue link types
+
+# Add a web URL as a remote link
+ajira issue link url PROJ-123 https://example.com "Design doc"
+
+# Remove a link
+ajira issue link remove PROJ-123 PROJ-456
+```
+
+### Watch Issues
+
+```bash
+# Watch an issue
+ajira issue watch PROJ-123
+
+# Unwatch
+ajira issue unwatch PROJ-123
+
+# Batch watch from stdin
+echo -e "PROJ-1\nPROJ-2" | ajira issue watch --stdin
 ```
 
 ### Delete Issues
@@ -219,23 +289,74 @@ ajira issue comment edit PROJ-123 12345 "Updated text"
 ajira issue delete PROJ-123
 ```
 
+### Open in Browser
+
+```bash
+# Open project in browser
+ajira open
+
+# Open a specific issue
+ajira open PROJ-123
+```
+
 ### Discovery Commands
 
 ```bash
-# List available issue types
+# List available issue types, statuses, priorities
 ajira issue type
-
-# List available statuses
 ajira issue status
-
-# List available priorities
 ajira issue priority
 
 # List accessible projects
 ajira project list
+
+# Search users (returns account IDs for assign)
+ajira user search john
+ajira user search john@example.com -l 20
+
+# List Jira fields
+ajira field list
 ```
 
+## Agile Commands
+
+Epic, sprint, board, and release commands. Sprint operations require `JIRA_BOARD` or `--board`.
+
+```bash
+# Boards
+ajira board list
+
+# Sprints (need a board id)
+ajira sprint list
+ajira sprint list --current
+ajira sprint list --state closed -l 5
+ajira sprint add 42 PROJ-123 PROJ-124
+echo -e "PROJ-1\nPROJ-2" | ajira sprint add 42 --stdin
+
+# Epics
+ajira epic list
+ajira epic list --status "In Progress"
+ajira epic create -s "Auth Epic"
+ajira epic create -s "API" -d "Description" -P Major -a me
+ajira epic add EPIC-1 PROJ-123 PROJ-124
+ajira epic remove PROJ-123 PROJ-124
+
+# Releases
+ajira release list
+```
+
+See `ajira help agile` for the full reference.
+
 ## Automation Examples
+
+### Preview Before Acting
+
+Most mutating commands accept `--dry-run` to show what would happen without calling the API.
+
+```bash
+ajira issue create -s "Test" --dry-run
+ajira issue move PROJ-123 Done --dry-run
+```
 
 ### Create and Assign in One Pipeline
 
@@ -266,17 +387,16 @@ ajira issue create \
 
 ## AI Agent Reference
 
-For AI agents and LLMs, ajira includes a token-efficient reference:
+For AI agents and LLMs, ajira includes token-efficient help topics:
 
 ```bash
-ajira help agents
+ajira help agents      # Compact command reference for AI context windows
+ajira help agile       # Epic, sprint, board reference
+ajira help markdown    # Markdown-to-ADF formatting rules
+ajira help schemas     # JSON output schemas
 ```
 
-This outputs a compact command reference designed for AI context windows. For JSON schema documentation:
-
-```bash
-ajira help schemas
-```
+Exit codes are stable and documented — see `internal/cli/exitcodes.go`.
 
 ## CLI Reference
 
@@ -286,6 +406,11 @@ ajira help schemas
 |------|-------|-------------|
 | `--json` | `-j` | Output in JSON format |
 | `--project` | `-p` | Override default project key |
+| `--board` |  | Override default board ID |
+| `--dry-run` |  | Preview actions without executing |
+| `--quiet` |  | Suppress non-essential output |
+| `--no-color` |  | Disable coloured output |
+| `--verbose` |  | Show HTTP request/response details |
 | `--version` | `-v` | Print version |
 | `--help` | `-h` | Print help |
 
@@ -294,23 +419,31 @@ ajira help schemas
 | Command | Description |
 |---------|-------------|
 | `me` | Display current user information |
+| `open [issue]` | Open project or issue in browser |
 | `project list` | List accessible projects |
+| `board list` | List boards |
+| `sprint list` | List sprints |
+| `sprint add` | Add issues to a sprint |
+| `epic list` | List epics |
+| `epic create` | Create a new epic |
+| `epic add` | Add issues to an epic |
+| `epic remove` | Remove issues from their epic |
+| `release list` | List project releases / versions |
 | `issue list` | List and search issues |
 | `issue view` | View issue details |
 | `issue create` | Create a new issue |
 | `issue edit` | Edit an existing issue |
+| `issue clone` | Clone an issue |
 | `issue delete` | Delete an issue |
 | `issue assign` | Assign an issue to a user |
 | `issue move` | Transition an issue to a new status |
-| `issue comment add` | Add a comment to an issue |
-| `issue comment edit` | Edit an existing comment |
-| `issue link add` | Create a link between two issues |
-| `issue link remove` | Remove links between two issues |
-| `issue link types` | List available link types |
-| `issue link url` | Add a web URL to an issue |
-| `issue type` | List available issue types |
-| `issue status` | List available statuses |
-| `issue priority` | List available priorities |
+| `issue watch` / `unwatch` | Add or remove yourself as a watcher |
+| `issue comment add` / `edit` / `list` | Manage comments |
+| `issue attachment add` / `list` / `download` / `remove` | Manage attachments |
+| `issue link add` / `remove` / `list` / `types` / `url` | Manage issue links and remote URLs |
+| `issue type` / `status` / `priority` | List metadata options |
+| `user search` | Search users by name or email |
+| `field list` | List Jira fields |
 | `completion` | Generate shell completion scripts |
 | `help` | Help for commands and topics |
 
@@ -330,16 +463,6 @@ ajira completion zsh > $(brew --prefix)/share/zsh/site-functions/_ajira
 ajira completion fish > ~/.config/fish/completions/ajira.fish
 ```
 
-## Roadmap
-
-Planned features for future releases:
-
-- **Issue Clone** - Duplicate issues with field modifications
-- **Agile Features** - Epic and sprint management
-- **Time Tracking** - Worklog support
-- **Enhanced Filters** - More filter options, CSV output
-- **Automation Support** - Dry-run mode, batch operations, exit codes
-
 ## Contributing
 
 Contributions welcome! Please:
@@ -358,7 +481,7 @@ Include:
 
 ## License
 
-`ajira` is licensed under the [MIT License](LICENSE).
+`ajira` is licensed under the [Mozilla Public License 2.0](LICENSE).
 
 ## Author
 
