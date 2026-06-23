@@ -31,6 +31,7 @@ Most Jira CLIs are designed for humans with interactive prompts, TUI views, and 
 ```bash
 # Install via Homebrew
 brew tap grantcarthew/tap
+brew trust grantcarthew/tap
 brew install grantcarthew/tap/ajira
 
 # Configure (add to your shell profile)
@@ -60,6 +61,7 @@ Homebrew (Linux/macOS):
 
 ```bash
 brew tap grantcarthew/tap
+brew trust grantcarthew/tap
 brew install grantcarthew/tap/ajira
 ```
 
