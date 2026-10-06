@@ -24,6 +24,7 @@ type IssueInfo struct {
 	Type           string `json:"type"`
 	Priority       string `json:"priority"`
 	Assignee       string `json:"assignee"`
+	Created        string `json:"created"`
 }
 
 // issueSearchResponse matches the Jira issue search API response.
@@ -44,6 +45,7 @@ type issueFields struct {
 	IssueType *issueType     `json:"issuetype"`
 	Priority  *priorityField `json:"priority"`
 	Assignee  *userField     `json:"assignee"`
+	Created   string         `json:"created"`
 }
 
 type statusField struct {
@@ -180,10 +182,17 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 		header := color.New(color.FgCyan, color.Bold).SprintFunc()
 
 		// Calculate column widths using display width for Unicode support
-		keyWidth, statusWidth, typeWidth, assigneeWidth := 8, 11, 4, 8
+		keyWidth, createdWidth, statusWidth, typeWidth, assigneeWidth := 8, 7, 11, 4, 8
 		for _, issue := range issues {
 			if w := width.StringWidth(issue.Key); w > keyWidth {
 				keyWidth = w
+			}
+			created := formatDate(issue.Created)
+			if created == "" {
+				created = "-"
+			}
+			if w := width.StringWidth(created); w > createdWidth {
+				createdWidth = w
 			}
 			if w := width.StringWidth(issue.Status); w > statusWidth {
 				statusWidth = w
@@ -201,8 +210,9 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 		}
 
 		// Print header
-		fmt.Printf("%s  %s  %s  %s  %s\n",
+		fmt.Printf("%s  %s  %s  %s  %s  %s\n",
 			header(width.PadRight("KEY", keyWidth)),
+			header(width.PadRight("CREATED", createdWidth)),
 			header(width.PadRight("STATUS", statusWidth)),
 			header(width.PadRight("TYPE", typeWidth)),
 			header(width.PadRight("ASSIGNEE", assigneeWidth)),
@@ -211,6 +221,12 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 		// Print rows
 		for _, issue := range issues {
 			key := bold(width.PadRight(issue.Key, keyWidth))
+			created := formatDate(issue.Created)
+			if created == "" {
+				created = faint(width.PadRight("-", createdWidth))
+			} else {
+				created = width.PadRight(created, createdWidth)
+			}
 			status := colorStatus(width.PadRight(issue.Status, statusWidth), issue.StatusCategory)
 
 			assignee := issue.Assignee
@@ -221,9 +237,9 @@ func runIssueList(cmd *cobra.Command, args []string) error {
 			}
 
 			// Truncate summary for display using display width
-			summary := width.Truncate(issue.Summary, 60, "...")
+			summary := width.Truncate(issue.Summary, 100, "...")
 
-			fmt.Printf("%s  %s  %s  %s  %s\n", key, status, width.PadRight(issue.Type, typeWidth), assignee, summary)
+			fmt.Printf("%s  %s  %s  %s  %s  %s\n", key, created, status, width.PadRight(issue.Type, typeWidth), assignee, summary)
 		}
 	}
 
@@ -323,7 +339,7 @@ func searchIssues(ctx context.Context, client *api.Client, jql string, limit int
 	const maxPages = 100 // Safety guard against infinite pagination loops
 
 	for range maxPages {
-		path := fmt.Sprintf("/search/jql?jql=%s&maxResults=%d&fields=summary,status,issuetype,priority,assignee",
+		path := fmt.Sprintf("/search/jql?jql=%s&maxResults=%d&fields=summary,status,issuetype,priority,assignee,created",
 			url.QueryEscape(jql), maxResults)
 		if nextPageToken != "" {
 			path += "&nextPageToken=" + url.QueryEscape(nextPageToken)
@@ -343,6 +359,7 @@ func searchIssues(ctx context.Context, client *api.Client, jql string, limit int
 			info := IssueInfo{
 				Key:     issue.Key,
 				Summary: issue.Fields.Summary,
+				Created: issue.Fields.Created,
 			}
 			if issue.Fields.Status != nil {
 				info.Status = issue.Fields.Status.Name

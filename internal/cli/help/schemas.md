@@ -9,7 +9,7 @@ release list: [id, name, description, released, archived, releaseDate, startDate
 user search: [accountId, displayName, emailAddress, active]
 field list: [id, name, custom, type]
 
-issue list: [key, summary, status, statusCategory, type, priority, assignee]
+issue list: [key, summary, status, statusCategory, type, priority, assignee, created]
 issue view: key, summary, status, type, priority, assignee, reporter, created, updated, description, labels, project, attachments[id, filename, size, mimeType, author, created, content], comments[id, author, created, body]
 issue create: key, id, self
 issue edit: key, status
@@ -38,7 +38,7 @@ issue attachment add: issueKey, attachments[id, filename, size, mimeType, author
 issue attachment download: id, filename, size, output
 issue attachment remove: issueKey, removed, count
 
-epic list: [key, summary, status, statusCategory, type, priority, assignee]
+epic list: [key, summary, status, statusCategory, type, priority, assignee, created]
 epic create: key, id, self
 epic add: epicKey, issues, count
 epic remove: issues, count

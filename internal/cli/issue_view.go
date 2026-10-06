@@ -346,6 +346,14 @@ func formatDateTime(iso string) string {
 	return iso
 }
 
+// formatDate returns the date portion of a Jira ISO datetime (YYYY-MM-DD).
+func formatDate(iso string) string {
+	if len(iso) >= 10 {
+		return iso[:10]
+	}
+	return iso
+}
+
 // getComments fetches recent comments for an issue.
 // Returns the comments slice and the total count of comments on the issue.
 func getComments(ctx context.Context, client *api.Client, key string, limit int) ([]CommentInfo, int, error) {

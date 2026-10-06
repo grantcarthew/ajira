@@ -459,6 +459,7 @@ func TestSearchIssues_Success(t *testing.T) {
 						IssueType: &issueType{Name: "Bug"},
 						Priority:  &priorityField{Name: "High"},
 						Assignee:  &userField{DisplayName: "John Doe"},
+						Created:   "2024-01-16T14:30:00.000+0000",
 					},
 				},
 				{
@@ -502,6 +503,9 @@ func TestSearchIssues_Success(t *testing.T) {
 	}
 	if issues[0].Assignee != "John Doe" {
 		t.Errorf("expected assignee 'John Doe', got %s", issues[0].Assignee)
+	}
+	if issues[0].Created != "2024-01-16T14:30:00.000+0000" {
+		t.Errorf("expected created '2024-01-16T14:30:00.000+0000', got %s", issues[0].Created)
 	}
 
 	// Second issue has no assignee
