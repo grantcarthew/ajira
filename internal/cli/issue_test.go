@@ -850,6 +850,152 @@ func TestCreateIssue_NoAssignee(t *testing.T) {
 	}
 }
 
+func TestResolveVPLocation(t *testing.T) {
+	tests := []struct {
+		label   string
+		wantID  int
+		wantErr bool
+	}{
+		{"", 0, false},
+		{"dfw1", 2417, false},
+		{"DFW1", 2417, false},
+		{"slc1", 2419, false},
+		{"SEA2", 2414, false},
+		{"unknown", 0, true},
+		{"xyz", 0, true},
+	}
+	for _, tt := range tests {
+		got, err := resolveVPLocation(tt.label)
+		if tt.wantErr {
+			if err == nil {
+				t.Errorf("resolveVPLocation(%q) expected error, got %d", tt.label, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("resolveVPLocation(%q) unexpected error: %v", tt.label, err)
+			continue
+		}
+		if got != tt.wantID {
+			t.Errorf("resolveVPLocation(%q) = %d, want %d", tt.label, got, tt.wantID)
+		}
+	}
+}
+
+// Test createIssue with vp_location
+func TestCreateIssue_WithVPLocation(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req issueCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if len(req.Fields.VPLocationDynamic) != 1 {
+			t.Fatalf("expected 1 VPLocationDynamic entry, got %d", len(req.Fields.VPLocationDynamic))
+		}
+		entry := req.Fields.VPLocationDynamic[0]
+		if entry.WorkspaceID != "e10787b0-3a5d-437c-8957-2a01ca3085b4" {
+			t.Errorf("expected hardcoded workspaceId, got %s", entry.WorkspaceID)
+		}
+		if entry.ObjectID != "2419" {
+			t.Errorf("expected objectId 2419 (slc1), got %s", entry.ObjectID)
+		}
+		if entry.ID != "e10787b0-3a5d-437c-8957-2a01ca3085b4:2419" {
+			t.Errorf("expected id workspaceId:2419, got %s", entry.ID)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(CreateResult{Key: "TEST-1002"})
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	result, err := createIssue(context.Background(), client, createIssueOptions{
+		Project:    "TEST",
+		Summary:    "Task with location",
+		IssueType:  "Task",
+		VPObjectID: 2419, // slc1
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Key != "TEST-1002" {
+		t.Errorf("expected key TEST-1002, got %s", result.Key)
+	}
+}
+
+func TestResolveVPTeam(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantID  string
+		wantErr bool
+	}{
+		{"", "", false},
+		{"InfraOps", "f0441640-07bf-4568-9f7b-aa2dff77914d", false},
+		{"infraops", "f0441640-07bf-4568-9f7b-aa2dff77914d", false},
+		{"DFW1", "238adc48-14b3-4943-bda4-8f356fb61aab", false},
+		{"ITAS", "0bf52e77-a2db-4da5-86dc-e5a6497da984", false},
+		{"SLC1", "e093f999-324e-44fd-9d63-a660b5d5f9dc", false},
+		{"unknown", "", true},
+	}
+	for _, tt := range tests {
+		got, err := resolveVPTeam(tt.name)
+		if tt.wantErr {
+			if err == nil {
+				t.Errorf("resolveVPTeam(%q) expected error, got %q", tt.name, got)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("resolveVPTeam(%q) unexpected error: %v", tt.name, err)
+			continue
+		}
+		if got != tt.wantID {
+			t.Errorf("resolveVPTeam(%q) = %q, want %q", tt.name, got, tt.wantID)
+		}
+	}
+}
+
+// Test createIssue with vp_team
+func TestCreateIssue_WithVPTeam(t *testing.T) {
+	expectedTeamID := "f0441640-07bf-4568-9f7b-aa2dff77914d" // InfraOps
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req issueCreateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+
+		if req.Fields.VPTeam == nil {
+			t.Fatal("expected VPTeam to be set")
+		}
+		if *req.Fields.VPTeam != expectedTeamID {
+			t.Errorf("expected VPTeam %q, got %q", expectedTeamID, *req.Fields.VPTeam)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(CreateResult{Key: "TEST-1003"})
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	result, err := createIssue(context.Background(), client, createIssueOptions{
+		Project:   "TEST",
+		Summary:   "Task with team",
+		IssueType: "Task",
+		VPTeamARI: expectedTeamID,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Key != "TEST-1003" {
+		t.Errorf("expected key TEST-1003, got %s", result.Key)
+	}
+}
+
 // Test updateIssue function
 func TestUpdateIssue_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

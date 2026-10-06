@@ -79,3 +79,4 @@ debug
 bin/
 test/output/
 .start/
+.ai/projects
