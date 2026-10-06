@@ -37,12 +37,13 @@ var (
 	editFixVersions       []string
 	editAddFixVersions    []string
 	editRemoveFixVersions []string
+	editCustomer          string
 )
 
 var issueEditCmd = &cobra.Command{
 	Use:   "edit <issue-key>",
 	Short: "Edit issue",
-	Long:  "Update issue fields. Supports summary, description, type, priority, labels, components, and versions.",
+	Long:  "Update issue fields. Supports summary, description, type, priority, labels, components, versions, and VP customer.",
 	Example: `  ajira issue edit PROJ-123 -s "New summary"          # Update summary
   ajira issue edit PROJ-123 -d "New description"      # Update description
   ajira issue edit PROJ-123 -t Bug --priority High    # Change type and priority
@@ -50,7 +51,9 @@ var issueEditCmd = &cobra.Command{
   ajira issue edit PROJ-123 --parent none             # Remove parent
   ajira issue edit PROJ-123 --add-labels urgent       # Add label
   ajira issue edit PROJ-123 --add-component Frontend  # Add component
-  ajira issue edit PROJ-123 --add-fix-version 1.1.0   # Add fix version`,
+  ajira issue edit PROJ-123 --add-fix-version 1.1.0   # Add fix version
+  ajira issue edit PROJ-123 --vp-customer internal    # Set VP customer
+  ajira issue edit PROJ-123 --vp-customer ""          # Clear VP customer`,
 	Args:         cobra.ExactArgs(1),
 	SilenceUsage: true,
 	RunE:         runIssueEdit,
@@ -73,6 +76,7 @@ func init() {
 	issueEditCmd.Flags().StringSliceVar(&editFixVersions, "fix-version", nil, "Replace all fix versions")
 	issueEditCmd.Flags().StringSliceVar(&editAddFixVersions, "add-fix-version", nil, "Add fix version(s)")
 	issueEditCmd.Flags().StringSliceVar(&editRemoveFixVersions, "remove-fix-version", nil, "Remove fix version(s)")
+	issueEditCmd.Flags().StringVar(&editCustomer, "vp-customer", "", "VP customer name or object key (sets customfield_10385; empty value clears it)")
 
 	issueCmd.AddCommand(issueEditCmd)
 }
@@ -92,15 +96,18 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	issueKey := args[0]
 
-	// Check if parent flag was explicitly provided
+	// Check if parent and customer flags were explicitly provided.
+	// An empty --vp-customer is a clear, so it must be distinguished from omitted.
 	parentChanged := cmd.Flags().Changed("parent")
+	customerChanged := cmd.Flags().Changed("vp-customer")
 
 	// Check if any field was provided
 	hasChanges := editSummary != "" || editBody != "" || editFile != "" ||
 		editType != "" || editPriority != "" || editLabels != nil || parentChanged ||
 		editAddLabels != nil || editRemoveLabels != nil ||
 		editComponents != nil || editAddComponents != nil || editRemoveComponents != nil ||
-		editFixVersions != nil || editAddFixVersions != nil || editRemoveFixVersions != nil
+		editFixVersions != nil || editAddFixVersions != nil || editRemoveFixVersions != nil ||
+		customerChanged
 
 	if !hasChanges {
 		return fmt.Errorf("no fields to update")
@@ -197,6 +204,14 @@ func runIssueEdit(cmd *cobra.Command, args []string) error {
 			components = append(components, map[string]string{"name": c})
 		}
 		fields["components"] = components
+	}
+
+	if customerChanged {
+		customerValue, err := customerFieldForEdit(ctx, client, issueKey, editCustomer)
+		if err != nil {
+			return err
+		}
+		fields[customerFieldKey] = customerValue
 	}
 
 	// Replace fix versions (fields)

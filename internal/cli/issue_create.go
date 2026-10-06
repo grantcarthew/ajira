@@ -27,6 +27,16 @@ type issueCreateRequest struct {
 
 const vpWorkspaceID = "e10787b0-3a5d-437c-8957-2a01ca3085b4"
 
+const (
+	customerFieldKey      = "customfield_10385"
+	customerFieldConfigID = "10589"
+)
+
+// customerRef is one Assets object reference on customfield_10385.
+type customerRef struct {
+	ID string `json:"id"`
+}
+
 // vpLocationLabelToObjectID maps first word of label (lowercase) to objectId.
 // Derived from "dynamic" locations field 10352
 var vpLocationLabelToObjectID = map[string]int{
@@ -148,6 +158,7 @@ var (
 	createAssignee    string
 	createVPLocation  string
 	createVPTeam      string
+	createCustomer    string
 )
 
 var issueCreateCmd = &cobra.Command{
@@ -164,7 +175,8 @@ var issueCreateCmd = &cobra.Command{
   ajira issue create -s "Task" -a me                       # Assign to yourself
   ajira issue create -s "Task" -a user@example.com         # Assign by email
   ajira issue create -s "Task" -a unassigned               # Explicitly unassigned
-  ajira issue create -s "Task" --vp-team InfraOps          # With VP team`,
+  ajira issue create -s "Task" --vp-team InfraOps          # With VP team
+  ajira issue create -s "Task" --vp-customer internal      # With VP customer`,
 	SilenceUsage: true,
 	RunE:         runIssueCreate,
 }
@@ -182,6 +194,7 @@ func init() {
 	issueCreateCmd.Flags().StringVarP(&createAssignee, "assignee", "a", "", "Assignee (me, email, account ID, or unassigned)")
 	issueCreateCmd.Flags().StringVar(&createVPLocation, "vp-location", "", "VP location label, e.g. dfw1, sea1 (sets customfield_10352)")
 	issueCreateCmd.Flags().StringVar(&createVPTeam, "vp-team", "", "VP team name (sets customfield_10001)")
+	issueCreateCmd.Flags().StringVar(&createCustomer, "vp-customer", "", "VP customer name or object key (sets customfield_10385)")
 
 	_ = issueCreateCmd.MarkFlagRequired("summary")
 
@@ -259,6 +272,19 @@ func runIssueCreate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("API error: %w", apiErr)
 		}
 		return fmt.Errorf("failed to create issue: %w", err)
+	}
+
+	if strings.TrimSpace(createCustomer) != "" {
+		issueID := result.ID
+		if issueID == "" {
+			issueID, err = fetchIssueID(ctx, client, result.Key)
+			if err != nil {
+				return fmt.Errorf("created %s but failed to set customer: %w", result.Key, err)
+			}
+		}
+		if err := setIssueCustomer(ctx, client, result.Key, issueID, createCustomer); err != nil {
+			return fmt.Errorf("created %s but failed to set customer: %w", result.Key, err)
+		}
 	}
 
 	if JSONOutput() {

@@ -1000,6 +1000,329 @@ func TestCreateIssue_WithVPTeam(t *testing.T) {
 	}
 }
 
+const internalCustomerID = "e10787b0-3a5d-437c-8957-2a01ca3085b4:2436"
+
+// internalCustomerAutocomplete is the lookup shape from vp-customer.json.
+const internalCustomerAutocomplete = `{
+  "size": 1,
+  "hasNextPage": false,
+  "results": [{
+    "id": "e10787b0-3a5d-437c-8957-2a01ca3085b4:2436",
+    "label": "Internal Team",
+    "objectKey": "CUS-2436"
+  }]
+}`
+
+func TestResolveCustomer(t *testing.T) {
+	var sawIssueID bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			t.Errorf("expected POST, got %s", r.Method)
+		}
+		wantPath := "/rest/servicedesk/cmdb/1/field/customfield_10385/config/10589/autocomplete"
+		if !strings.HasPrefix(r.URL.Path, wantPath) {
+			t.Errorf("expected path %s, got %s", wantPath, r.URL.Path)
+		}
+		if r.URL.Query().Get("excludeCurrentValues") != "true" {
+			t.Errorf("expected excludeCurrentValues=true, got %q", r.URL.RawQuery)
+		}
+
+		var req customerAutocompleteRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+		if req.FieldValueMap == nil {
+			t.Error("expected fieldValueMap object")
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		switch strings.ToLower(req.Query) {
+		case "internal", "internal team", "cus-2436":
+			if strings.EqualFold(req.Query, "internal") && req.IssueID != "" {
+				if req.IssueID != "78630" {
+					t.Errorf("unexpected issueId %q", req.IssueID)
+				}
+				sawIssueID = true
+			}
+			_, _ = w.Write([]byte(internalCustomerAutocomplete))
+		case "missing":
+			_, _ = w.Write([]byte(`{"size":0,"hasNextPage":false,"results":[]}`))
+		case "acme", "a":
+			_, _ = w.Write([]byte(`{"size":2,"hasNextPage":false,"results":[{"id":"id-a","label":"Acme","objectKey":"CUS-1"},{"id":"id-b","label":"Apex","objectKey":"CUS-2"}]}`))
+		default:
+			t.Errorf("unexpected query %q", req.Query)
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	ctx := context.Background()
+
+	got, err := resolveCustomer(ctx, client, "internal", "")
+	if err != nil {
+		t.Fatalf("resolveCustomer(internal) unexpected error: %v", err)
+	}
+	if got != internalCustomerID {
+		t.Errorf("resolveCustomer(internal) = %q, want %q", got, internalCustomerID)
+	}
+
+	got, err = resolveCustomer(ctx, client, "Internal Team", "")
+	if err != nil {
+		t.Fatalf("resolveCustomer(Internal Team) unexpected error: %v", err)
+	}
+	if got != internalCustomerID {
+		t.Errorf("resolveCustomer(Internal Team) = %q, want %q", got, internalCustomerID)
+	}
+
+	got, err = resolveCustomer(ctx, client, "CUS-2436", "")
+	if err != nil {
+		t.Fatalf("resolveCustomer(CUS-2436) unexpected error: %v", err)
+	}
+	if got != internalCustomerID {
+		t.Errorf("resolveCustomer(CUS-2436) = %q, want %q", got, internalCustomerID)
+	}
+
+	got, err = resolveCustomer(ctx, client, "internal", "78630")
+	if err != nil {
+		t.Fatalf("resolveCustomer with issueId unexpected error: %v", err)
+	}
+	if got != internalCustomerID {
+		t.Errorf("resolveCustomer with issueId = %q, want %q", got, internalCustomerID)
+	}
+	if !sawIssueID {
+		t.Error("expected customer lookup to send issueId")
+	}
+
+	if _, err := resolveCustomer(ctx, client, "missing", ""); err == nil {
+		t.Error("resolveCustomer(missing) expected error")
+	}
+
+	if _, err := resolveCustomer(ctx, client, "a", ""); err == nil {
+		t.Error("resolveCustomer(a) expected ambiguous error")
+	}
+
+	got, err = resolveCustomer(ctx, client, "Acme", "")
+	if err != nil {
+		t.Fatalf("resolveCustomer(Acme) unexpected error: %v", err)
+	}
+	if got != "id-a" {
+		t.Errorf("resolveCustomer(Acme) = %q, want id-a", got)
+	}
+
+	got, err = resolveCustomer(ctx, client, "  ", "")
+	if err != nil {
+		t.Fatalf("resolveCustomer(empty) unexpected error: %v", err)
+	}
+	if got != "" {
+		t.Errorf("resolveCustomer(empty) = %q, want empty", got)
+	}
+}
+
+func TestFetchIssueID(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("expected GET, got %s", r.Method)
+		}
+		if !strings.Contains(r.URL.Path, "/issue/OP-18254") {
+			t.Errorf("expected issue path, got %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"78630","key":"OP-18254"}`))
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	got, err := fetchIssueID(context.Background(), client, "OP-18254")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "78630" {
+		t.Errorf("fetchIssueID = %q, want 78630", got)
+	}
+}
+
+func TestSetIssueCustomer(t *testing.T) {
+	var sawLookup, sawUpdate bool
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/autocomplete"):
+			var req customerAutocompleteRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("failed to decode lookup: %v", err)
+			}
+			if req.IssueID != "78630" {
+				t.Errorf("expected issueId 78630, got %q", req.IssueID)
+			}
+			if req.Query != "internal" {
+				t.Errorf("expected query internal, got %q", req.Query)
+			}
+			sawLookup = true
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(internalCustomerAutocomplete))
+		case r.Method == http.MethodPut && strings.Contains(r.URL.Path, "/issue/TEST-1004"):
+			var req issueEditRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				t.Fatalf("failed to decode update: %v", err)
+			}
+			customers, ok := req.Fields["customfield_10385"].([]any)
+			if !ok || len(customers) != 1 {
+				t.Fatalf("expected one customfield_10385 entry, got %#v", req.Fields["customfield_10385"])
+			}
+			entry, ok := customers[0].(map[string]any)
+			if !ok || entry["id"] != internalCustomerID {
+				t.Fatalf("unexpected customer payload %#v", customers[0])
+			}
+			sawUpdate = true
+			w.WriteHeader(http.StatusNoContent)
+		default:
+			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := setIssueCustomer(context.Background(), client, "TEST-1004", "78630", "internal")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !sawLookup || !sawUpdate {
+		t.Errorf("sawLookup=%v sawUpdate=%v", sawLookup, sawUpdate)
+	}
+}
+
+func TestVPCustomerFlagAcceptsEmpty(t *testing.T) {
+	t.Cleanup(func() {
+		editCustomer = ""
+		flag := issueEditCmd.Flags().Lookup("vp-customer")
+		flag.Changed = false
+		_ = flag.Value.Set("")
+	})
+
+	if err := issueEditCmd.ParseFlags([]string{"--vp-customer", ""}); err != nil {
+		t.Fatalf("ParseFlags(--vp-customer \"\") unexpected error: %v", err)
+	}
+	if !issueEditCmd.Flags().Changed("vp-customer") {
+		t.Fatal("expected --vp-customer to be marked changed")
+	}
+	if editCustomer != "" {
+		t.Fatalf("editCustomer = %q, want empty", editCustomer)
+	}
+}
+
+func TestCustomerFieldForEdit_EmptyClears(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	for _, query := range []string{"", "  "} {
+		got, err := customerFieldForEdit(context.Background(), client, "OP-18271", query)
+		if err != nil {
+			t.Fatalf("customerFieldForEdit(%q) unexpected error: %v", query, err)
+		}
+		refs, ok := got.([]customerRef)
+		if !ok || len(refs) != 0 {
+			t.Fatalf("customerFieldForEdit(%q) = %#v, want empty customer list", query, got)
+		}
+	}
+}
+
+func TestCustomerFieldForEdit_ResolvesName(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/issue/OP-18271"):
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"id":"78630","key":"OP-18271"}`))
+		case r.Method == http.MethodPost && strings.Contains(r.URL.Path, "/autocomplete"):
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(internalCustomerAutocomplete))
+		default:
+			t.Errorf("unexpected %s %s", r.Method, r.URL.Path)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	got, err := customerFieldForEdit(context.Background(), client, "OP-18271", "internal")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	refs, ok := got.([]customerRef)
+	if !ok || len(refs) != 1 || refs[0].ID != internalCustomerID {
+		t.Fatalf("customerFieldForEdit(internal) = %#v, want id %s", got, internalCustomerID)
+	}
+}
+
+func TestUpdateIssue_ClearCustomer(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+		}
+
+		var req issueEditRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+		customers, ok := req.Fields["customfield_10385"].([]any)
+		if !ok || len(customers) != 0 {
+			t.Fatalf("expected empty customfield_10385, got %#v", req.Fields["customfield_10385"])
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := updateIssue(context.Background(), client, "OP-18271", map[string]any{
+		customerFieldKey: []customerRef{},
+	}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestUpdateIssue_WithCustomer(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Errorf("expected PUT, got %s", r.Method)
+		}
+
+		var req issueEditRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("failed to decode request: %v", err)
+		}
+		customers, ok := req.Fields["customfield_10385"].([]any)
+		if !ok || len(customers) != 1 {
+			t.Fatalf("expected one customfield_10385 entry, got %#v", req.Fields["customfield_10385"])
+		}
+		entry, ok := customers[0].(map[string]any)
+		if !ok {
+			t.Fatalf("expected customer object, got %#v", customers[0])
+		}
+		if entry["id"] != internalCustomerID {
+			t.Errorf("expected customer id %s, got %v", internalCustomerID, entry["id"])
+		}
+		if _, extra := entry["workspaceId"]; extra {
+			t.Error("customer payload should contain only id")
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	client := api.NewClient(testConfig(server.URL))
+	err := updateIssue(context.Background(), client, "OP-18254", map[string]any{
+		customerFieldKey: []customerRef{{ID: internalCustomerID}},
+	}, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 // Test updateIssue function
 func TestUpdateIssue_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

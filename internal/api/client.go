@@ -283,6 +283,9 @@ func (c *Client) doRequestWithRetry(ctx context.Context, method, path string, bo
 
 	if verboseWriter != nil {
 		fmt.Fprintf(verboseWriter, "%s %s %s (%s)\n", method, path, resp.Status, duration.Round(time.Millisecond))
+		if len(body) > 0 {
+			fmt.Fprintf(verboseWriter, "request: %s\n", body)
+		}
 	}
 
 	// Handle rate limiting with retry
@@ -307,6 +310,14 @@ func (c *Client) doRequestWithRetry(ctx context.Context, method, path string, bo
 	}
 
 	if resp.StatusCode >= 400 {
+		if verboseWriter != nil {
+			if len(respBody) == 0 {
+				fmt.Fprintf(verboseWriter, "response: <empty>\n")
+			} else {
+				fmt.Fprintf(verboseWriter, "response: %s\n", respBody)
+			}
+		}
+
 		apiErr := &APIError{
 			StatusCode: resp.StatusCode,
 			Status:     resp.Status,
@@ -315,7 +326,8 @@ func (c *Client) doRequestWithRetry(ctx context.Context, method, path string, bo
 		}
 
 		var jiraErr jiraErrorResponse
-		if json.Unmarshal(respBody, &jiraErr) == nil {
+		parsed := json.Unmarshal(respBody, &jiraErr) == nil
+		if parsed && (len(jiraErr.ErrorMessages) > 0 || len(jiraErr.Errors) > 0) {
 			apiErr.Messages = jiraErr.ErrorMessages
 			apiErr.Errors = jiraErr.Errors
 		} else if len(respBody) > 0 {
